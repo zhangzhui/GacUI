@@ -718,7 +718,7 @@ StateMachine
 			}
 
 /***********************************************************************
-Libraries
+Sys
 ***********************************************************************/
 
 			namespace system_sys
@@ -844,6 +844,10 @@ Libraries
 			DEFINE_COMPARE(DateTime)
 #undef DEFINE_COMPARE
 
+/***********************************************************************
+Math
+***********************************************************************/
+
 #define DEFINE_MINMAX(TYPE)\
 			TYPE Math::Min(TYPE a, TYPE b)\
 			{\
@@ -857,6 +861,107 @@ Libraries
 			REFLECTION_PREDEFINED_PRIMITIVE_TYPES(DEFINE_MINMAX)
 			DEFINE_MINMAX(DateTime)
 #undef DEFINE_MINMAX
+
+/***********************************************************************
+Localization
+***********************************************************************/
+
+			Locale Localization::Invariant()
+			{
+				return Locale::Invariant();
+			}
+
+			Locale Localization::System()
+			{
+				return Locale::SystemDefault();
+			}
+
+			Locale Localization::User()
+			{
+				return Locale::UserDefault();
+			}
+
+			collections::LazyList<Locale> Localization::Locales()
+			{
+				auto result = MakePtr<List<Locale>>();
+				Locale::Enumerate(*result.Obj());
+				return result;
+			}
+
+			collections::LazyList<WString> Localization::GetShortDateFormats(Locale locale)
+			{
+				auto result = MakePtr<List<WString>>();
+				locale.GetShortDateFormats(*result.Obj());
+				return result;
+			}
+
+			collections::LazyList<WString> Localization::GetLongDateFormats(Locale locale)
+			{
+				auto result = MakePtr<List<WString>>();
+				locale.GetLongDateFormats(*result.Obj());
+				return result;
+			}
+
+			collections::LazyList<WString> Localization::GetYearMonthDateFormats(Locale locale)
+			{
+				auto result = MakePtr<List<WString>>();
+				locale.GetYearMonthDateFormats(*result.Obj());
+				return result;
+			}
+
+			collections::LazyList<WString> Localization::GetLongTimeFormats(Locale locale)
+			{
+				auto result = MakePtr<List<WString>>();
+				locale.GetLongTimeFormats(*result.Obj());
+				return result;
+			}
+
+			collections::LazyList<WString> Localization::GetShortTimeFormats(Locale locale)
+			{
+				auto result = MakePtr<List<WString>>();
+				locale.GetShortTimeFormats(*result.Obj());
+				return result;
+			}
+
+			WString Localization::GetShortDayOfWeekName(Locale locale, vint dayOfWeek)
+			{
+				return locale.GetShortDayOfWeekName(dayOfWeek);
+			}
+
+			WString Localization::GetLongDayOfWeekName(Locale locale, vint dayOfWeek)
+			{
+				return locale.GetLongDayOfWeekName(dayOfWeek);
+			}
+
+			WString Localization::GetShortMonthName(Locale locale, vint month)
+			{
+				return locale.GetShortMonthName(month);
+			}
+
+			WString Localization::GetLongMonthName(Locale locale, vint month)
+			{
+				return locale.GetLongMonthName(month);
+			}
+
+			WString Localization::FormatDate(Locale locale, const WString& format, DateTime date)
+			{
+				return locale.FormatDate(format, date);
+			}
+
+			WString Localization::FormatTime(Locale locale, const WString& format, DateTime date)
+			{
+				return locale.FormatTime(format, date);
+			}
+
+			WString Localization::FormatNumber(Locale locale, const WString& number)
+			{
+				return locale.FormatNumber(number);
+			}
+
+			WString Localization::FormatCurrency(Locale locale, const WString& number)
+			{
+				return locale.FormatCurrency(number);
+			}
 		}
 	}
 }
@@ -886,6 +991,7 @@ TypeName
 
 			IMPL_TYPE_INFO_RENAME(vl::reflection::description::Sys, system::Sys)
 			IMPL_TYPE_INFO_RENAME(vl::reflection::description::Math, system::Math)
+			IMPL_TYPE_INFO_RENAME(vl::reflection::description::Localization, system::Localization)
 			IMPL_TYPE_INFO_RENAME(vl::reflection::description::CoroutineStatus, system::CoroutineStatus)
 			IMPL_TYPE_INFO_RENAME(vl::reflection::description::CoroutineResult, system::CoroutineResult)
 			IMPL_TYPE_INFO_RENAME(vl::reflection::description::ICoroutine, system::Coroutine)
@@ -935,11 +1041,26 @@ WfLoadLibraryTypes
 			};
 
 			BEGIN_CLASS_MEMBER(Sys)
+				CLASS_MEMBER_STATIC_METHOD(Int32ToInt, { L"value" })
+				CLASS_MEMBER_STATIC_METHOD(Int64ToInt, { L"value" })
+				CLASS_MEMBER_STATIC_METHOD(IntToInt32, { L"value" })
+				CLASS_MEMBER_STATIC_METHOD(IntToInt64, { L"value" })
+
+				CLASS_MEMBER_STATIC_METHOD(UInt32ToUInt, { L"value" })
+				CLASS_MEMBER_STATIC_METHOD(UInt64ToUInt, { L"value" })
+				CLASS_MEMBER_STATIC_METHOD(UIntToUInt32, { L"value" })
+				CLASS_MEMBER_STATIC_METHOD(UIntToUInt64, { L"value" })
+
 				CLASS_MEMBER_STATIC_METHOD(Len, { L"value" })
 				CLASS_MEMBER_STATIC_METHOD(Left, { L"value" _ L"length" })
 				CLASS_MEMBER_STATIC_METHOD(Right, { L"value" _ L"length" })
 				CLASS_MEMBER_STATIC_METHOD(Mid, { L"value" _ L"start" _ L"length" })
 				CLASS_MEMBER_STATIC_METHOD(Find, { L"value" _ L"substr" })
+				CLASS_MEMBER_STATIC_METHOD(UCase, { L"value" })
+				CLASS_MEMBER_STATIC_METHOD(LCase, { L"value" })
+				CLASS_MEMBER_STATIC_METHOD(LoremIpsumTitle, { L"bestLength" })
+				CLASS_MEMBER_STATIC_METHOD(LoremIpsumSentence, { L"bestLength" })
+				CLASS_MEMBER_STATIC_METHOD(LoremIpsumParagraph, { L"bestLength" })
 				CLASS_MEMBER_STATIC_METHOD(ReverseEnumerable, { L"value" })
 #pragma push_macro("CompareString")
 #if defined CompareString
@@ -999,6 +1120,29 @@ WfLoadLibraryTypes
 				CLASS_MEMBER_STATIC_METHOD(Round, { L"value" })
 				CLASS_MEMBER_STATIC_METHOD(Trunc, { L"value" })
 			END_CLASS_MEMBER(Math)
+
+			BEGIN_CLASS_MEMBER(Localization)
+				CLASS_MEMBER_STATIC_METHOD(Invariant, NO_PARAMETER)
+				CLASS_MEMBER_STATIC_METHOD(System, NO_PARAMETER)
+				CLASS_MEMBER_STATIC_METHOD(User, NO_PARAMETER)
+				CLASS_MEMBER_STATIC_METHOD(Locales, NO_PARAMETER)
+
+				CLASS_MEMBER_STATIC_METHOD(GetShortDateFormats, { L"locale" })
+				CLASS_MEMBER_STATIC_METHOD(GetLongDateFormats, { L"locale" })
+				CLASS_MEMBER_STATIC_METHOD(GetYearMonthDateFormats, { L"locale" })
+				CLASS_MEMBER_STATIC_METHOD(GetLongTimeFormats, { L"locale" })
+				CLASS_MEMBER_STATIC_METHOD(GetShortTimeFormats, { L"locale" })
+
+				CLASS_MEMBER_STATIC_METHOD(GetShortDayOfWeekName, { L"locale" _ L"dayOfWeek" })
+				CLASS_MEMBER_STATIC_METHOD(GetLongDayOfWeekName, { L"locale" _ L"dayOfWeek" })
+				CLASS_MEMBER_STATIC_METHOD(GetShortMonthName, { L"locale" _ L"month" })
+				CLASS_MEMBER_STATIC_METHOD(GetLongMonthName, { L"locale" _ L"month" })
+
+				CLASS_MEMBER_STATIC_METHOD(FormatDate, { L"locale" _ L"format" _ L"date" })
+				CLASS_MEMBER_STATIC_METHOD(FormatTime, { L"locale" _ L"format" _ L"date" })
+				CLASS_MEMBER_STATIC_METHOD(FormatNumber, { L"locale" _ L"number" })
+				CLASS_MEMBER_STATIC_METHOD(FormatCurrency, { L"locale" _ L"number" })
+			END_CLASS_MEMBER(Localization)
 
 			BEGIN_ENUM_ITEM(CoroutineStatus)
 				ENUM_CLASS_ITEM(Waiting)

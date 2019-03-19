@@ -24,6 +24,7 @@ Predefined ItemArranger
 
 			namespace list
 			{
+
 				/// <summary>Ranged item arranger. This arranger implements most of the common functionality for those arrangers that display a continuing subset of item at a time.</summary>
 				class RangedItemArrangerBase : public Object, virtual public GuiListControl::IItemArranger, public Description<RangedItemArrangerBase>
 				{
@@ -52,7 +53,7 @@ Predefined ItemArranger
 					virtual void								RearrangeItemBounds();
 
 					virtual void								BeginPlaceItem(bool forMoving, Rect newBounds, vint& newStartIndex) = 0;
-					virtual void								PlaceItem(bool forMoving, vint index, ItemStyleRecord style, Rect viewBounds, Rect& bounds, Margin& alignmentToParent) = 0;
+					virtual void								PlaceItem(bool forMoving, bool newCreatedStyle, vint index, ItemStyleRecord style, Rect viewBounds, Rect& bounds, Margin& alignmentToParent) = 0;
 					virtual bool								IsItemOutOfViewBounds(vint index, ItemStyleRecord style, Rect bounds, Rect viewBounds) = 0;
 					virtual bool								EndPlaceItem(bool forMoving, Rect newBounds, vint newStartIndex) = 0;
 					virtual void								InvalidateItemSizeCache() = 0;
@@ -74,6 +75,36 @@ Predefined ItemArranger
 					void										ReloadVisibleStyles()override;
 					void										OnViewChanged(Rect bounds)override;
 				};
+				/// <summary>Free height item arranger. This arranger will cache heights of all items.</summary>
+				class FreeHeightItemArranger : public RangedItemArrangerBase, public Description<FreeHeightItemArranger>
+				{
+				private:
+					bool										pim_heightUpdated = false;
+
+				protected:
+					collections::Array<vint>					heights;
+					collections::Array<vint>					offsets;
+					vint										availableOffsetCount = 0;
+
+					void										EnsureOffsetForItem(vint itemIndex);
+
+					void										BeginPlaceItem(bool forMoving, Rect newBounds, vint& newStartIndex)override;
+					void										PlaceItem(bool forMoving, bool newCreatedStyle, vint index, ItemStyleRecord style, Rect viewBounds, Rect& bounds, Margin& alignmentToParent)override;
+					bool										IsItemOutOfViewBounds(vint index, ItemStyleRecord style, Rect bounds, Rect viewBounds)override;
+					bool										EndPlaceItem(bool forMoving, Rect newBounds, vint newStartIndex)override;
+					void										InvalidateItemSizeCache()override;
+					Size										OnCalculateTotalSize()override;
+				public:
+					/// <summary>Create the arranger.</summary>
+					FreeHeightItemArranger();
+					~FreeHeightItemArranger();
+
+					void										OnAttached(GuiListControl::IItemProvider* provider)override;
+					void										OnItemModified(vint start, vint count, vint newCount)override;
+					vint										FindItem(vint itemIndex, compositions::KeyDirection key)override;
+					GuiListControl::EnsureItemVisibleResult		EnsureItemVisible(vint itemIndex)override;
+					Size										GetAdoptedSize(Size expectedSize)override;
+				};
 				
 				/// <summary>Fixed height item arranger. This arranger lists all item with the same height value. This value is the maximum height of all minimum heights of displayed items.</summary>
 				class FixedHeightItemArranger : public RangedItemArrangerBase, public Description<FixedHeightItemArranger>
@@ -83,13 +114,13 @@ Predefined ItemArranger
 					vint										pim_rowHeight = 0;
 
 				protected:
-					vint										rowHeight;
+					vint										rowHeight = 1;
 
 					virtual vint								GetWidth();
 					virtual vint								GetYOffset();
 
 					void										BeginPlaceItem(bool forMoving, Rect newBounds, vint& newStartIndex)override;
-					void										PlaceItem(bool forMoving, vint index, ItemStyleRecord style, Rect viewBounds, Rect& bounds, Margin& alignmentToParent)override;
+					void										PlaceItem(bool forMoving, bool newCreatedStyle, vint index, ItemStyleRecord style, Rect viewBounds, Rect& bounds, Margin& alignmentToParent)override;
 					bool										IsItemOutOfViewBounds(vint index, ItemStyleRecord style, Rect bounds, Rect viewBounds)override;
 					bool										EndPlaceItem(bool forMoving, Rect newBounds, vint newStartIndex)override;
 					void										InvalidateItemSizeCache()override;
@@ -100,7 +131,7 @@ Predefined ItemArranger
 					~FixedHeightItemArranger();
 
 					vint										FindItem(vint itemIndex, compositions::KeyDirection key)override;
-					bool										EnsureItemVisible(vint itemIndex)override;
+					GuiListControl::EnsureItemVisibleResult		EnsureItemVisible(vint itemIndex)override;
 					Size										GetAdoptedSize(Size expectedSize)override;
 				};
 
@@ -111,12 +142,12 @@ Predefined ItemArranger
 					Size										pim_itemSize;
 
 				protected:
-					Size										itemSize;
+					Size										itemSize{ 1,1 };
 
 					void										CalculateRange(Size itemSize, Rect bounds, vint count, vint& start, vint& end);
 
 					void										BeginPlaceItem(bool forMoving, Rect newBounds, vint& newStartIndex)override;
-					void										PlaceItem(bool forMoving, vint index, ItemStyleRecord style, Rect viewBounds, Rect& bounds, Margin& alignmentToParent)override;
+					void										PlaceItem(bool forMoving, bool newCreatedStyle, vint index, ItemStyleRecord style, Rect viewBounds, Rect& bounds, Margin& alignmentToParent)override;
 					bool										IsItemOutOfViewBounds(vint index, ItemStyleRecord style, Rect bounds, Rect viewBounds)override;
 					bool										EndPlaceItem(bool forMoving, Rect newBounds, vint newStartIndex)override;
 					void										InvalidateItemSizeCache()override;
@@ -127,7 +158,7 @@ Predefined ItemArranger
 					~FixedSizeMultiColumnItemArranger();
 
 					vint										FindItem(vint itemIndex, compositions::KeyDirection key)override;
-					bool										EnsureItemVisible(vint itemIndex)override;
+					GuiListControl::EnsureItemVisibleResult		EnsureItemVisible(vint itemIndex)override;
 					Size										GetAdoptedSize(Size expectedSize)override;
 				};
 				
@@ -145,7 +176,7 @@ Predefined ItemArranger
 					void										CalculateRange(vint itemHeight, Rect bounds, vint& rows, vint& startColumn);
 
 					void										BeginPlaceItem(bool forMoving, Rect newBounds, vint& newStartIndex)override;
-					void										PlaceItem(bool forMoving, vint index, ItemStyleRecord style, Rect viewBounds, Rect& bounds, Margin& alignmentToParent)override;
+					void										PlaceItem(bool forMoving, bool newCreatedStyle, vint index, ItemStyleRecord style, Rect viewBounds, Rect& bounds, Margin& alignmentToParent)override;
 					bool										IsItemOutOfViewBounds(vint index, ItemStyleRecord style, Rect bounds, Rect viewBounds)override;
 					bool										EndPlaceItem(bool forMoving, Rect newBounds, vint newStartIndex)override;
 					void										InvalidateItemSizeCache()override;
@@ -156,7 +187,7 @@ Predefined ItemArranger
 					~FixedHeightMultiColumnItemArranger();
 
 					vint										FindItem(vint itemIndex, compositions::KeyDirection key)override;
-					bool										EnsureItemVisible(vint itemIndex)override;
+					GuiListControl::EnsureItemVisibleResult		EnsureItemVisible(vint itemIndex)override;
 					Size										GetAdoptedSize(Size expectedSize)override;
 				};
 			}

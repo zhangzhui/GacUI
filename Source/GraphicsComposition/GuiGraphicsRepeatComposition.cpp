@@ -1,4 +1,4 @@
-#include "GuiGraphicsComposition.h"
+#include "GuiGraphicsRepeatComposition.h"
 #include "../Controls/Templates/GuiControlTemplates.h"
 
 namespace vl
@@ -7,174 +7,10 @@ namespace vl
 	{
 		namespace compositions
 		{
+			using namespace reflection::description;
 			using namespace collections;
 			using namespace controls;
 			using namespace elements;
-
-/***********************************************************************
-GuiSharedSizeItemComposition
-***********************************************************************/
-
-			void GuiSharedSizeItemComposition::Update()
-			{
-				if (parentRoot)
-				{
-					parentRoot->ForceCalculateSizeImmediately();
-				}
-				InvokeOnCompositionStateChanged();
-			}
-
-			void GuiSharedSizeItemComposition::OnParentLineChanged()
-			{
-				GuiBoundsComposition::OnParentLineChanged();
-				if (parentRoot)
-				{
-					parentRoot->childItems.Remove(this);
-					parentRoot = 0;
-				}
-
-				auto current = GetParent();
-				while (current)
-				{
-					if (auto item = dynamic_cast<GuiSharedSizeItemComposition*>(current))
-					{
-						break;
-					}
-					else if (auto root = dynamic_cast<GuiSharedSizeRootComposition*>(current))
-					{
-						parentRoot = root;
-						break;
-					}
-					current = current->GetParent();
-				}
-
-				if (parentRoot)
-				{
-					parentRoot->childItems.Add(this);
-				}
-			}
-
-			GuiSharedSizeItemComposition::GuiSharedSizeItemComposition()
-				:parentRoot(0)
-				, sharedWidth(false)
-				, sharedHeight(false)
-			{
-				SetMinSizeLimitation(GuiGraphicsComposition::LimitToElementAndChildren);
-			}
-
-			GuiSharedSizeItemComposition::~GuiSharedSizeItemComposition()
-			{
-			}
-
-			const WString& GuiSharedSizeItemComposition::GetGroup()
-			{
-				return group;
-			}
-
-			void GuiSharedSizeItemComposition::SetGroup(const WString& value)
-			{
-				if (group != value)
-				{
-					group = value;
-					Update();
-				}
-			}
-
-			bool GuiSharedSizeItemComposition::GetSharedWidth()
-			{
-				return sharedWidth;
-			}
-
-			void GuiSharedSizeItemComposition::SetSharedWidth(bool value)
-			{
-				if (sharedWidth != value)
-				{
-					sharedWidth = value;
-					Update();
-				}
-			}
-
-			bool GuiSharedSizeItemComposition::GetSharedHeight()
-			{
-				return sharedHeight;
-			}
-
-			void GuiSharedSizeItemComposition::SetSharedHeight(bool value)
-			{
-				if (sharedHeight != value)
-				{
-					sharedHeight = value;
-					Update();
-				}
-			}
-
-/***********************************************************************
-GuiSharedSizeRootComposition
-***********************************************************************/
-
-			GuiSharedSizeRootComposition::GuiSharedSizeRootComposition()
-			{
-			}
-
-			GuiSharedSizeRootComposition::~GuiSharedSizeRootComposition()
-			{
-			}
-
-			void AddSizeComponent(Dictionary<WString, vint>& sizes, const WString& group, vint sizeComponent)
-			{
-				vint index = sizes.Keys().IndexOf(group);
-				if (index == -1)
-				{
-					sizes.Add(group, sizeComponent);
-				}
-				else if (sizes.Values().Get(index) < sizeComponent)
-				{
-					sizes.Set(group, sizeComponent);
-				}
-			}
-
-			void GuiSharedSizeRootComposition::ForceCalculateSizeImmediately()
-			{
-				Dictionary<WString, vint> widths, heights;
-
-				FOREACH(GuiSharedSizeItemComposition*, item, childItems)
-				{
-					auto group = item->GetGroup();
-					auto minSize = item->GetPreferredMinSize();
-					item->SetPreferredMinSize(Size(0, 0));
-					auto size = item->GetPreferredBounds().GetSize();
-
-					if (item->GetSharedWidth())
-					{
-						AddSizeComponent(widths, group, size.x);
-					}
-					if (item->GetSharedHeight())
-					{
-						AddSizeComponent(heights, group, size.y);
-					}
-
-					item->SetPreferredMinSize(minSize);
-				}
-
-				FOREACH(GuiSharedSizeItemComposition*, item, childItems)
-				{
-					auto group = item->GetGroup();
-					auto size = item->GetPreferredMinSize();
-
-					if (item->GetSharedWidth())
-					{
-						size.x = widths[group];
-					}
-					if (item->GetSharedHeight())
-					{
-						size.y = heights[group];
-					}
-
-					item->SetPreferredMinSize(size);
-				}
-
-				GuiBoundsComposition::ForceCalculateSizeImmediately();
-			}
 
 /***********************************************************************
 GuiRepeatCompositionBase
@@ -264,28 +100,34 @@ GuiRepeatCompositionBase
 				}
 			}
 
-			GuiRepeatCompositionBase::ItemSourceType GuiRepeatCompositionBase::GetItemSource()
+			Ptr<IValueEnumerable> GuiRepeatCompositionBase::GetItemSource()
 			{
 				return itemSource;
 			}
 
-			void GuiRepeatCompositionBase::SetItemSource(ItemSourceType value)
+			void GuiRepeatCompositionBase::SetItemSource(Ptr<IValueEnumerable> value)
 			{
-				if (itemSource != value)
+				if (value != itemSource)
 				{
-					if (itemSource)
+					if (itemChangedHandler)
 					{
-						itemSource->ItemChanged.Remove(itemChangedHandler);
+						itemSource.Cast<IValueObservableList>()->ItemChanged.Remove(itemChangedHandler);
 					}
+
 					ClearItems();
-					itemSource = value;
+					itemSource = value.Cast<IValueList>();
+					if (!itemSource && value)
+					{
+						itemSource = IValueList::Create(GetLazyList<Value>(value));
+					}
+
 					if (itemTemplate && itemSource)
 					{
 						InstallItems();
 					}
-					if (itemSource)
+					if (auto observable = itemSource.Cast<IValueObservableList>())
 					{
-						itemChangedHandler = itemSource->ItemChanged.Add(this, &GuiRepeatCompositionBase::OnItemChanged);
+						itemChangedHandler = observable->ItemChanged.Add(this, &GuiRepeatCompositionBase::OnItemChanged);
 					}
 				}
 			}

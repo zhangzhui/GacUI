@@ -10,6 +10,7 @@ Interfaces:
 #define VCZH_PRESENTATION_CONTROLS_TEMPLATES_GUICONTROLTEMPLATES
 
 #include "GuiControlShared.h"
+#include "../../GraphicsElement/GuiGraphicsTextElement.h"
 
 namespace vl
 {
@@ -97,6 +98,14 @@ namespace vl
 			F(GuiTabTemplate,					GuiControlTemplate)			\
 			F(GuiDatePickerTemplate,			GuiControlTemplate)			\
 			F(GuiDateComboBoxTemplate,			GuiComboBoxTemplate)		\
+			F(GuiRibbonTabTemplate,				GuiTabTemplate)				\
+			F(GuiRibbonGroupTemplate,			GuiControlTemplate)			\
+			F(GuiRibbonIconLabelTemplate,		GuiControlTemplate)			\
+			F(GuiRibbonButtonsTemplate,			GuiControlTemplate)			\
+			F(GuiRibbonToolstripsTemplate,		GuiControlTemplate)			\
+			F(GuiRibbonToolstripMenuTemplate,	GuiMenuTemplate)			\
+			F(GuiRibbonGalleryTemplate,			GuiControlTemplate)			\
+			F(GuiRibbonGalleryListTemplate,		GuiRibbonGalleryTemplate)	\
 
 #define GUI_ITEM_TEMPLATE_DECL(F)\
 			F(GuiTextListItemTemplate,			GuiListItemTemplate)		\
@@ -121,9 +130,10 @@ GuiTemplate
 				~GuiTemplate();
 				
 #define GuiTemplate_PROPERTIES(F)\
-				F(GuiTemplate,	FontProperties,	Font,				{}	)\
-				F(GuiTemplate,	WString,		Text,				{}	)\
-				F(GuiTemplate,	bool,			VisuallyEnabled,	true)\
+				F(GuiTemplate,	FontProperties,		Font,				{}	)\
+				F(GuiTemplate,	description::Value,	Context,			{}	)\
+				F(GuiTemplate,	WString,			Text,				{}	)\
+				F(GuiTemplate,	bool,				VisuallyEnabled,	true)\
 
 				GuiTemplate_PROPERTIES(GUI_TEMPLATE_PROPERTY_DECL)
 			};
@@ -148,7 +158,7 @@ GuiListItemTemplate
 
 				GuiListItemTemplate_PROPERTIES(GUI_TEMPLATE_PROPERTY_DECL)
 
-					void						BeginEditListItem();
+				void						BeginEditListItem();
 				void						EndEditListItem();
 				void						Initialize(controls::GuiListControl* _listControl);
 			};
@@ -163,10 +173,11 @@ Control Template
 				AlwaysFalse,
 				Customizable,
 			};
-				
+
 #define GuiControlTemplate_PROPERTIES(F)\
 				F(GuiControlTemplate, compositions::GuiGraphicsComposition*, ContainerComposition, this)\
 				F(GuiControlTemplate, compositions::GuiGraphicsComposition*, FocusableComposition, nullptr)\
+				F(GuiControlTemplate, bool, Focused, false)\
 
 #define GuiLabelTemplate_PROPERTIES(F)\
 				F(GuiLabelTemplate, Color, DefaultTextColor, {})\
@@ -193,11 +204,13 @@ Control Template
 				F(GuiWindowTemplate, bool, SizeBox, true)\
 				F(GuiWindowTemplate, bool, IconVisible, true)\
 				F(GuiWindowTemplate, bool, TitleBar, true)\
-				F(GuiWindowTemplate, bool, CustomizedBorder, false)\
 				F(GuiWindowTemplate, bool, Maximized, false)\
+				F(GuiWindowTemplate, bool, Activated, false)\
 				F(GuiWindowTemplate, TemplateProperty<GuiWindowTemplate>, TooltipTemplate, {})\
 				F(GuiWindowTemplate, TemplateProperty<GuiLabelTemplate>, ShortcutKeyTemplate, {})\
 				F(GuiWindowTemplate, bool, CustomFrameEnabled, true)\
+				F(GuiWindowTemplate, Margin, CustomFramePadding, {})\
+				F(GuiWindowTemplate, Ptr<GuiImageData>, Icon, {})\
 
 #define GuiMenuTemplate_PROPERTIES(F)
 
@@ -212,6 +225,7 @@ Control Template
 				F(GuiToolstripButtonTemplate, bool, SubMenuExisting, false)\
 				F(GuiToolstripButtonTemplate, bool, SubMenuOpening, false)\
 				F(GuiToolstripButtonTemplate, controls::GuiButton*, SubMenuHost, nullptr)\
+				F(GuiToolstripButtonTemplate, Ptr<GuiImageData>, LargeImage, {})\
 				F(GuiToolstripButtonTemplate, Ptr<GuiImageData>, Image, {})\
 				F(GuiToolstripButtonTemplate, WString, ShortcutText, {})\
 
@@ -219,7 +233,6 @@ Control Template
 				F(GuiListViewColumnHeaderTemplate, controls::ColumnSortingState, SortingState, controls::ColumnSortingState::NotSorted)\
 
 #define GuiComboBoxTemplate_PROPERTIES(F)\
-				F(GuiComboBoxTemplate, controls::IComboBoxCommandExecutor*, Commands, nullptr)\
 				F(GuiComboBoxTemplate, bool, TextVisible, true)\
 
 #define GuiScrollTemplate_PROPERTIES(F)\
@@ -263,6 +276,7 @@ Control Template
 				F(GuiTabTemplate, controls::ITabCommandExecutor*, Commands, nullptr)\
 				F(GuiTabTemplate, Ptr<reflection::description::IValueObservableList>, TabPages, {})\
 				F(GuiTabTemplate, controls::GuiTabPage*, SelectedTabPage, nullptr)\
+				F(GuiTabTemplate, controls::TabPageOrder, TabOrder, controls::TabPageOrder::Unknown)\
 
 #define GuiDatePickerTemplate_PROPERTIES(F)\
 				F(GuiDatePickerTemplate, controls::IDatePickerCommandExecutor*, Commands, nullptr)\
@@ -271,14 +285,59 @@ Control Template
 
 #define GuiDateComboBoxTemplate_PROPERTIES(F)\
 				F(GuiDateComboBoxTemplate, TemplateProperty<GuiDatePickerTemplate>, DatePickerTemplate, {})\
-				
-#define GuiListItemTemplate_PROPERTIES(F)\
-				F(GuiListItemTemplate, bool, Selected, false)\
-				F(GuiListItemTemplate, vint, Index, 0)\
+
+#define GuiRibbonTabTemplate_PROPERTIES(F)\
+				F(GuiRibbonTabTemplate, compositions::GuiGraphicsComposition*, BeforeHeadersContainer, nullptr)\
+				F(GuiRibbonTabTemplate, compositions::GuiGraphicsComposition*, AfterHeadersContainer, nullptr)\
+
+#define GuiRibbonGroupTemplate_PROPERTIES(F)\
+				F(GuiRibbonGroupTemplate, controls::IRibbonGroupCommandExecutor*, Commands, nullptr)\
+				F(GuiRibbonGroupTemplate, bool, Expandable, false)\
+				F(GuiRibbonGroupTemplate, bool, Collapsed, false)\
+				F(GuiRibbonGroupTemplate, TemplateProperty<GuiToolstripButtonTemplate>, LargeDropdownButtonTemplate, {})\
+				F(GuiRibbonGroupTemplate, TemplateProperty<GuiMenuTemplate>, SubMenuTemplate, {})\
+
+#define GuiRibbonIconLabelTemplate_PROPERTIES(F)\
+				F(GuiRibbonIconLabelTemplate, Ptr<GuiImageData>, Image, {})\
+
+#define GuiRibbonButtonsTemplate_PROPERTIES(F)\
+				F(GuiRibbonButtonsTemplate, TemplateProperty<GuiToolstripButtonTemplate>, LargeButtonTemplate, {})\
+				F(GuiRibbonButtonsTemplate, TemplateProperty<GuiToolstripButtonTemplate>, LargeDropdownButtonTemplate, {})\
+				F(GuiRibbonButtonsTemplate, TemplateProperty<GuiToolstripButtonTemplate>, LargeSplitButtonTemplate, {})\
+				F(GuiRibbonButtonsTemplate, TemplateProperty<GuiToolstripButtonTemplate>, SmallButtonTemplate, {})\
+				F(GuiRibbonButtonsTemplate, TemplateProperty<GuiToolstripButtonTemplate>, SmallDropdownButtonTemplate, {})\
+				F(GuiRibbonButtonsTemplate, TemplateProperty<GuiToolstripButtonTemplate>, SmallSplitButtonTemplate, {})\
+				F(GuiRibbonButtonsTemplate, TemplateProperty<GuiToolstripButtonTemplate>, SmallIconLabelTemplate, {})\
+				F(GuiRibbonButtonsTemplate, TemplateProperty<GuiToolstripButtonTemplate>, IconButtonTemplate, {})\
+				F(GuiRibbonButtonsTemplate, TemplateProperty<GuiToolstripButtonTemplate>, IconDropdownButtonTemplate, {})\
+				F(GuiRibbonButtonsTemplate, TemplateProperty<GuiToolstripButtonTemplate>, IconSplitButtonTemplate, {})\
+				F(GuiRibbonButtonsTemplate, TemplateProperty<GuiToolstripButtonTemplate>, IconLabelTemplate, {})\
+
+#define GuiRibbonToolstripsTemplate_PROPERTIES(F)\
+				F(GuiRibbonToolstripsTemplate, TemplateProperty<GuiControlTemplate>, ToolbarTemplate, {})\
+
+#define GuiRibbonToolstripMenuTemplate_PROPERTIES(F)\
+				F(GuiRibbonToolstripMenuTemplate, compositions::GuiGraphicsComposition*, ContentComposition, nullptr)\
+
+#define GuiRibbonGalleryTemplate_PROPERTIES(F)\
+				F(GuiRibbonGalleryTemplate, controls::IRibbonGalleryCommandExecutor*, Commands, nullptr)\
+				F(GuiRibbonGalleryTemplate, bool, ScrollUpEnabled, true)\
+				F(GuiRibbonGalleryTemplate, bool, ScrollDownEnabled, true)\
+
+#define GuiRibbonGalleryListTemplate_PROPERTIES(F)\
+				F(GuiRibbonGalleryListTemplate, TemplateProperty<GuiTextListTemplate>, ItemListTemplate, {})\
+				F(GuiRibbonGalleryListTemplate, TemplateProperty<GuiRibbonToolstripMenuTemplate>, MenuTemplate, {})\
+				F(GuiRibbonGalleryListTemplate, TemplateProperty<GuiControlTemplate>, HeaderTemplate, {})\
+				F(GuiRibbonGalleryListTemplate, TemplateProperty<GuiSelectableButtonTemplate>, BackgroundTemplate, {})\
+				F(GuiRibbonGalleryListTemplate, TemplateProperty<GuiScrollViewTemplate>, GroupContainerTemplate, {})\
 
 /***********************************************************************
 Item Template
 ***********************************************************************/
+				
+#define GuiListItemTemplate_PROPERTIES(F)\
+				F(GuiListItemTemplate, bool, Selected, false)\
+				F(GuiListItemTemplate, vint, Index, 0)\
 
 #define GuiTextListItemTemplate_PROPERTIES(F)\
 				F(GuiTextListItemTemplate, Color, TextColor, {})\

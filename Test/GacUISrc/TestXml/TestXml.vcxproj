@@ -22,7 +22,7 @@
     <ProjectGuid>{DD912F54-3FEB-4D62-B7EE-632D29841A46}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>TestXml</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -89,6 +89,9 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions);VCZH_CHECK_MEMORY_LEAKS</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <DisableLanguageExtensions>false</DisableLanguageExtensions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -106,6 +109,9 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions);VCZH_CHECK_MEMORY_LEAKS</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <DisableLanguageExtensions>false</DisableLanguageExtensions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -123,8 +129,11 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions);VCZH_CHECK_MEMORY_LEAKS;VCZH_DEBUG_NO_REFLECTION</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions);VCZH_CHECK_MEMORY_LEAKS</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <DisableLanguageExtensions>false</DisableLanguageExtensions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -144,8 +153,11 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions);VCZH_CHECK_MEMORY_LEAKS;VCZH_DEBUG_NO_REFLECTION</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions);VCZH_CHECK_MEMORY_LEAKS</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <DisableLanguageExtensions>false</DisableLanguageExtensions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -158,10 +170,26 @@
     </ProjectReference>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\Host\CompositionDumper.cpp" />
     <ClCompile Include="..\Host\ResourceCompiler.cpp" />
     <ClCompile Include="..\TestCppCodegen\Source\DarkSkin.cpp" />
-    <ClCompile Include="..\TestCppCodegen\Source\DarkSkinReflection.cpp" />
+    <ClCompile Include="..\TestCppCodegen\Source\DarkSkinReflection.cpp">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">/bigobj %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">/bigobj %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">/bigobj %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">/bigobj %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
     <ClCompile Include="..\TestCppCodegen\Source\DarkSkinResource.cpp" />
+    <ClCompile Include="..\TestCppCodegen\Source\Demo.cpp" />
+    <ClCompile Include="..\TestCppCodegen\Source\DemoReflection.cpp">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">/bigobj %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">/bigobj %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">/bigobj %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">/bigobj %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\TestCppCodegen\Source\DemoResource.cpp" />
+    <ClCompile Include="..\TestCppCodegen\Source\DocumentEditorBase.cpp" />
+    <ClCompile Include="..\TestCppCodegen\Source\MainWindow.cpp" />
     <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -169,6 +197,13 @@
     <ClInclude Include="..\TestCppCodegen\Source\DarkSkin.h" />
     <ClInclude Include="..\TestCppCodegen\Source\DarkSkinIncludes.h" />
     <ClInclude Include="..\TestCppCodegen\Source\DarkSkinReflection.h" />
+    <ClInclude Include="..\TestCppCodegen\Source\Demo.h" />
+    <ClInclude Include="..\TestCppCodegen\Source\Demo1.h" />
+    <ClInclude Include="..\TestCppCodegen\Source\DemoIncludes.h" />
+    <ClInclude Include="..\TestCppCodegen\Source\DemoReflection.h" />
+    <ClInclude Include="..\TestCppCodegen\Source\DocumentEditorBase.h" />
+    <ClInclude Include="..\TestCppCodegen\Source\MainWindow.h" />
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <Xml Include="Resources\Resource.xml">
@@ -179,6 +214,9 @@
     <ProjectReference Include="..\GacUISrc\GacUISrc.vcxproj">
       <Project>{407401eb-c968-42b2-aee9-47aa1658e1ff}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Resource.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

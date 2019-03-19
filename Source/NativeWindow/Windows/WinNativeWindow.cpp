@@ -1,3 +1,4 @@
+#include "..\..\Resources\GuiResource.h"
 #include "WinNativeWindow.h"
 #include "ServicesImpl\WindowsResourceService.h"
 #include "ServicesImpl\WindowsClipboardService.h"
@@ -7,9 +8,11 @@
 #include "ServicesImpl\WindowsCallbackService.h"
 #include "ServicesImpl\WindowsInputService.h"
 #include "ServicesImpl\WindowsDialogService.h"
+#include <CommCtrl.h>
 
 #pragma comment(lib, "Imm32.lib")
 #pragma comment(lib, "Shlwapi.lib")
+#pragma comment(lib, "Comctl32.lib")
 
 namespace vl
 {
@@ -18,6 +21,20 @@ namespace vl
 		namespace windows
 		{
 			using namespace collections;
+
+			LPCWSTR defaultIconResourceName = nullptr;
+
+			HICON CreateWindowDefaultIcon(vint size = 0)
+			{
+				if (!defaultIconResourceName) return NULL;
+				return (HICON)LoadImage(GetModuleHandle(NULL), defaultIconResourceName, IMAGE_ICON, (int)size, (int)size, (size ? 0 : LR_DEFAULTSIZE) | LR_SHARED);
+			}
+
+			void SetWindowDefaultIcon(UINT resourceId)
+			{
+				CHECK_ERROR(defaultIconResourceName == nullptr, L"vl::presentation::windows::SetWindowDefaultIcon(UINT)#This function can only be called once.");
+				defaultIconResourceName = MAKEINTRESOURCE(resourceId);
+			}
 
 			HWND GetHWNDFromNativeWindowHandle(INativeWindow* window)
 			{
@@ -42,13 +59,17 @@ WindowsClass
 				WinClass(WString _name, bool shadow, bool ownDC, WNDPROC procedure, HINSTANCE hInstance)
 				{
 					name=_name;
+					ZeroMemory(&windowClass, sizeof(windowClass));
 					windowClass.cbSize=sizeof(windowClass);
 					windowClass.style=CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS | (shadow?CS_DROPSHADOW:0) | (ownDC?CS_OWNDC:0);
 					windowClass.lpfnWndProc=procedure;
 					windowClass.cbClsExtra=0;
 					windowClass.cbWndExtra=0;
 					windowClass.hInstance=hInstance;
-					windowClass.hIcon=LoadIcon(NULL,IDI_APPLICATION);
+					if (defaultIconResourceName)
+					{
+						windowClass.hIcon = CreateWindowDefaultIcon();
+					}
 					windowClass.hCursor=NULL;//LoadCursor(NULL,IDC_ARROW);
 					windowClass.hbrBackground=GetSysColorBrush(COLOR_BTNFACE);
 					windowClass.lpszMenuName=NULL;
@@ -89,7 +110,7 @@ WindowsForm
 				void InternalSetExStyle(LONG_PTR exStyle)
 				{
 					LONG_PTR result = SetWindowLongPtr(handle, GWL_EXSTYLE, exStyle);
-					SetWindowPos(handle, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_FRAMECHANGED);
+					SetWindowPos(handle, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
 				}
 
 				bool GetExStyle(LONG_PTR exStyle)
@@ -130,9 +151,12 @@ WindowsForm
 						Long &= ~style;
 					}
 					SetWindowLongPtr(handle, GWL_STYLE, Long);
-					SetWindowPos(handle, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_FRAMECHANGED);
+					SetWindowPos(handle, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
 				}
-
+#pragma push_macro("_CONTROL")
+#if defined _CONTROL
+#undef _CONTROL
+#endif
 				NativeWindowMouseInfo ConvertMouse(WPARAM wParam, LPARAM lParam, bool wheelMessage, bool nonClient)
 				{
 					NativeWindowMouseInfo info;
@@ -164,32 +188,32 @@ WindowsForm
 
 					if (nonClient)
 					{
-						info.ctrl = WinIsKeyPressing(VK_CONTROL);
-						info.shift = WinIsKeyPressing(VK_SHIFT);
-						info.left= WinIsKeyPressing(MK_LBUTTON);
-						info.middle= WinIsKeyPressing(MK_MBUTTON);
-						info.right = WinIsKeyPressing(MK_RBUTTON);
+						info.ctrl = WinIsKeyPressing(VKEY::_CONTROL);
+						info.shift = WinIsKeyPressing(VKEY::_SHIFT);
+						info.left= WinIsKeyPressing(VKEY::_LBUTTON);
+						info.middle= WinIsKeyPressing(VKEY::_MBUTTON);
+						info.right = WinIsKeyPressing(VKEY::_RBUTTON);
 						
 						POINTS point = MAKEPOINTS(lParam);
-						Point offset = GetClientBoundsInScreen().LeftTop();
-						info.x = point.x - offset.x;
-						info.y = point.y - offset.y;
+						NativePoint offset = GetClientBoundsInScreen().LeftTop();
+						info.x = point.x - offset.x.value;
+						info.y = point.y - offset.y.value;
 					}
 					else
 					{
-						info.ctrl=(wParam & MK_CONTROL)!=0;
-						info.shift=(wParam & MK_SHIFT)!=0;
-						info.left=(wParam & MK_LBUTTON)!=0;
-						info.middle=(wParam & MK_MBUTTON)!=0;
-						info.right=(wParam & MK_RBUTTON)!=0;
+						info.ctrl=((VKEY)wParam & VKEY::_CONTROL)!=(VKEY)0;
+						info.shift=((VKEY)wParam & VKEY::_SHIFT)!= (VKEY)0;
+						info.left=((VKEY)wParam & VKEY::_LBUTTON)!= (VKEY)0;
+						info.middle=((VKEY)wParam & VKEY::_MBUTTON)!= (VKEY)0;
+						info.right=((VKEY)wParam & VKEY::_RBUTTON)!= (VKEY)0;
 
 						POINTS point = MAKEPOINTS(lParam);
 
 						if (wheelMessage)
 						{
-							Point offset = GetClientBoundsInScreen().LeftTop();
-							info.x = point.x - offset.x;
-							info.y = point.y - offset.y;
+							NativePoint offset = GetClientBoundsInScreen().LeftTop();
+							info.x = point.x - offset.x.value;
+							info.y = point.y - offset.y.value;
 						}
 						else
 						{
@@ -203,11 +227,12 @@ WindowsForm
 				NativeWindowKeyInfo ConvertKey(WPARAM wParam, LPARAM lParam)
 				{
 					NativeWindowKeyInfo info;
-					info.code=wParam;
-					info.ctrl=WinIsKeyPressing(VK_CONTROL);
-					info.shift=WinIsKeyPressing(VK_SHIFT);
-					info.alt=WinIsKeyPressing(VK_MENU);
-					info.capslock=WinIsKeyToggled(VK_CAPITAL);
+					info.code=(VKEY)wParam;
+					info.ctrl=WinIsKeyPressing(VKEY::_CONTROL);
+					info.shift=WinIsKeyPressing(VKEY::_SHIFT);
+					info.alt=WinIsKeyPressing(VKEY::_MENU);
+					info.capslock=WinIsKeyToggled(VKEY::_CAPITAL);
+					info.autoRepeatKeyDown = (((vuint32_t)lParam) >> 30) % 2 == 1;
 					return info;
 				}
 
@@ -215,12 +240,13 @@ WindowsForm
 				{
 					NativeWindowCharInfo info;
 					info.code=(wchar_t)wParam;
-					info.ctrl=WinIsKeyPressing(VK_CONTROL);
-					info.shift=WinIsKeyPressing(VK_SHIFT);
-					info.alt=WinIsKeyPressing(VK_MENU);
-					info.capslock=WinIsKeyToggled(VK_CAPITAL);
+					info.ctrl=WinIsKeyPressing(VKEY::_CONTROL);
+					info.shift=WinIsKeyPressing(VKEY::_SHIFT);
+					info.alt=WinIsKeyPressing(VKEY::_MENU);
+					info.capslock=WinIsKeyToggled(VKEY::_CAPITAL);
 					return info;
 				}
+#pragma pop_macro("_CONTROL")
 
 				void TrackMouse(bool enable)
 				{
@@ -237,8 +263,8 @@ WindowsForm
 					HIMC imc = ImmGetContext(handle);
 					COMPOSITIONFORM cf;
 					cf.dwStyle = CFS_POINT;
-					cf.ptCurrentPos.x = (int)caretPoint.x;
-					cf.ptCurrentPos.y = (int)caretPoint.y;
+					cf.ptCurrentPos.x = (int)caretPoint.x.value;
+					cf.ptCurrentPos.y = (int)caretPoint.y.value;
 					ImmSetCompositionWindow(imc, &cf);
 					ImmReleaseContext(handle, imc);
 				}
@@ -267,20 +293,20 @@ WindowsForm
 					case WM_MOVING:case WM_SIZING:
 						{
 							LPRECT rawBounds=(LPRECT)lParam;
-							Rect bounds(rawBounds->left, rawBounds->top, rawBounds->right, rawBounds->bottom);
+							NativeRect bounds(rawBounds->left, rawBounds->top, rawBounds->right, rawBounds->bottom);
 							for(vint i=0;i<listeners.Count();i++)
 							{
 								listeners[i]->Moving(bounds, false);
 							}
-							if(		rawBounds->left!=bounds.Left()
-								||	rawBounds->top!=bounds.Top()
-								||	rawBounds->right!=bounds.Right()
-								||	rawBounds->bottom!=bounds.Bottom())
+							if(		rawBounds->left!=bounds.Left().value
+								||	rawBounds->top!=bounds.Top().value
+								||	rawBounds->right!=bounds.Right().value
+								||	rawBounds->bottom!=bounds.Bottom().value)
 							{
-								rawBounds->left=(int)bounds.Left();
-								rawBounds->top=(int)bounds.Top();
-								rawBounds->right=(int)bounds.Right();
-								rawBounds->bottom=(int)bounds.Bottom();
+								rawBounds->left=(int)bounds.Left().value;
+								rawBounds->top=(int)bounds.Top().value;
+								rawBounds->right=(int)bounds.Right().value;
+								rawBounds->bottom=(int)bounds.Bottom().value;
 								result=TRUE;
 							}
 						}
@@ -290,6 +316,19 @@ WindowsForm
 							for(vint i=0;i<listeners.Count();i++)
 							{
 								listeners[i]->Moved();
+							}
+						}
+						break;
+					case WM_DPICHANGED:
+						{
+							dpiX = LOWORD(wParam);
+							dpiY = HIWORD(wParam);
+							UpdateDpiAwaredFields(false);
+							auto newRect = (RECT*)lParam;
+							MoveWindow(handle, newRect->left, newRect->top, (newRect->right - newRect->left), (newRect->bottom - newRect->top), FALSE);
+							for (vint i = 0; i < listeners.Count(); i++)
+							{
+								listeners[i]->DpiChanged();
 							}
 						}
 						break;
@@ -341,17 +380,18 @@ WindowsForm
 						}
 						break;
 					case WM_SHOWWINDOW:
+						if (lParam == 0)
 						{
-							if(wParam==TRUE)
+							if (wParam == TRUE)
 							{
-								for(vint i=0;i<listeners.Count();i++)
+								for (vint i = 0; i < listeners.Count(); i++)
 								{
 									listeners[i]->Opened();
 								}
 							}
 							else
 							{
-								for(vint i=0;i<listeners.Count();i++)
+								for (vint i = 0; i < listeners.Count(); i++)
 								{
 									listeners[i]->Closed();
 								}
@@ -545,6 +585,7 @@ WindowsForm
 					case WM_KEYUP:
 						{
 							NativeWindowKeyInfo info=ConvertKey(wParam, lParam);
+							info.autoRepeatKeyDown = false;
 							for(vint i=0;i<listeners.Count();i++)
 							{
 								listeners[i]->KeyUp(info);
@@ -563,7 +604,8 @@ WindowsForm
 					case WM_SYSKEYUP:
 						{
 							NativeWindowKeyInfo info=ConvertKey(wParam, lParam);
-							if (supressingAlt && !info.ctrl && !info.shift && info.code == VK_MENU)
+							info.autoRepeatKeyDown = false;
+							if (supressingAlt && !info.ctrl && !info.shift && info.code == VKEY::_MENU)
 							{
 								supressingAlt = false;
 								break;
@@ -577,7 +619,7 @@ WindowsForm
 					case WM_SYSKEYDOWN:
 						{
 							NativeWindowKeyInfo info=ConvertKey(wParam, lParam);
-							if (supressingAlt && !info.ctrl && !info.shift && info.code == VK_MENU)
+							if (supressingAlt && !info.ctrl && !info.shift && info.code == VKEY::_MENU)
 							{
 								break;
 							}
@@ -632,12 +674,12 @@ WindowsForm
 					case WM_NCHITTEST:
 						{
 							POINTS location=MAKEPOINTS(lParam);
-							Point windowLocation=GetBounds().LeftTop();
-							location.x-=(SHORT)windowLocation.x;
-							location.y-=(SHORT)windowLocation.y;
+							NativePoint windowLocation=GetBounds().LeftTop();
+							location.x-=(SHORT)windowLocation.x.value;
+							location.y-=(SHORT)windowLocation.y.value;
 							for(vint i=0;i<listeners.Count();i++)
 							{
-								switch(listeners[i]->HitTest(Point(location.x, location.y)))
+								switch(listeners[i]->HitTest(NativePoint(location.x, location.y)))
 								{
 								case INativeWindowListener::BorderNoSizing:
 									result=HTBORDER;
@@ -762,7 +804,7 @@ WindowsForm
 								POINTS location = MAKEPOINTS(lParam);
 								for(vint i=0;i<listeners.Count();i++)
 								{
-									switch(listeners[i]->HitTest(Point(location.x, location.y)))
+									switch(listeners[i]->HitTest(NativePoint(location.x, location.y)))
 									{
 									case INativeWindowListener::ButtonMinimum:
 										ShowMinimized();
@@ -778,7 +820,7 @@ WindowsForm
 										}
 										return false;
 									case INativeWindowListener::ButtonClose:
-										Hide();
+										Hide(true);
 										return false;
 									}
 								}
@@ -791,44 +833,54 @@ WindowsForm
 			protected:
 				HWND								handle;
 				WString								title;
-				WindowsCursor*						cursor;
-				Point								caretPoint;
-				WindowsForm*						parentWindow;
-				bool								alwaysPassFocusToParent;
+				WindowsCursor*						cursor = nullptr;
+				NativePoint							caretPoint;
+				WindowsForm*						parentWindow = nullptr;
+				bool								alwaysPassFocusToParent = false;
 				List<INativeWindowListener*>		listeners;
-				vint								mouseLastX;
-				vint								mouseLastY;
-				vint								mouseHoving;
-				Interface*							graphicsHandler;
-				bool								customFrameMode;
+				vint								mouseLastX = -1;
+				vint								mouseLastY = -1;
+				bool								mouseHoving = false;
+				Interface*							graphicsHandler = nullptr;
+				bool								customFrameMode = false;
 				List<Ptr<INativeMessageHandler>>	messageHandlers;
-				bool								supressingAlt;
+				bool								supressingAlt = false;
+				Ptr<bool>							flagDisposed = new bool(false);
+				NativeMargin						customFramePadding;
+				Ptr<GuiImageData>					defaultIcon;
+				Ptr<GuiImageData>					replacementIcon;
+				HICON								replacementHIcon = NULL;
+				UINT								dpiX = 0;
+				UINT								dpiY = 0;
 
+				void UpdateDpiAwaredFields(bool refreshDpiXY)
+				{
+					if (refreshDpiXY)
+					{
+						DpiAwared_GetDpiForWindow(handle, &dpiX, &dpiY);
+					}
+					auto padding = (vint)(DpiAwared_GetSystemMetrics(SM_CXSIZEFRAME, dpiX) + DpiAwared_GetSystemMetrics(SM_CXPADDEDBORDER, dpiX));
+					customFramePadding = NativeMargin(padding, padding, padding, padding);
+				}
 			public:
 				WindowsForm(HWND parent, WString className, HINSTANCE hInstance)
-					:cursor(0)
-					,parentWindow(0)
-					,alwaysPassFocusToParent(false)
-					,mouseLastX(-1)
-					,mouseLastY(-1)
-					,mouseHoving(false)
-					,graphicsHandler(0)
-					,customFrameMode(false)
-					,supressingAlt(false)
 				{
 					DWORD exStyle = WS_EX_APPWINDOW | WS_EX_CONTROLPARENT;
 					DWORD style = WS_BORDER | WS_CAPTION | WS_SIZEBOX | WS_SYSMENU | WS_POPUP | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_MAXIMIZEBOX | WS_MINIMIZEBOX;
-					handle=CreateWindowEx(exStyle, className.Buffer(), L"", style, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, parent, NULL, hInstance, NULL);
+					handle = CreateWindowEx(exStyle, className.Buffer(), L"", style, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, parent, NULL, hInstance, NULL);
+
+					UpdateDpiAwaredFields(true);
 				}
 
 				~WindowsForm()
 				{
+					*flagDisposed.Obj() = true;
 					List<INativeWindowListener*> copiedListeners;
 					CopyFrom(copiedListeners, listeners);
-					for(vint i=0;i<copiedListeners.Count();i++)
+					for (vint i = 0; i < copiedListeners.Count(); i++)
 					{
-						INativeWindowListener* listener=copiedListeners[i];
-						if(listeners.Contains(listener))
+						INativeWindowListener* listener = copiedListeners[i];
+						if (listeners.Contains(listener))
 						{
 							listener->Destroyed();
 						}
@@ -846,11 +898,14 @@ WindowsForm
 
 				bool HandleMessage(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT& result)
 				{
+#define CHECK_DISPOSED if (*flag.Obj()) return skip
+					auto flag = flagDisposed;
 					bool skip = false;
 					{
 						FOREACH(Ptr<INativeMessageHandler>, handler, messageHandlers)
 						{
 							handler->BeforeHandle(hwnd, uMsg, wParam, lParam, skip);
+							CHECK_DISPOSED;
 						}
 						if (skip)
 						{
@@ -858,14 +913,17 @@ WindowsForm
 						}
 					}
 					skip = HandleMessageInternal(hwnd, uMsg, wParam, lParam, result);
+					CHECK_DISPOSED;
 					if (GetWindowsFormFromHandle(hwnd))
 					{
 						FOREACH(Ptr<INativeMessageHandler>, handler, messageHandlers)
 						{
 							handler->AfterHandle(hwnd, uMsg, wParam, lParam, skip, result);
+							CHECK_DISPOSED;
 						}
 					}
 					return skip;
+#undef CHECK_DISPOSED
 				}
 
 				HWND GetWindowHandle()override
@@ -901,38 +959,78 @@ WindowsForm
 					return true;
 				}
 
-				Rect GetBounds()
+				Point Convert(NativePoint value)override
+				{
+					return Point((vint)value.x.value * 96 / dpiX, (vint)value.y.value * 96 / dpiY);
+				}
+
+				NativePoint Convert(Point value)override
+				{
+					return NativePoint(value.x * dpiX / 96, value.y * dpiY / 96);
+				}
+
+				Size Convert(NativeSize value)override
+				{
+					return Size((vint)value.x.value * 96 / dpiX, (vint)value.y.value * 96 / dpiY);
+				}
+
+				NativeSize Convert(Size value)override
+				{
+					return NativeSize(value.x * dpiX / 96, value.y * dpiY / 96);
+				}
+
+				Margin Convert(NativeMargin value)override
+				{
+					return Margin(
+						(vint)value.left.value * 96 / dpiX,
+						(vint)value.top.value * 96 / dpiY,
+						(vint)value.right.value * 96 / dpiX,
+						(vint)value.bottom.value * 96 / dpiY
+					);
+				}
+
+				NativeMargin Convert(Margin value)override
+				{
+					return NativeMargin(
+						(vint)value.left * dpiX / 96,
+						(vint)value.top * dpiY / 96,
+						(vint)value.right * dpiX / 96,
+						(vint)value.bottom * dpiY / 96
+					);
+				}
+
+				NativeRect GetBounds()override
 				{
 					RECT rect;
 					GetWindowRect(handle, &rect);
-					return Rect(rect.left, rect.top, rect.right, rect.bottom);
+					return NativeRect(rect.left, rect.top, rect.right, rect.bottom);
 				}
 
-				void SetBounds(const Rect& bounds)
+				void SetBounds(const NativeRect& bounds)override
 				{
-					Rect newBounds=bounds;
+					NativeRect newBounds=bounds;
 					for(vint i=0;i<listeners.Count();i++)
 					{
 						listeners[i]->Moving(newBounds, true);
 					}
-					MoveWindow(handle, (int)newBounds.Left(), (int)newBounds.Top(), (int)newBounds.Width(), (int)newBounds.Height(), FALSE);
+					MoveWindow(handle, (int)newBounds.Left().value, (int)newBounds.Top().value, (int)newBounds.Width().value, (int)newBounds.Height().value, FALSE);
 				}
 
-				Size GetClientSize()
+				NativeSize GetClientSize()override
 				{
 					return GetClientBoundsInScreen().GetSize();
 				}
 
-				void SetClientSize(Size size)
+				void SetClientSize(NativeSize size)override
 				{
-					RECT required={0,0,(int)size.x,(int)size.y};
+					RECT required={0,0,(int)size.x.value,(int)size.y.value };
 					RECT bounds;
 					GetWindowRect(handle, &bounds);
-					AdjustWindowRect(&required, (DWORD)GetWindowLongPtr(handle, GWL_STYLE), FALSE);
-					SetBounds(Rect(Point(bounds.left, bounds.top), Size(required.right-required.left, required.bottom-required.top)));
+					DpiAwared_AdjustWindowRect(&required, handle, dpiX);
+					SetBounds(NativeRect(NativePoint(bounds.left, bounds.top), NativeSize(required.right-required.left, required.bottom-required.top)));
 				}
 
-				Rect GetClientBoundsInScreen()
+				NativeRect GetClientBoundsInScreen()override
 				{
 					if(customFrameMode)
 					{
@@ -943,13 +1041,13 @@ WindowsForm
 						RECT required={0,0,0,0};
 						RECT bounds;
 						GetWindowRect(handle, &bounds);
-						AdjustWindowRect(&required, (DWORD)GetWindowLongPtr(handle, GWL_STYLE), FALSE);
-						return Rect(
-							Point(
+						DpiAwared_AdjustWindowRect(&required, handle, dpiX);
+						return NativeRect(
+							NativePoint(
 								(bounds.left-required.left),
 								(bounds.top-required.top)
 								),
-							Size(
+							NativeSize(
 								(bounds.right-bounds.left)-(required.right-required.left),
 								(bounds.bottom-bounds.top)-(required.bottom-required.top)
 								)
@@ -957,23 +1055,23 @@ WindowsForm
 					}
 				}
 
-				WString GetTitle()
+				WString GetTitle()override
 				{
 					return title;
 				}
 
-				void SetTitle(WString _title)
+				void SetTitle(WString _title)override
 				{
 					title=_title;
 					SetWindowText(handle, title.Buffer());
 				}
 
-				INativeCursor* GetWindowCursor()
+				INativeCursor* GetWindowCursor()override
 				{
 					return cursor;
 				}
 
-				void SetWindowCursor(INativeCursor* _cursor)
+				void SetWindowCursor(INativeCursor* _cursor)override
 				{
 					WindowsCursor* newCursor=dynamic_cast<WindowsCursor*>(_cursor);
 					if(newCursor && cursor!=newCursor)
@@ -986,23 +1084,23 @@ WindowsForm
 					}
 				}
 				
-				Point GetCaretPoint()
+				NativePoint GetCaretPoint()override
 				{
 					return caretPoint;
 				}
 
-				void SetCaretPoint(Point point)
+				void SetCaretPoint(NativePoint point)override
 				{
 					caretPoint=point;
 					UpdateCompositionForContent();
 				}
 
-				INativeWindow* GetParent()
+				INativeWindow* GetParent()override
 				{
 					return parentWindow;
 				}
 
-				void SetParent(INativeWindow* parent)
+				void SetParent(INativeWindow* parent)override
 				{
 					parentWindow=dynamic_cast<WindowsForm*>(parent);
 					if(parentWindow)
@@ -1015,32 +1113,226 @@ WindowsForm
 					}
 				}
 
-				bool GetAlwaysPassFocusToParent()
+				bool GetAlwaysPassFocusToParent()override
 				{
 					return alwaysPassFocusToParent;
 				}
 
-				void SetAlwaysPassFocusToParent(bool value)
+				void SetAlwaysPassFocusToParent(bool value)override
 				{
 					alwaysPassFocusToParent=value;
 				}
 
-				void EnableCustomFrameMode()
+				void EnableCustomFrameMode()override
 				{
 					customFrameMode=true;
 				}
 
-				void DisableCustomFrameMode()
+				void DisableCustomFrameMode()override
 				{
 					customFrameMode=false;
 				}
 
-				bool IsCustomFrameModeEnabled()
+				bool IsCustomFrameModeEnabled()override
 				{
 					return customFrameMode;
 				}
 
-				WindowSizeState GetSizeState()
+				NativeMargin GetCustomFramePadding()override
+				{
+					if (GetSizeBox() || GetTitleBar())
+					{
+						return customFramePadding;
+					}
+					else
+					{
+						return NativeMargin(0, 0, 0, 0);
+					}
+				}
+
+				Ptr<GuiImageData> GetIcon()override
+				{
+					if (replacementIcon && replacementIcon->GetImage())
+					{
+						return replacementIcon;
+					}
+					else
+					{
+						if (!defaultIcon)
+						{
+							auto icon = CreateWindowDefaultIcon(16);
+							if (icon == NULL)
+							{
+								icon = (HICON)LoadImage(NULL, IDI_APPLICATION, IMAGE_ICON, 16, 16, LR_SHARED);
+							}
+							if (icon != NULL)
+							{
+								defaultIcon = new GuiImageData(CreateImageFromHICON(icon), 0);
+							}
+						}
+						return defaultIcon;
+					}
+				}
+
+				static double GetSizeScore(vint size)
+				{
+					if (size > 32)
+					{
+						return 32.0 / size;
+					}
+					else if (size < 32)
+					{
+						return size / 32.0 - 1;
+					}
+					else
+					{
+						return 1.0;
+					}
+				}
+
+				static vint GetBppFromFormat(const WICPixelFormatGUID& format)
+				{
+					if (format == GUID_WICPixelFormat1bppIndexed)	return 1;
+					if (format == GUID_WICPixelFormat2bppIndexed)	return 2;
+					if (format == GUID_WICPixelFormat4bppIndexed)	return 4;
+					if (format == GUID_WICPixelFormat8bppIndexed)	return 8;
+					if (format == GUID_WICPixelFormatBlackWhite)	return 1;
+					if (format == GUID_WICPixelFormat2bppGray)		return 2;
+					if (format == GUID_WICPixelFormat4bppGray)		return 4;
+					if (format == GUID_WICPixelFormat8bppGray)		return 8;
+					if (format == GUID_WICPixelFormat8bppAlpha)		return 8;
+					if (format == GUID_WICPixelFormat16bppBGR555)	return 16;
+					if (format == GUID_WICPixelFormat16bppBGR565)	return 16;
+					if (format == GUID_WICPixelFormat16bppBGRA5551)	return 16;
+					if (format == GUID_WICPixelFormat16bppGray)		return 16;
+					if (format == GUID_WICPixelFormat24bppBGR)		return 24;
+					if (format == GUID_WICPixelFormat24bppRGB)		return 24;
+					if (format == GUID_WICPixelFormat32bppBGR)		return 32;
+					if (format == GUID_WICPixelFormat32bppBGRA)		return 32;
+					if (format == GUID_WICPixelFormat32bppPBGRA)	return 32;
+					return -1;
+				}
+
+				void SetIcon(Ptr<GuiImageData> icon)override
+				{
+					replacementIcon = icon;
+					HICON newReplacementHIcon = NULL;
+					if (replacementIcon && replacementIcon->GetImage())
+					{
+						stream::MemoryStream memoryStream;
+
+						replacementIcon->GetImage()->SaveToStream(memoryStream, INativeImage::Icon);
+						if (memoryStream.Size() > 0)
+						{
+							newReplacementHIcon = CreateIconFromResource((PBYTE)memoryStream.GetInternalBuffer(), (DWORD)memoryStream.Size(), TRUE, 0x00030000);
+							if (newReplacementHIcon != NULL)
+							{
+								goto SKIP;
+							}
+						}
+
+						INativeImageFrame* selectedFrame = nullptr;
+						for (vint i = 0; i < replacementIcon->GetImage()->GetFrameCount(); i++)
+						{
+							auto frame = replacementIcon->GetImage()->GetFrame(i);
+							auto size = frame->GetSize();
+							if (size.x == size.y)
+							{
+								auto bitmap = GetWICBitmap(frame);
+								WICPixelFormatGUID format;
+								HRESULT hr = bitmap->GetPixelFormat(&format);
+								if (hr != S_OK) continue;
+
+								if (!selectedFrame)
+								{
+									selectedFrame = frame;
+								}
+								else
+								{
+									auto score = GetSizeScore(size.x);
+									auto scoreSelected = GetSizeScore(selectedFrame->GetSize().x);
+									if (score > scoreSelected)
+									{
+										selectedFrame = frame;
+									}
+									else if (score == scoreSelected)
+									{
+										WICPixelFormatGUID selectedFormat;
+										auto selectedBitmap = GetWICBitmap(selectedFrame);
+										hr = selectedBitmap->GetPixelFormat(&selectedFormat);
+
+										auto bpp = GetBppFromFormat(format);
+										auto bppSelected = GetBppFromFormat(selectedFormat);
+										if (bpp > bppSelected)
+										{
+											selectedFrame = frame;
+										}
+									}
+								}
+							}
+						}
+
+						if (selectedFrame)
+						{
+							bool succeeded = false;
+							WindowsBitmapImage newBitmap(replacementIcon->GetImage()->GetImageService(), GetWICBitmap(selectedFrame), replacementIcon->GetImage()->GetFormat());
+							newBitmap.SaveToStream(memoryStream, INativeImage::Bmp);
+							if (memoryStream.Size() > 0)
+							{
+								auto pBuffer = (char*)memoryStream.GetInternalBuffer();
+								tagBITMAPFILEHEADER bfh = *(tagBITMAPFILEHEADER*)pBuffer;
+								tagBITMAPINFOHEADER bih = *(tagBITMAPINFOHEADER*)(pBuffer + sizeof(tagBITMAPFILEHEADER));
+								RGBQUAD rgb = *(RGBQUAD*)(pBuffer + sizeof(tagBITMAPFILEHEADER) + sizeof(tagBITMAPINFOHEADER));
+
+								BITMAPINFO bi;
+								bi.bmiColors[0] = rgb;
+								bi.bmiHeader = bih;
+
+								char* pPixels = (pBuffer + bfh.bfOffBits);
+								char* ppvBits;
+								auto hBitmap = CreateDIBSection(NULL, &bi, DIB_RGB_COLORS, (void**)&ppvBits, NULL, 0);
+								if (hBitmap != NULL)
+								{
+									SetDIBits(NULL, hBitmap, 0, bih.biHeight, pPixels, &bi, DIB_RGB_COLORS);
+									auto himl = ImageList_Create(32, 32, ILC_COLOR32, 1, 1);
+									if (himl != NULL)
+									{
+										int addResult = ImageList_Add(himl, hBitmap, NULL);
+										newReplacementHIcon = ImageList_GetIcon(himl, 0, ILD_NORMAL);
+										ImageList_Destroy(himl);
+									}
+									DeleteObject(hBitmap);
+								}
+							}
+						}
+					}
+
+				SKIP:
+					{
+						HICON hAppIcon = newReplacementHIcon;
+						if (hAppIcon == NULL) hAppIcon = CreateWindowDefaultIcon();
+						if (hAppIcon == NULL) hAppIcon = (HICON)LoadImage(NULL, IDI_APPLICATION, IMAGE_ICON, 0, 0, LR_DEFAULTSIZE | LR_SHARED);
+						bool isVisible = IsVisible();
+						if (isVisible) SendMessage(handle, WM_SETREDRAW, (WPARAM)FALSE, NULL);
+						SendMessage(handle, WM_SETICON, ICON_BIG, (LPARAM)newReplacementHIcon);
+						SendMessage(handle, WM_SETICON, ICON_SMALL, (LPARAM)newReplacementHIcon);
+						if (isVisible) SendMessage(handle, WM_SETREDRAW, (WPARAM)TRUE, NULL);
+
+						if (this == GetCurrentController()->WindowService()->GetMainWindow())
+						{
+							SendMessage(GetWindow(handle, GW_OWNER), WM_SETICON, ICON_BIG, (LPARAM)hAppIcon);
+							SendMessage(GetWindow(handle, GW_OWNER), WM_SETICON, ICON_SMALL, (LPARAM)hAppIcon);
+						}
+					}
+
+					if (replacementHIcon != NULL)
+					{
+						DestroyIcon(replacementHIcon);
+					}
+					replacementHIcon = newReplacementHIcon;
+				}
+
+				WindowSizeState GetSizeState()override
 				{
 					if(IsIconic(handle))
 					{
@@ -1056,195 +1348,202 @@ WindowsForm
 					}
 				}
 
-				void Show()
+				void Show()override
 				{
 					ShowWindow(handle, SW_SHOWNORMAL);
 				}
 
-				void ShowDeactivated()
+				void ShowDeactivated()override
 				{
 					ShowWindow(handle, SW_SHOWNOACTIVATE);
 					SetWindowPos(handle,HWND_TOP,0,0,0,0,SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE);
 				}
 
-				void ShowRestored()
+				void ShowRestored()override
 				{
 					ShowWindow(handle, SW_RESTORE);
 				}
 
-				void ShowMaximized()
+				void ShowMaximized()override
 				{
 					ShowWindow(handle, SW_SHOWMAXIMIZED);
 				}
 
-				void ShowMinimized()
+				void ShowMinimized()override
 				{
 					ShowWindow(handle, SW_SHOWMINIMIZED);
 				}
 
-				void Hide()
+				void Hide(bool closeWindow)override
 				{
-					SendMessage(handle, WM_CLOSE, NULL, NULL);
+					if (closeWindow)
+					{
+						PostMessage(handle, WM_CLOSE, NULL, NULL);
+					}
+					else
+					{
+						ShowWindow(handle, SW_HIDE);
+					}
 				}
 
-				bool IsVisible()
+				bool IsVisible()override
 				{
 					return IsWindowVisible(handle)!=0;
 				}
 
-				void Enable()
+				void Enable()override
 				{
 					EnableWindow(handle, TRUE);
 				}
 
-				void Disable()
+				void Disable()override
 				{
 					EnableWindow(handle, FALSE);
 				}
 
-				bool IsEnabled()
+				bool IsEnabled()override
 				{
 					return IsWindowEnabled(handle)!=0;
 				}
 
-				void SetFocus()
+				void SetFocus()override
 				{
 					::SetFocus(handle);
 				}
 
-				bool IsFocused()
+				bool IsFocused()override
 				{
 					return GetFocus()==handle;
 				}
 
-				void SetActivate()
+				void SetActivate()override
 				{
 					SetActiveWindow(handle);
 				}
 
-				bool IsActivated()
+				bool IsActivated()override
 				{
 					return GetActiveWindow()==handle;
 				}
 
-				void ShowInTaskBar()
+				void ShowInTaskBar()override
 				{
 					SetExStyle(WS_EX_APPWINDOW, true);
 				}
 
-				void HideInTaskBar()
+				void HideInTaskBar()override
 				{
 					SetExStyle(WS_EX_APPWINDOW, false);
 				}
 
-				bool IsAppearedInTaskBar()
+				bool IsAppearedInTaskBar()override
 				{
 					return GetExStyle(WS_EX_APPWINDOW);
 				}
 
-				void EnableActivate()
+				void EnableActivate()override
 				{
 					SetExStyle(WS_EX_NOACTIVATE, false);
 				}
 
-				void DisableActivate()
+				void DisableActivate()override
 				{
 					SetExStyle(WS_EX_NOACTIVATE, true);
 				}
 
-				bool IsEnabledActivate()
+				bool IsEnabledActivate()override
 				{
 					return !GetExStyle(WS_EX_NOACTIVATE);
 				}
 
-				bool RequireCapture()
+				bool RequireCapture()override
 				{
 					SetCapture(handle);
 					return true;
 				}
 
-				bool ReleaseCapture()
+				bool ReleaseCapture()override
 				{
 					::ReleaseCapture();
 					return true;
 				}
 
-				bool IsCapturing()
+				bool IsCapturing()override
 				{
 					return GetCapture()==handle;
 				}
 
-				bool GetMaximizedBox()
+				bool GetMaximizedBox()override
 				{
 					return GetStyle(WS_MAXIMIZEBOX);
 				}
 
-				void SetMaximizedBox(bool visible)
+				void SetMaximizedBox(bool visible)override
 				{
 					SetStyle(WS_MAXIMIZEBOX, visible);
 				}
 
-				bool GetMinimizedBox()
+				bool GetMinimizedBox()override
 				{
 					return GetStyle(WS_MINIMIZEBOX);
 				}
 
-				void SetMinimizedBox(bool visible)
+				void SetMinimizedBox(bool visible)override
 				{
 					SetStyle(WS_MINIMIZEBOX, visible);
 				}
 
-				bool GetBorder()
+				bool GetBorder()override
 				{
 					return GetStyle(WS_BORDER);
 				}
 
-				void SetBorder(bool visible)
+				void SetBorder(bool visible)override
 				{
 					SetStyle(WS_BORDER, visible);
 				}
 
-				bool GetSizeBox()
+				bool GetSizeBox()override
 				{
 					return GetStyle(WS_SIZEBOX);
 				}
 
-				void SetSizeBox(bool visible)
+				void SetSizeBox(bool visible)override
 				{
 					SetStyle(WS_SIZEBOX, visible);
 				}
 
-				bool GetIconVisible()
+				bool GetIconVisible()override
 				{
 					return GetStyle(WS_SYSMENU);
 				}
 
-				void SetIconVisible(bool visible)
+				void SetIconVisible(bool visible)override
 				{
 					SetStyle(WS_SYSMENU, visible);
 				}
 
-				bool GetTitleBar()
+				bool GetTitleBar()override
 				{
 					return GetStyle(WS_CAPTION);
 				}
 
-				void SetTitleBar(bool visible)
+				void SetTitleBar(bool visible)override
 				{
 					SetStyle(WS_CAPTION, visible);
 				}
 
-				bool GetTopMost()
+				bool GetTopMost()override
 				{
 					return GetExStyle(WS_EX_TOPMOST);
 				}
 
-				void SetTopMost(bool topmost)
+				void SetTopMost(bool topmost)override
 				{
 					SetWindowPos(handle, (topmost ? HWND_TOPMOST : HWND_NOTOPMOST), 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_FRAMECHANGED);
 				}
 
-				void SupressAlt()
+				void SupressAlt()override
 				{
 					if (!supressingAlt)
 					{
@@ -1254,7 +1553,7 @@ WindowsForm
 					}
 				}
 
-				bool InstallListener(INativeWindowListener* listener)
+				bool InstallListener(INativeWindowListener* listener)override
 				{
 					if(listeners.Contains(listener))
 					{
@@ -1267,7 +1566,7 @@ WindowsForm
 					}
 				}
 
-				bool UninstallListener(INativeWindowListener* listener)
+				bool UninstallListener(INativeWindowListener* listener)override
 				{
 					if(listeners.Contains(listener))
 					{
@@ -1280,7 +1579,7 @@ WindowsForm
 					}
 				}
 
-				void RedrawContent()
+				void RedrawContent()override
 				{
 					if(graphicsHandler)
 					{
@@ -1351,50 +1650,53 @@ WindowsController
 				bool HandleMessage(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT& result)
 				{
 					bool skipDefaultProcedure=false;
-					vint index=windows.Keys().IndexOf(hwnd);
-					if(index!=-1)
 					{
-						WindowsForm* window=windows.Values().Get(index);
-						skipDefaultProcedure=window->HandleMessage(hwnd, uMsg, wParam, lParam, result);
-						switch(uMsg)
+						vint index = windows.Keys().IndexOf(hwnd);
+						if (index != -1)
 						{
-						case WM_CLOSE:
-							if(!skipDefaultProcedure)
+							WindowsForm* window = windows.Values().Get(index);
+							skipDefaultProcedure = window->HandleMessage(hwnd, uMsg, wParam, lParam, result);
+							switch (uMsg)
 							{
-								ShowWindow(window->GetWindowHandle(), SW_HIDE);
-								if(window!=mainWindow)
+							case WM_CLOSE:
+								if (!skipDefaultProcedure)
 								{
-									skipDefaultProcedure=true;
+									ShowWindow(window->GetWindowHandle(), SW_HIDE);
+									if (window != mainWindow)
+									{
+										skipDefaultProcedure = true;
+									}
 								}
+								break;
+							case WM_DESTROY:
+								DestroyNativeWindow(window);
+								break;
 							}
-							break;
-						case WM_DESTROY:
-							DestroyNativeWindow(window);
-							break;
 						}
 					}
-
-					if(hwnd==mainWindowHandle && uMsg==WM_DESTROY)
 					{
-						for(vint i=0;i<windows.Count();i++)
+						if (hwnd == mainWindowHandle && uMsg == WM_DESTROY)
 						{
-							if(windows.Values().Get(i)->IsVisible())
+							for (vint i = 0; i < windows.Count(); i++)
 							{
-								windows.Values().Get(i)->Hide();
+								if (windows.Values().Get(i)->IsVisible())
+								{
+									windows.Values().Get(i)->Hide(true);
+								}
 							}
+							while (windows.Count())
+							{
+								DestroyNativeWindow(windows.Values().Get(0));
+							}
+							PostQuitMessage(0);
 						}
-						while(windows.Count())
-						{
-							DestroyNativeWindow(windows.Values().Get(0));
-						}
-						PostQuitMessage(0);
 					}
 					return skipDefaultProcedure;
 				}
 
 				//=======================================================================
 
-				INativeWindow* CreateNativeWindow()
+				INativeWindow* CreateNativeWindow()override
 				{
 					WindowsForm* window=new WindowsForm(godWindow, windowClass.GetName(), hInstance);
 					windows.Add(window->GetWindowHandle(), window);
@@ -1403,7 +1705,7 @@ WindowsController
 					return window;
 				}
 
-				void DestroyNativeWindow(INativeWindow* window)
+				void DestroyNativeWindow(INativeWindow* window)override
 				{
 					WindowsForm* windowsForm=dynamic_cast<WindowsForm*>(window);
 					windowsForm->InvokeDestroying();
@@ -1415,12 +1717,12 @@ WindowsController
 					}
 				}
 
-				INativeWindow* GetMainWindow()
+				INativeWindow* GetMainWindow()override
 				{
 					return mainWindow;
 				}
 
-				void Run(INativeWindow* window)
+				void Run(INativeWindow* window)override
 				{
 					mainWindow=window;
 					mainWindowHandle=GetWindowsForm(window)->GetWindowHandle();
@@ -1434,11 +1736,11 @@ WindowsController
 					}
 				}
 
-				INativeWindow* GetWindow(Point location)
+				INativeWindow* GetWindow(NativePoint location)override
 				{
 					POINT p;
-					p.x=(int)location.x;
-					p.y=(int)location.y;
+					p.x=(int)location.x.value;
+					p.y=(int)location.y.value;
 					HWND handle=WindowFromPoint(p);
 					vint index=windows.Keys().IndexOf(handle);
 					if(index==-1)
@@ -1507,7 +1809,7 @@ WindowsController
 
 				//=======================================================================
 
-				void InvokeMouseHook(WPARAM message, Point location)
+				void InvokeMouseHook(WPARAM message, NativePoint location)
 				{
 					callbackService.InvokeMouseHook(message, location);
 				}
@@ -1565,7 +1867,7 @@ Windows Procedure
 				if(controller)
 				{
 					MSLLHOOKSTRUCT* mouseHookStruct=(MSLLHOOKSTRUCT*)lParam;
-					Point location(mouseHookStruct->pt.x, mouseHookStruct->pt.y);
+					NativePoint location(mouseHookStruct->pt.x, mouseHookStruct->pt.y);
 					controller->InvokeMouseHook(wParam, location);
 				}
 				return CallNextHookEx(NULL,nCode,wParam,lParam);

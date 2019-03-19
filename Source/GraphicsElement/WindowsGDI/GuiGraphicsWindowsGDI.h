@@ -9,12 +9,12 @@ Interfaces:
 #ifndef VCZH_PRESENTATION_ELEMENTS_GUIGRAPHICSWINDOWSGDI
 #define VCZH_PRESENTATION_ELEMENTS_GUIGRAPHICSWINDOWSGDI
 
-#include <wincodec.h>
-#include <MLang.h>
-#include "..\..\NativeWindow\Windows\GDI\WinGDI.h"
 #include "..\GuiGraphicsElement.h"
 #include "..\GuiGraphicsTextElement.h"
-#include "..\..\GraphicsComposition\GuiGraphicsComposition.h"
+#include "..\..\GraphicsComposition\IncludeForward.h"
+#include "..\..\NativeWindow\Windows\GDI\WinGDI.h"
+#include <wincodec.h>
+#include <MLang.h>
 
 namespace vl
 {
@@ -78,6 +78,7 @@ Functionality
 			class IWindowsGDIResourceManager : public Interface
 			{
 			public:
+				virtual Ptr<windows::WinPen>				GetFocusRectanglePen()=0;
 				virtual Ptr<windows::WinPen>				CreateGdiPen(Color color)=0;
 				virtual void								DestroyGdiPen(Color color)=0;
 				virtual Ptr<windows::WinBrush>				CreateGdiBrush(Color color)=0;

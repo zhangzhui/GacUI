@@ -9,7 +9,8 @@ Interfaces:
 #ifndef VCZH_PRESENTATION_CONTROLS_TEMPLATES_GUICONTROLSHARED
 #define VCZH_PRESENTATION_CONTROLS_TEMPLATES_GUICONTROLSHARED
 
-#include "../../GraphicsComposition/GuiGraphicsComposition.h"
+#include "../../GraphicsComposition/IncludeForward.h"
+#include "../../Resources/GuiResource.h"
 
 namespace vl
 {
@@ -42,6 +43,21 @@ namespace vl
 				Descending,
 			};
 
+			/// <summary>Represents the order of tab pages.</summary>
+			enum class TabPageOrder
+			{
+				/// <summary>Unknown.</summary>
+				Unknown,
+				/// <summary>Left to right.</summary>
+				LeftToRight,
+				/// <summary>Right to left.</summary>
+				RightToLeft,
+				/// <summary>Top to bottom.</summary>
+				TopToBottom,
+				/// <summary>Bottom to top.</summary>
+				BottomToTop,
+			};
+
 			/// <summary>A command executor for the combo box to change the control state.</summary>
 			class ITextBoxCommandExecutor : public virtual IDescriptable, public Description<ITextBoxCommandExecutor>
 			{
@@ -49,14 +65,6 @@ namespace vl
 				/// <summary>Override the text content in the control.</summary>
 				/// <param name="value">The new text content.</param>
 				virtual void						UnsafeSetText(const WString& value) = 0;
-			};
-
-			/// <summary>A command executor for the combo box to change the control state.</summary>
-			class IComboBoxCommandExecutor : public virtual IDescriptable, public Description<IComboBoxCommandExecutor>
-			{
-			public:
-				/// <summary>Notify that an item is selected, the combo box should close the popup and show the text of the selected item.</summary>
-				virtual void						SelectItem() = 0;
 			};
 
 			/// <summary>A command executor for the style controller to change the control state.</summary>
@@ -89,7 +97,8 @@ namespace vl
 			public:
 				/// <summary>Select a tab page.</summary>
 				/// <param name="index">The specified position for the tab page.</param>
-				virtual void						ShowTab(vint index) = 0;
+				/// <param name="setFocus">Set to true to set focus to the tab control.</param>
+				virtual void						ShowTab(vint index, bool setFocus) = 0;
 			};
 
 			/// <summary>A command executor for the style controller to change the control state.</summary>
@@ -102,6 +111,26 @@ namespace vl
 				virtual void						NotifyDateNavigated() = 0;
 				/// <summary>Called when selected a date.</summary>
 				virtual void						NotifyDateSelected() = 0;
+			};
+
+			/// <summary>A command executor for the style controller to change the control state.</summary>
+			class IRibbonGroupCommandExecutor : public virtual IDescriptable, public Description<IRibbonGroupCommandExecutor>
+			{
+			public:
+				/// <summary>Called when the expand button is clicked.</summary>
+				virtual void						NotifyExpandButtonClicked() = 0;
+			};
+
+			/// <summary>A command executor for the style controller to change the control state.</summary>
+			class IRibbonGalleryCommandExecutor : public virtual IDescriptable, public Description<IRibbonGalleryCommandExecutor>
+			{
+			public:
+				/// <summary>Called when the scroll up button is clicked.</summary>
+				virtual void						NotifyScrollUp() = 0;
+				/// <summary>Called when the scroll down button is clicked.</summary>
+				virtual void						NotifyScrollDown() = 0;
+				/// <summary>Called when the dropdown button is clicked.</summary>
+				virtual void						NotifyDropdown() = 0;
 			};
 
 			class GuiInstanceRootObject;
@@ -139,13 +168,19 @@ Animation
 				/// <summary>Play the animation. The animation should calculate the time itself to determine the content of the current state of animating objects.</summary>
 				virtual void							Run() = 0;
 
-				/// <summary>Returns true if the animation has ended.</summary>
+				/// <summary>Test if the animation has ended.</summary>
+				/// <returns>Returns true if the animation has ended.</returns>
 				virtual bool							GetStopped() = 0;
 
 				/// <summary>Create a finite animation.</summary>
+				/// <returns>Returns the created animation.</returns>
+				/// <param name="run">The animation callback for each frame.</param>
+				/// <param name="milliseconds">The length of the animation.</param>
 				static Ptr<IGuiAnimation>				CreateAnimation(const Func<void(vuint64_t)>& run, vuint64_t milliseconds);
 
 				/// <summary>Create an infinite animation.</summary>
+				/// <returns>Returns the created animation.</returns>
+				/// <param name="run">The animation callback for each frame.</param>
 				static Ptr<IGuiAnimation>				CreateAnimation(const Func<void(vuint64_t)>& run);
 			};
 

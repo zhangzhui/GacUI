@@ -1,5 +1,6 @@
 #include "GuiGraphicsCompositionBase.h"
 #include "../Controls/GuiWindowControls.h"
+#include "../GraphicsHost/GuiGraphicsHost.h"
 
 namespace vl
 {
@@ -150,6 +151,11 @@ GuiGraphicsComposition
 				}
 			}
 
+			bool GuiGraphicsComposition::IsRendering()
+			{
+				return isRendering;
+			}
+
 			GuiGraphicsComposition* GuiGraphicsComposition::GetParent()
 			{
 				return parent;
@@ -167,6 +173,7 @@ GuiGraphicsComposition
 
 			bool GuiGraphicsComposition::InsertChild(vint index, GuiGraphicsComposition* child)
 			{
+				CHECK_ERROR(!isRendering, L"GuiGraphicsComposition::InsertChild(vint, GuiGraphicsComposition*)#Cannot modify composition tree during rendering.");
 				if (!child) return false;
 				if (child->GetParent()) return false;
 				children.Insert(index, child);
@@ -183,6 +190,7 @@ GuiGraphicsComposition
 
 			bool GuiGraphicsComposition::RemoveChild(GuiGraphicsComposition* child)
 			{
+				CHECK_ERROR(!isRendering, L"GuiGraphicsComposition::InsertChild(vint, GuiGraphicsComposition*)#Cannot modify composition tree during rendering.");
 				if (!child) return false;
 				vint index = children.IndexOf(child);
 				if (index == -1) return false;
@@ -289,6 +297,7 @@ GuiGraphicsComposition
 						bounds.y1 += offset.y;
 						bounds.y2 += offset.y;
 
+						isRendering = true;
 						if (ownedElement)
 						{
 							IGuiGraphicsRenderer* renderer = ownedElement->GetRenderer();
@@ -317,6 +326,7 @@ GuiGraphicsComposition
 								renderTarget->PopClipper();
 							}
 						}
+						isRendering = false;
 					}
 				}
 			}
@@ -522,10 +532,12 @@ GuiGraphicsComposition
 
 			void GuiGraphicsComposition::ForceCalculateSizeImmediately()
 			{
+				isRendering = true;
 				for (vint i = 0; i < children.Count(); i++)
 				{
 					children[i]->ForceCalculateSizeImmediately();
 				}
+				isRendering = false;
 				InvokeOnCompositionStateChanged();
 			}
 
@@ -705,8 +717,15 @@ Helper Functions
 
 			void SafeDeleteControl(controls::GuiControl* value)
 			{
-				NotifyFinalizeInstance(value);
-				SafeDeleteControlInternal(value);
+				if (auto controlHost = dynamic_cast<controls::GuiControlHost*>(value))
+				{
+					controlHost->DeleteAfterProcessingAllEvents();
+				}
+				else
+				{
+					NotifyFinalizeInstance(value);
+					SafeDeleteControlInternal(value);
+				}
 			}
 
 			void SafeDeleteComposition(GuiGraphicsComposition* value)

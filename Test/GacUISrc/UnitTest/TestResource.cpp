@@ -129,6 +129,16 @@ TEST_CASE(TestResource_FailedInstance_Control)
 	LoadResource(L"Resource.FailedInstance.Control.xml", true);
 }
 
+TEST_CASE(TestResource_FailedInstance_Inheriting1)
+{
+	LoadResource(L"Resource.FailedInstance.Inheriting1.xml", true);
+}
+
+TEST_CASE(TestResource_FailedInstance_Inheriting2)
+{
+	LoadResource(L"Resource.FailedInstance.Inheriting2.xml", true);
+}
+
 TEST_CASE(Resource_FailedScript_Workflow)
 {
 	LoadResource(L"Resource.FailedScript.Workflow.xml", true);
@@ -147,4 +157,14 @@ TEST_CASE(Resource_FailedScript_Animations)
 TEST_CASE(Resource_FailedScript_Animations2)
 {
 	LoadResource(L"Resource.FailedScript.Animations2.xml", true);
+}
+
+TEST_CASE(Resource_FailedScript_Strings)
+{
+	LoadResource(L"Resource.FailedScript.Strings.xml", true);
+}
+
+TEST_CASE(Resource_FailedScript_Strings2)
+{
+	LoadResource(L"Resource.FailedScript.Strings2.xml", true);
 }

@@ -10,7 +10,6 @@ Interfaces:
 #define VCZH_PRESENTATION_CONTROLS_GUIBUTTONCONTROLS
 
 #include "GuiBasicControls.h"
-#include "Templates/GuiControlTemplates.h"
 
 namespace vl
 {
@@ -29,19 +28,26 @@ Buttons
 				GUI_SPECIFY_CONTROL_TEMPLATE_TYPE(ButtonTemplate, GuiControl)
 			protected:
 				bool									clickOnMouseUp = true;
+				bool									autoFocus = true;
+				bool									keyPressing = false;
 				bool									mousePressing = false;
 				bool									mouseHoving = false;
 				ButtonState								controlState = ButtonState::Normal;
 
 				void									OnParentLineChanged()override;
 				void									OnActiveAlt()override;
+				bool									IsTabAvailable()override;
 				void									UpdateControlState();
+				void									CheckAndClick(compositions::GuiEventArgs& arguments);
 				void									OnLeftButtonDown(compositions::GuiGraphicsComposition* sender, compositions::GuiMouseEventArgs& arguments);
 				void									OnLeftButtonUp(compositions::GuiGraphicsComposition* sender, compositions::GuiMouseEventArgs& arguments);
 				void									OnMouseEnter(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
 				void									OnMouseLeave(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
+				void									OnKeyDown(compositions::GuiGraphicsComposition* sender, compositions::GuiKeyEventArgs& arguments);
+				void									OnKeyUp(compositions::GuiGraphicsComposition* sender, compositions::GuiKeyEventArgs& arguments);
+				void									OnLostFocus(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
 			public:
-				/// <summary>Create a control with a specified style controller.</summary>
+				/// <summary>Create a control with a specified default theme.</summary>
 				/// <param name="themeName">The theme name for retriving a default control template.</param>
 				GuiButton(theme::ThemeName themeName);
 				~GuiButton();
@@ -55,6 +61,13 @@ Buttons
 				/// <summary>Set is the <see cref="Clicked"/> event raised when left mouse button up or not.</summary>
 				/// <param name="value">Set to true to make this event raised when left mouse button up</param>
 				void									SetClickOnMouseUp(bool value);
+
+				/// <summary>Test if the button gets focus when it is clicked.</summary>
+				/// <returns>Returns true if the button gets focus when it is clicked</returns>
+				bool									GetAutoFocus();
+				/// <summary>Set if the button gets focus when it is clicked.</summary>
+				/// <param name="value">Set to true to make this button get focus when it is clicked.</param>
+				void									SetAutoFocus(bool value);
 			};
 
 			/// <summary>A <see cref="GuiButton"/> with a selection state.</summary>
@@ -101,7 +114,7 @@ Buttons
 
 				void									OnClicked(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
 			public:
-				/// <summary>Create a control with a specified style controller.</summary>
+				/// <summary>Create a control with a specified default theme.</summary>
 				/// <param name="themeName">The theme name for retriving a default control template.</param>
 				GuiSelectableButton(theme::ThemeName themeName);
 				~GuiSelectableButton();

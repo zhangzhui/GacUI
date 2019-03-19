@@ -9,7 +9,6 @@ Interfaces:
 #ifndef VCZH_PRESENTATION_CONTROLS_GUILISTCONTROLS
 #define VCZH_PRESENTATION_CONTROLS_GUILISTCONTROLS
 
-#include "../GuiButtonControls.h"
 #include "../GuiContainerControls.h"
 
 namespace vl
@@ -131,7 +130,7 @@ List Control
 					/// <param name="itemIndex">The index of the item.</param>
 					virtual description::Value					GetBindingValue(vint itemIndex) = 0;
 
-					/// <summary>Request a view for this item provider. If the specified view is not supported, it returns null. If you want to get a view of type IXXX, use IXXX::Identifier as the identifier. When the view object is no longer needed, Calling to the [M:vl.presentation.controls.GuiListControl.IItemProvider.ReleaseView] is needed.</summary>
+					/// <summary>Request a view for this item provider. If the specified view is not supported, it returns null. If you want to get a view of type IXXX, use IXXX::Identifier as the identifier.</summary>
 					/// <returns>The view object.</returns>
 					/// <param name="identifier">The identifier for the requested view.</param>
 					virtual IDescriptable*						RequestView(const WString& identifier) = 0;
@@ -140,6 +139,17 @@ List Control
 				//-----------------------------------------------------------
 				// Item Layout Interfaces
 				//-----------------------------------------------------------
+
+				/// <summary>EnsureItemVisible result for item arranger.</summary>
+				enum class EnsureItemVisibleResult
+				{
+					/// <summary>The requested item does not exist.</summary>
+					ItemNotExists,
+					/// <summary>The view location is moved.</summary>
+					Moved,
+					/// <summary>The view location is not moved.</summary>
+					NotMoved,
+				};
 				
 				/// <summary>Item arranger for a <see cref="GuiListControl"/>. Item arranger decides how to arrange and item controls. When implementing an item arranger, <see cref="IItemArrangerCallback"/> is suggested to use when calculating locations and sizes for item controls.</summary>
 				class IItemArranger : public virtual IItemProviderCallback, public Description<IItemArranger>
@@ -178,9 +188,9 @@ List Control
 					/// <param name="key">The key direction.</param>
 					virtual vint								FindItem(vint itemIndex, compositions::KeyDirection key) = 0;
 					/// <summary>Adjust the view location to make an item visible.</summary>
-					/// <returns>Returns true if this operation succeeded.</returns>
+					/// <returns>Returns the result of this operation.</returns>
 					/// <param name="itemIndex">The item index of the item to be made visible.</param>
-					virtual bool								EnsureItemVisible(vint itemIndex) = 0;
+					virtual EnsureItemVisibleResult				EnsureItemVisible(vint itemIndex) = 0;
 					/// <summary>Get the adopted size for the view bounds.</summary>
 					/// <returns>The adopted size, making the vids bounds just enough to display several items.</returns>
 					/// <param name="expectedSize">The expected size, to provide a guidance.</param>
@@ -273,9 +283,10 @@ List Control
 				friend class collections::ArrayBase<Ptr<VisibleStyleHelper>>;
 				collections::Dictionary<ItemStyle*, Ptr<VisibleStyleHelper>>		visibleStyles;
 
+				void											UpdateDisplayFont()override;
 				void											OnClientBoundsChanged(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
 				void											OnVisuallyEnabledChanged(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
-				void											OnFontChanged(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
+				void											OnContextChanged(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
 				void											OnItemMouseEvent(compositions::GuiItemMouseEvent& itemEvent, ItemStyle* style, compositions::GuiGraphicsComposition* sender, compositions::GuiMouseEventArgs& arguments);
 				void											OnItemNotifyEvent(compositions::GuiItemNotifyEvent& itemEvent, ItemStyle* style, compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
 				void											AttachItemEvents(ItemStyle* style);
@@ -335,14 +346,12 @@ List Control
 				/// <returns>The item arranger.</returns>
 				virtual IItemArranger*							GetArranger();
 				/// <summary>Set the item arranger</summary>
-				/// <returns>The old item arranger</returns>
 				/// <param name="value">The new item arranger</param>
 				virtual void									SetArranger(Ptr<IItemArranger> value);
 				/// <summary>Get the item coordinate transformer.</summary>
 				/// <returns>The item coordinate transformer.</returns>
 				virtual compositions::IGuiAxis*					GetAxis();
 				/// <summary>Set the item coordinate transformer</summary>
-				/// <returns>The old item coordinate transformer</returns>
 				/// <param name="value">The new item coordinate transformer</param>
 				virtual void									SetAxis(Ptr<compositions::IGuiAxis> value);
 				/// <summary>Adjust the view location to make an item visible.</summary>
@@ -433,7 +442,7 @@ Selectable List Control
 				/// <param name="code">The key code that is pressing.</param>
 				/// <param name="ctrl">Set to true if the control key is pressing.</param>
 				/// <param name="shift">Set to true if the shift key is pressing.</param>
-				bool											SelectItemsByKey(vint code, bool ctrl, bool shift);
+				bool											SelectItemsByKey(VKEY code, bool ctrl, bool shift);
 				/// <summary>Unselect all items.</summary>
 				void											ClearSelection();
 			};
@@ -450,6 +459,7 @@ Predefined ItemProvider
 				protected:
 					collections::List<GuiListControl::IItemProviderCallback*>	callbacks;
 					vint														editingCounter = 0;
+					bool														callingOnItemModified = false;
 
 					virtual void								InvokeOnItemModified(vint start, vint count, vint newCount);
 				public:

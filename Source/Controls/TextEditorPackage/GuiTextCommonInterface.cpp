@@ -1,4 +1,5 @@
 #include "GuiTextCommonInterface.h"
+#include "../../GraphicsHost/GuiGraphicsHost.h"
 #include <math.h>
 
 namespace vl
@@ -80,65 +81,83 @@ GuiTextBoxCommonInterface
 
 			void GuiTextBoxCommonInterface::Move(TextPos pos, bool shift)
 			{
-				TextPos oldBegin=textElement->GetCaretBegin();
-				TextPos oldEnd=textElement->GetCaretEnd();
+				TextPos oldBegin = textElement->GetCaretBegin();
+				TextPos oldEnd = textElement->GetCaretEnd();
 
-				pos=textElement->GetLines().Normalize(pos);
-				if(!shift)
+#if defined VCZH_MSVC
+				if (0 <= pos.row && pos.row < textElement->GetLines().GetCount())
+				{
+					TextLine& line = textElement->GetLines().GetLine(pos.row);
+					if (pos.column > 0 && UTF16SPFirst(line.text[pos.column - 1]) && UTF16SPSecond(line.text[pos.column]))
+					{
+						if (pos < oldBegin)
+						{
+							pos.column--;
+						}
+						else if (pos > oldBegin)
+						{
+							pos.column++;
+						}
+					}
+				}
+#endif
+
+				pos = textElement->GetLines().Normalize(pos);
+				if (!shift)
 				{
 					textElement->SetCaretBegin(pos);
 				}
 				textElement->SetCaretEnd(pos);
-				if(textControl)
+				if (textControl)
 				{
-					GuiGraphicsHost* host=textComposition->GetRelatedGraphicsHost();
-					if(host)
+					GuiGraphicsHost* host = textComposition->GetRelatedGraphicsHost();
+					if (host)
 					{
-						if(host->GetFocusedComposition()==textControl->GetFocusableComposition())
+						if (host->GetFocusedComposition() == textControl->GetFocusableComposition())
 						{
 							textElement->SetCaretVisible(true);
 						}
 					}
 				}
 
-				Rect bounds=textElement->GetLines().GetRectFromTextPos(pos);
-				Rect view=Rect(textElement->GetViewPosition(), textComposition->GetBounds().GetSize());
-				Point viewPoint=view.LeftTop();
+				Rect bounds = textElement->GetLines().GetRectFromTextPos(pos);
+				Rect view = Rect(textElement->GetViewPosition(), textComposition->GetBounds().GetSize());
+				Point viewPoint = view.LeftTop();
 
-				if(view.x2>view.x1 && view.y2>view.y1)
+				if (view.x2 > view.x1 && view.y2 > view.y1)
 				{
-					if(bounds.x1<view.x1)
+					if (bounds.x1 < view.x1)
 					{
-						viewPoint.x=bounds.x1;
+						viewPoint.x = bounds.x1;
 					}
-					else if(bounds.x2>view.x2)
+					else if (bounds.x2 > view.x2)
 					{
-						viewPoint.x=bounds.x2-view.Width();
+						viewPoint.x = bounds.x2 - view.Width();
 					}
-					if(bounds.y1<view.y1)
+					if (bounds.y1 < view.y1)
 					{
-						viewPoint.y=bounds.y1;
+						viewPoint.y = bounds.y1;
 					}
-					else if(bounds.y2>view.y2)
+					else if (bounds.y2 > view.y2)
 					{
-						viewPoint.y=bounds.y2-view.Height();
+						viewPoint.y = bounds.y2 - view.Height();
 					}
 				}
 
 				callback->ScrollToView(viewPoint);
 				UpdateCaretPoint();
 
-				TextPos newBegin=textElement->GetCaretBegin();
-				TextPos newEnd=textElement->GetCaretEnd();
-				if(oldBegin!=newBegin || oldEnd!=newEnd)
+				TextPos newBegin = textElement->GetCaretBegin();
+				TextPos newEnd = textElement->GetCaretEnd();
+				if (oldBegin != newBegin || oldEnd != newEnd)
 				{
 					ICommonTextEditCallback::TextCaretChangedStruct arguments;
-					arguments.oldBegin=oldBegin;
-					arguments.oldEnd=oldEnd;
-					arguments.newBegin=newBegin;
-					arguments.newEnd=newEnd;
-					arguments.editVersion=editVersion;
-					for(vint i=0;i<textEditCallbacks.Count();i++)
+					arguments.oldBegin = oldBegin;
+					arguments.oldEnd = oldEnd;
+					arguments.newBegin = newBegin;
+					arguments.newEnd = newEnd;
+					arguments.editVersion = editVersion;
+					for (vint i = 0; i < textEditCallbacks.Count(); i++)
 					{
 						textEditCallbacks[i]->TextCaretChanged(arguments);
 					}
@@ -218,11 +237,11 @@ GuiTextBoxCommonInterface
 				}
 			}
 
-			bool GuiTextBoxCommonInterface::ProcessKey(vint code, bool shift, bool ctrl)
+			bool GuiTextBoxCommonInterface::ProcessKey(VKEY code, bool shift, bool ctrl)
 			{
 				if(IGuiShortcutKeyItem* item=internalShortcutKeyManager->TryGetShortcut(ctrl, shift, false, code))
 				{
-					GuiEventArgs arguments;
+					GuiEventArgs arguments(textControl->GetBoundsComposition());
 					item->Executed.Execute(arguments);
 					return true;
 				}
@@ -231,13 +250,14 @@ GuiTextBoxCommonInterface
 				TextPos end=textElement->GetCaretEnd();
 				switch(code)
 				{
-				case VKEY_ESCAPE:
+				case VKEY::_ESCAPE:
 					if(autoComplete && autoComplete->IsListOpening() && !shift && !ctrl)
 					{
 						autoComplete->CloseList();
+						return true;
 					}
-					return true;
-				case VKEY_RETURN:
+					break;
+				case VKEY::_RETURN:
 					if(autoComplete && autoComplete->IsListOpening() && !shift && !ctrl)
 					{
 						if(autoComplete->ApplySelectedListItem())
@@ -247,7 +267,7 @@ GuiTextBoxCommonInterface
 						}
 					}
 					break;
-				case VKEY_UP:
+				case VKEY::_UP:
 					if(autoComplete && autoComplete->IsListOpening() && !shift && !ctrl)
 					{
 						autoComplete->SelectPreviousListItem();
@@ -258,7 +278,7 @@ GuiTextBoxCommonInterface
 						Move(end, shift);
 					}
 					return true;
-				case VKEY_DOWN:
+				case VKEY::_DOWN:
 					if(autoComplete && autoComplete->IsListOpening() && !shift && !ctrl)
 					{
 						autoComplete->SelectNextListItem();
@@ -269,7 +289,7 @@ GuiTextBoxCommonInterface
 						Move(end, shift);
 					}
 					return true;
-				case VKEY_LEFT:
+				case VKEY::_LEFT:
 					{
 						if(ctrl)
 						{
@@ -294,7 +314,7 @@ GuiTextBoxCommonInterface
 						}
 					}
 					return true;
-				case VKEY_RIGHT:
+				case VKEY::_RIGHT:
 					{
 						if(ctrl)
 						{
@@ -318,7 +338,7 @@ GuiTextBoxCommonInterface
 						}
 					}
 					return true;
-				case VKEY_HOME:
+				case VKEY::_HOME:
 					{
 						if(ctrl)
 						{
@@ -331,7 +351,7 @@ GuiTextBoxCommonInterface
 						}
 					}
 					return true;
-				case VKEY_END:
+				case VKEY::_END:
 					{
 						if(ctrl)
 						{
@@ -341,66 +361,67 @@ GuiTextBoxCommonInterface
 						Move(end, shift);
 					}
 					return true;
-				case VKEY_PRIOR:
+				case VKEY::_PRIOR:
 					{
 						end.row-=callback->GetPageRows();
 						Move(end, shift);
 					}
 					return true;
-				case VKEY_NEXT:
+				case VKEY::_NEXT:
 					{
 						end.row+=callback->GetPageRows();
 						Move(end, shift);
 					}
 					return true;
-				case VKEY_BACK:
+				case VKEY::_BACK:
 					if(!readonly)
 					{
 						if(ctrl && !shift)
 						{
-							ProcessKey(VKEY_LEFT, true, true);
-							ProcessKey(VKEY_BACK, false, false);
+							ProcessKey(VKEY::_LEFT, true, true);
+							ProcessKey(VKEY::_BACK, false, false);
 						}
 						else if(!ctrl && shift)
 						{
-							ProcessKey(VKEY_UP, true, false);
-							ProcessKey(VKEY_BACK, false, false);
+							ProcessKey(VKEY::_UP, true, false);
+							ProcessKey(VKEY::_BACK, false, false);
 						}
 						else
 						{
 							if(begin==end)
 							{
-								ProcessKey(VKEY_LEFT, true, false);
+								ProcessKey(VKEY::_LEFT, true, false);
 							}
 							SetSelectionTextAsKeyInput(L"");
 						}
 						return true;
 					}
 					break;
-				case VKEY_DELETE:
+				case VKEY::_DELETE:
 					if(!readonly)
 					{
 						if(ctrl && !shift)
 						{
-							ProcessKey(VKEY_RIGHT, true, true);
-							ProcessKey(VKEY_DELETE, false, false);
+							ProcessKey(VKEY::_RIGHT, true, true);
+							ProcessKey(VKEY::_DELETE, false, false);
 						}
 						else if(!ctrl && shift)
 						{
-							ProcessKey(VKEY_DOWN, true, false);
-							ProcessKey(VKEY_DELETE, false, false);
+							ProcessKey(VKEY::_DOWN, true, false);
+							ProcessKey(VKEY::_DELETE, false, false);
 						}
 						else
 						{
 							if(begin==end)
 							{
-								ProcessKey(VKEY_RIGHT, true, false);
+								ProcessKey(VKEY::_RIGHT, true, false);
 							}
 							SetSelectionTextAsKeyInput(L"");
 						}
 						return true;
 					}
 					break;
+				default:;
 				}
 				return false;
 			}
@@ -466,17 +487,21 @@ GuiTextBoxCommonInterface
 
 			void GuiTextBoxCommonInterface::OnCharInput(compositions::GuiGraphicsComposition* sender, compositions::GuiCharEventArgs& arguments)
 			{
-				if(preventEnterDueToAutoComplete)
+				if (preventEnterDueToAutoComplete)
 				{
-					preventEnterDueToAutoComplete=false;
-					if(arguments.code==VKEY_RETURN)
+					preventEnterDueToAutoComplete = false;
+					if (arguments.code == (wchar_t)VKEY::_RETURN)
 					{
 						return;
 					}
 				}
-				if(textControl->GetVisuallyEnabled() && arguments.compositionSource==arguments.eventSource)
+				if (textControl->GetVisuallyEnabled() && arguments.compositionSource == arguments.eventSource)
 				{
-					if(!readonly && arguments.code!=VKEY_ESCAPE && arguments.code!=VKEY_BACK && !arguments.ctrl)
+					if (!readonly &&
+						arguments.code != (wchar_t)VKEY::_ESCAPE &&
+						arguments.code != (wchar_t)VKEY::_BACK &&
+						(arguments.code != (wchar_t)VKEY::_TAB || textControl->GetAcceptTabInput()) &&
+						!arguments.ctrl)
 					{
 						SetSelectionTextAsKeyInput(WString(arguments.code));
 					}
@@ -557,7 +582,7 @@ GuiTextBoxCommonInterface
 				}
 			}
 
-			void GuiTextBoxCommonInterface::AddShortcutCommand(vint key, const Func<void()>& eventHandler)
+			void GuiTextBoxCommonInterface::AddShortcutCommand(VKEY key, const Func<void()>& eventHandler)
 			{
 				IGuiShortcutKeyItem* item=internalShortcutKeyManager->CreateShortcut(true, false, false, key);
 				item->Executed.AttachLambda([=](GuiGraphicsComposition* sender, GuiEventArgs& arguments)
@@ -599,12 +624,12 @@ GuiTextBoxCommonInterface
 				AttachTextEditCallback(undoRedoProcessor);
 
 				internalShortcutKeyManager=new GuiShortcutKeyManager;
-				AddShortcutCommand('Z', Func<bool()>(this, &GuiTextBoxCommonInterface::Undo));
-				AddShortcutCommand('Y', Func<bool()>(this, &GuiTextBoxCommonInterface::Redo));
-				AddShortcutCommand('A', Func<void()>(this, &GuiTextBoxCommonInterface::SelectAll));
-				AddShortcutCommand('X', Func<bool()>(this, &GuiTextBoxCommonInterface::Cut));
-				AddShortcutCommand('C', Func<bool()>(this, &GuiTextBoxCommonInterface::Copy));
-				AddShortcutCommand('V', Func<bool()>(this, &GuiTextBoxCommonInterface::Paste));
+				AddShortcutCommand(VKEY::_Z, Func<bool()>(this, &GuiTextBoxCommonInterface::Undo));
+				AddShortcutCommand(VKEY::_Y, Func<bool()>(this, &GuiTextBoxCommonInterface::Redo));
+				AddShortcutCommand(VKEY::_A, Func<void()>(this, &GuiTextBoxCommonInterface::SelectAll));
+				AddShortcutCommand(VKEY::_X, Func<bool()>(this, &GuiTextBoxCommonInterface::Cut));
+				AddShortcutCommand(VKEY::_C, Func<bool()>(this, &GuiTextBoxCommonInterface::Copy));
+				AddShortcutCommand(VKEY::_V, Func<bool()>(this, &GuiTextBoxCommonInterface::Paste));
 			}
 
 			GuiTextBoxCommonInterface::~GuiTextBoxCommonInterface()
@@ -641,47 +666,39 @@ GuiTextBoxCommonInterface
 
 			bool GuiTextBoxCommonInterface::CanPaste()
 			{
-				return !readonly && GetCurrentController()->ClipboardService()->ContainsText() && textElement->GetPasswordChar()==L'\0';
+				if (!readonly && textElement->GetPasswordChar() == L'\0')
+				{
+					auto reader = GetCurrentController()->ClipboardService()->ReadClipboard();
+					return reader->ContainsText();
+				}
+				return false;
 			}
 
 			bool GuiTextBoxCommonInterface::Cut()
 			{
-				if(CanCut())
-				{
-					GetCurrentController()->ClipboardService()->SetText(GetSelectionText());
-					SetSelectionText(L"");
-					return true;
-				}
-				else
-				{
-					return false;
-				}
+				if (!CanCut()) return false;
+				auto writer = GetCurrentController()->ClipboardService()->WriteClipboard();
+				writer->SetText(GetSelectionText());
+				writer->Submit();
+				SetSelectionText(L"");
+				return true;
 			}
 
 			bool GuiTextBoxCommonInterface::Copy()
 			{
-				if(CanCopy())
-				{
-					GetCurrentController()->ClipboardService()->SetText(GetSelectionText());
-					return true;
-				}
-				else
-				{
-					return false;
-				}
+				if (!CanCopy()) return false;
+				auto writer = GetCurrentController()->ClipboardService()->WriteClipboard();
+				writer->SetText(GetSelectionText());
+				writer->Submit();
+				return true;
 			}
 
 			bool GuiTextBoxCommonInterface::Paste()
 			{
-				if(CanPaste())
-				{
-					SetSelectionText(GetCurrentController()->ClipboardService()->GetText());
-					return true;
-				}
-				else
-				{
-					return false;
-				}
+				if (!CanPaste()) return false;
+				auto reader = GetCurrentController()->ClipboardService()->ReadClipboard();
+				SetSelectionText(reader->GetText());
+				return true;
 			}
 			
 			//================ editing control

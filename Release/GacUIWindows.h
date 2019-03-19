@@ -7,1130 +7,6 @@ DEVELOPER: Zihan Chen(vczh)
 #include "VlppWorkflowLibrary.h"
 
 /***********************************************************************
-.\NATIVEWINDOW\WINDOWS\GDI\WINGDI.H
-***********************************************************************/
-/*******************************************************************************
-Vczh Library++ 3.0
-Developer: Zihan Chen(vczh)
-GacUI::GDI Helper Library
-
-Classes:
-  WinRegion				: Region
-  WinTransform			: Vertex Transformation
-  WinBrush				: Brush for filling geometries
-  WinPen				: Pen for filling lines
-  WinFont				: Font
-  WinDC					: Device Context
-  WinControlDC			: Device Context from HWND
-  WinImageDC			: Device Context from images
-  WinProxyDC			: Device Context from HDC
-  WinDIB				: Device Independent Bitmap
-  WinMetaFileBuilder	: Metafile Builder
-  WinMetaFile			: Metafile Image
-  WinBitmap				: Bitmap
-
-Comments:
-  WinDC::PolyDraw
-    Points				: Points
-	Actions				: How to deal with points
-		PT_MOVETO		：MoveTo and consume 1 point
-		PT_LINETO		：LineTo and consume 1 point
-		PT_BEZIERTO		：Draw a bezier curve and consume 3 points
-		PT_LINETO and PT_BEZIERTO can be mixed with PT_CLOSFIGURE to close the geometry begins from the last PT_MOVETO that happened
-	PointCount			: Point count
-  WinDC::DrawBuffer
-    Format: See DrawText
-  Pen：
-	Style：
-		PS_SOLID、PS_DASH、PS_DOT、PS_DASHDOT、PS_DASHDOTDOT、PS_USERSTYLE (for Geometric pen)
-	EndCap：
-		PS_ENDCAP_ROUND、PS_ENDCAP_SQUARE、PS_ENDCAP_FLAT
-	Join：
-		PS_JOIN_BEVEL、PS_JOIN_MITER、PS_JOIN_ROUND
-  Brush：
-	Hatch：
-		HS_BDIAGONAL、HS_CROSS、HS_DIAGCROSS、HS_FDIAGONAL、HS_HORIZONTAL、HS_VERTICAL
-  Region：
-	Combine：
-		RGN_AND、RGN_OR、RGN_XOR、RGN_DIFF、RGN_COPY
-  ImageCopy：
-	Draw ROP：
-		BLACKNESS、DSTINVERT、MERGECOPY、MERGEPAINT、NOTSRCCOPY、NOTSRCERASE、
-		PATCOPY、PATINVERT、PATPAINT、SRCAND、SRCCOPY、SRCERASE、SRCINVERT、SRCPAINT、WHITENESS
-  WinDIB：
-	TransformAlphaChannel()：	Convert to an GDI compatible bitmap with alpha channel after all pixels are filled.
-	Generate×××()：				Predefined alpha channel generation, TransformAlphaChannel should be called after that
-*******************************************************************************/
-
-#ifndef VCZH_PRESENTATION_WINDOWS_GDI_WINGDI
-#define VCZH_PRESENTATION_WINDOWS_GDI_WINGDI
-
-#include<windows.h>
-
-namespace vl
-{
-	namespace presentation
-	{
-		namespace windows
-		{
-
-/*********************************************************************************************************
-Geometry
-*********************************************************************************************************/
-
-			class WinRegion : public Object
-			{
-			public:
-				typedef Ptr<WinRegion>	Ptr;
-
-				friend bool IsEqual(WinRegion::Ptr Region1, WinRegion::Ptr Region2);
-			protected:
-				HRGN					FHandle;
-			public:
-				WinRegion(vint Left, vint Top, vint Right, vint Bottom, bool Rectangle);
-				WinRegion(RECT Rect, bool Rectangle);
-				WinRegion(vint Left, vint Top, vint Right, vint Bottom, vint EllipseWidth, vint EllipseHeight);
-				WinRegion(POINT* Points, vint Count, bool Alternate);
-				WinRegion(WinRegion::Ptr Region);
-				WinRegion(WinRegion::Ptr Region1, WinRegion::Ptr Region2, vint CombineMode);
-				WinRegion(HRGN RegionHandle);
-				~WinRegion();
-
-				HRGN					GetHandle();
-				bool					ContainPoint(POINT Point);
-				bool					ContainRect(RECT Rect);
-				RECT					GetBoundRect();
-				void					Move(vint OffsetX, vint OffsetY);
-			};
-
-			class WinTransform : public Object
-			{
-			protected:
-				XFORM					FTransform;
-			public:
-				WinTransform(XFORM Transform);
-				WinTransform(const WinTransform& Transform);
-
-				WinTransform&			operator=(const WinTransform& Transform);
-				WinTransform			operator*(const WinTransform& Transform);
-				const XFORM*			GetHandle()const;
-
-				static WinTransform		Translate(float OffsetX, float OffsetY);
-				static WinTransform		Scale(float ScaleX, float ScaleY);
-				static WinTransform		Rotate(float Angle);
-				static WinTransform		Rotate(float Cos, float Sin);
-				static WinTransform		ReflectX();
-				static WinTransform		ReflectY();
-				static WinTransform		Reflect(float VectorX, float VectorY);
-				static WinTransform		Reflect(float OriginX, float OriginY, float VectorX, float VectorY);
-				static WinTransform		AxisV(float Xx, float Xy, float Yx, float Yy);
-				static WinTransform		AxisA(float AngleX, float LenX, float AngleY, float LenY);
-			};
-		
-/*********************************************************************************************************
-Images
-*********************************************************************************************************/
-
-			class WinDC;
-			class WinControlDC;
-			class WinProxyDC;
-			class WinImageDC;
-
-			class WinMetaFileBuilder : public Object
-			{
-				friend class WinMetaFile;
-			protected:
-				vint					FWidth;
-				vint					FHeight;
-				WinProxyDC*				FDC;
-
-				void					Create(vint Width, vint Height);
-				void					Draw(HENHMETAFILE Handle);
-				void					Destroy();
-			public:
-
-				WinMetaFileBuilder(vint Width, vint Height);
-				~WinMetaFileBuilder();
-
-				void					LoadFrom(WinMetaFile* File);
-				void					SaveTo(WinMetaFile* File);
-				void					LoadFrom(WString FileName);
-				void					SaveTo(WString FileName);
-				WinDC*					GetWinDC();
-				vint					GetWidth();
-				vint					GetHeight();
-			};
-
-			class WinMetaFile : public Object
-			{
-				friend class WinMetaFileBuilder;
-			protected:
-				HENHMETAFILE			FHandle;
-				vint					FWidth;
-				vint					FHeight;
-			public:
-				WinMetaFile(WString FileName);
-				WinMetaFile(WinMetaFileBuilder* Builder);
-				~WinMetaFile();
-
-				HENHMETAFILE			GetHandle();
-				vint					GetWidth();
-				vint					GetHeight();
-			};
-
-			class WinBitmap : public Object
-			{
-			public:
-				typedef Ptr<WinBitmap>		Ptr;
-				enum BitmapBits
-				{
-					vbb2Bits,
-					vbb24Bits,
-					vbb32Bits
-				};
-			protected:
-				BitmapBits				FBits;
-				vint					FWidth;
-				vint					FHeight;
-				WinImageDC*				FDC;
-				HBITMAP					FHandle;
-				BYTE**					FScanLines;
-				bool					FAlphaChannelBuilt;
-
-				vint					GetBitsFromBB(BitmapBits BB);
-				vint					GetLineBytes(vint Width, BitmapBits BB);
-				void					FillBitmapInfoHeader(vint Width, vint Height, BitmapBits Bits, BITMAPINFOHEADER* Header);
-				HBITMAP					CreateDDB(vint Width, vint Height, BitmapBits Bits);
-				HBITMAP					CreateDIB(vint Width, vint Height, BitmapBits Bits, BYTE**& ScanLines);
-				void					Constructor(vint Width, vint Height, BitmapBits Bits, bool DIBSections);
-			public:
-				WinBitmap(vint Width, vint Height, BitmapBits Bits, bool DIBSections);
-				WinBitmap(WString FileName, bool Use32Bits, bool DIBSections);
-				~WinBitmap();
-
-				void					SaveToFile(WString FileName);
-
-				WinDC*					GetWinDC();
-				vint					GetWidth();
-				vint					GetHeight();
-				vint					GetLineBytes();
-				BYTE**					GetScanLines();
-				HBITMAP					GetBitmap();
-				BitmapBits				GetBitmapBits();
-				void					FillCompatibleHeader(BITMAPINFOHEADER* Header);
-
-				bool					CanBuildAlphaChannel();
-				bool					IsAlphaChannelBuilt();
-				void					BuildAlphaChannel(bool autoPremultiply);
-				void					GenerateTrans(COLORREF Color);
-				void					GenerateAlpha(BYTE Alpha);
-				void					GenerateTransAlpha(COLORREF Color, BYTE Alpha);
-				void					GenerateLuminance();
-				void					GenerateGrayLevel();
-				void					Generate(BYTE(*Function)(COLORREF));
-			};
-
-/*********************************************************************************************************
-Resources
-*********************************************************************************************************/
-
-			class WinBrush : public Object
-			{
-			public:
-				typedef Ptr<WinBrush>	Ptr;
-			protected:
-				HBRUSH					FHandle;
-				unsigned char*			FDIBMemory;
-			public:
-				WinBrush();
-				WinBrush(COLORREF Color);
-				WinBrush(vint Hatch, COLORREF Color);
-				WinBrush(WinBitmap::Ptr Bitmap);
-				~WinBrush();
-
-				HBRUSH					GetHandle();
-			};
-
-			class WinPen : public Object
-			{
-			public:
-				typedef Ptr<WinPen>		Ptr;
-			protected:
-				HPEN					FHandle;
-				unsigned char*			FDIBMemory;
-			public:
-				WinPen(vint Style, vint Width, COLORREF Color);
-				WinPen(vint Style, vint EndCap, vint Join, vint Width, COLORREF Color);
-				WinPen(vint Style, vint EndCap, vint Join, vint Hatch, vint Width, COLORREF Color);
-				WinPen(WinBitmap::Ptr DIB, vint Style, vint EndCap, vint Join, vint Width);
-				~WinPen();
-
-				HPEN					GetHandle();
-			};
-
-			class WinFont : public Object
-			{
-			public:
-				typedef Ptr<WinFont>		Ptr;
-			protected:
-				LOGFONT					FFontInfo;
-				HFONT					FHandle;
-			public:
-				WinFont(WString Name, vint Height, vint Width, vint Escapement, vint Orientation, vint Weight, bool Italic, bool Underline, bool StrikeOut, bool Antialise);
-				WinFont(LOGFONT* FontInfo);
-				~WinFont();
-
-				HFONT					GetHandle();
-				LOGFONT*				GetInfo();
-			};
-
-/*********************************************************************************************************
-Device Context
-*********************************************************************************************************/
-
-			extern WinBrush::Ptr		CreateDefaultBrush();
-			extern WinPen::Ptr			CreateDefaultPen();
-			extern WinFont::Ptr			CreateDefaultFont();
-
-			class IWinResourceService : public Interface
-			{
-			public:
-				virtual WinPen::Ptr		GetDefaultPen()=0;
-				virtual WinBrush::Ptr	GetDefaultBrush()=0;
-				virtual WinFont::Ptr	GetDefaultFont()=0;
-			};
-			extern IWinResourceService*	GetDefaultResourceService();
-			extern void					SetDefaultResourceService(IWinResourceService* Service);
-
-			class WinDC : public Object
-			{
-			protected:
-				HDC						FHandle;
-
-				WinPen::Ptr				FPen;
-				WinBrush::Ptr			FBrush;
-				WinFont::Ptr			FFont;
-
-				HPEN					FOldPen;
-				HBRUSH					FOldBrush;
-				HFONT					FOldFont;
-
-				void					Init();
-			public:
-				WinDC();
-				~WinDC();
-
-				HDC						GetHandle();
-
-				WinPen::Ptr				GetPen();
-				WinBrush::Ptr			GetBrush();
-				WinFont::Ptr			GetFont();
-				void					SetPen(WinPen::Ptr Pen);
-				void					SetBrush(WinBrush::Ptr Brush);
-				void					SetFont(WinFont::Ptr Font);
-				COLORREF				GetBackColor();
-				void					SetBackColor(COLORREF Color);
-				COLORREF				GetTextColor();
-				void					SetTextColor(COLORREF Color);
-				bool					GetBackTransparent();
-				void					SetBackTransparent(bool Transparent);
-				POINT					GetBrushOrigin();
-				void					SetBrushOrigin(POINT Point);
-
-				void					DrawBuffer(vint X, vint Y, const wchar_t* Text, vint CharCount);
-				void					DrawBuffer(vint X, vint Y, const wchar_t* Text, vint CharCount, vint TabWidth, vint TabOriginX);
-				void					DrawBuffer(RECT Rect, const wchar_t* Text, vint CharCount, UINT Format);
-				void					DrawString(vint X, vint Y, WString Text);
-				void					DrawString(vint X, vint Y, WString Text, vint TabWidth, vint TabOriginX);
-				void					DrawString(RECT Rect, WString Text, UINT Format);
-
-				SIZE					MeasureString(WString Text, vint TabSize=-1);
-				SIZE					MeasureBuffer(const wchar_t* Text, vint CharCount, vint TabSize=-1);
-				SIZE					MeasureBuffer(const wchar_t* Text, vint TabSize=-1);
-				SIZE					MeasureWrapLineString(WString Text, vint MaxWidth);
-				SIZE					MeasureWrapLineBuffer(const wchar_t* Text, vint CharCount, vint MaxWidth);
-				SIZE					MeasureWrapLineBuffer(const wchar_t* Text, vint MaxWidth);
-
-				void					FillRegion(WinRegion::Ptr Region);
-				void					FrameRegion(WinRegion::Ptr Region, vint BlockWidth, vint BlockHeight);
-
-				void					MoveTo(vint X, vint Y);
-				void					LineTo(vint X, vint Y);
-				void					Rectangle(vint Left, vint Top, vint Right, vint Bottom);
-				void					Rectangle(RECT Rect);
-				void					FocusRectangle(vint Left, vint Top, vint Right, vint Bottom);
-				void					FocusRectangle(RECT Rect);
-				void					FillRect(vint Left, vint Top, vint Right, vint Bottom);
-				void					FillRect(RECT Rect);
-				void					Ellipse(vint Left, vint Top, vint Right, vint Bottom);
-				void					Ellipse(RECT Rect);
-				void					RoundRect(vint Left, vint Top, vint Right, vint Bottom, vint EllipseWidth, vint EllipseHeight);
-				void					RoundRect(RECT Rect, vint EllipseWidth, vint EllipseHeight);
-				void					PolyLine(const POINT* Points, vint Count);
-				void					PolyLineTo(const POINT* Points, vint Count);
-				void					PolyGon(const POINT* Points, vint Count);
-				void					PolyBezier(const POINT* Points, vint Count);
-				void					PolyBezierTo(const POINT* Points, vint Count);
-				void					PolyDraw(const POINT* Points, const BYTE* Actions, vint PointCount);
-				void					Arc(RECT Bound, POINT Start, POINT End);
-				void					Arc(vint Left, vint Top, vint Right, vint Bottom, vint StartX, vint StartY, vint EndX, vint EndY);
-				void					ArcTo(RECT Bound, POINT Start, POINT End);
-				void					ArcTo(vint Left, vint Top, vint Right, vint Bottom, vint StartX, vint StartY, vint EndX, vint EndY);
-				void					AngleArc(vint X, vint Y, vint Radius, float StartAngle, float SweepAngle);
-				void					AngleArc(vint X, vint Y, vint Radius, double StartAngle, double SweepAngle);
-				void					Chord(RECT Bound, POINT Start, POINT End);
-				void					Chord(vint Left, vint Top, vint Right, vint Bottom, vint StartX, vint StartY, vint EndX, vint EndY);
-				void					Pie(RECT Bound, POINT Start, POINT End);
-				void					Pie(vint Left, vint Top, vint Right, vint Bottom, vint StartX, vint StartY, vint EndX, vint EndY);
-				void					GradientRectH(TRIVERTEX* Vertices, vint VerticesCount, GRADIENT_RECT* Rectangles, vint RectangleCount);
-				void					GradientRectV(TRIVERTEX* Vertices, vint VerticesCount, GRADIENT_RECT* Rectangles, vint RectangleCount);
-				void					GradientTriangle(TRIVERTEX* Vertices, vint VerticesCount, GRADIENT_TRIANGLE* Triangles, vint TriangleCount);
-
-				void					BeginPath();
-				void					EndPath();
-				void					ClosePath();
-				void					WidenPath();
-				void					DiscardPath();
-				void					DrawPath();
-				void					FillPath();
-				void					DrawAndFillPath();
-				WinRegion::Ptr			RegionFromPath();
-
-				bool					PointInClip(POINT Point);
-				bool					RectInClip(RECT Rect);
-				void					ClipPath(vint CombineMode);
-				void					ClipRegion(WinRegion::Ptr Region);
-				void					RemoveClip();
-				void					MoveClip(vint OffsetX, vint OffsetY);
-				void					CombineClip(WinRegion::Ptr Region, vint CombineMode);
-				void					IntersetClipRect(RECT Rect);
-				void					ExcludeClipRect(RECT Rect);
-				WinRegion::Ptr			GetClipRegion();
-				RECT					GetClipBoundRect();
-
-				WinTransform			GetTransform();
-				void					SetTransform(const WinTransform& Transform);
-
-				void					Copy(vint dstX, vint dstY, vint dstW, vint dstH, WinDC* Source, vint srcX, vint srcY, DWORD DrawROP=SRCCOPY);
-				void					Copy(RECT dstRect, WinDC* Source, POINT srcPos, DWORD DrawROP=SRCCOPY);
-				void					Copy(vint dstX, vint dstY, vint dstW, vint dstH, WinDC* Source, vint srcX, vint srcY ,vint srcW, vint srcH, DWORD DrawROP=SRCCOPY);
-				void					Copy(RECT dstRect, WinDC* Source, RECT srcRect, DWORD DrawROP=SRCCOPY);
-				void					Copy(POINT UpperLeft, POINT UpperRight, POINT LowerLeft, WinDC* Source, vint srcX, vint srcY, vint srcW, vint srcH);
-				void					Copy(POINT UpperLeft, POINT UpperRight, POINT LowerLeft, WinDC* Source, RECT srcRect);
-				void					CopyTrans(vint dstX, vint dstY, vint dstW, vint dstH, WinDC* Source, vint srcX, vint srcY ,vint srcW, vint srcH, COLORREF Color);
-				void					CopyTrans(RECT dstRect, WinDC* Source, RECT srcRect, COLORREF Color);
-
-				void					Draw(vint dstX, vint dstY, WinMetaFile* MetaFile);
-				void					Draw(POINT Pos, WinMetaFile* MetaFile);
-				void					Draw(vint dstX, vint dstY, vint dstW, vint dstH, WinMetaFile* MetaFile);
-				void					Draw(RECT Rect, WinMetaFile* MetaFile);
-
-				void					Draw(vint dstX, vint WinBitmap, WinBitmap::Ptr Bitmap);
-				void					Draw(POINT Pos, WinBitmap::Ptr Bitmap);
-				void					Draw(vint dstX, vint dstY, vint dstW, vint dstH, WinBitmap::Ptr Bitmap);
-				void					Draw(RECT Rect, WinBitmap::Ptr Bitmap);
-				void					Draw(vint dstX, vint dstY, vint dstW, vint dstH, WinBitmap::Ptr Bitmap, vint srcX, vint srcY);
-				void					Draw(RECT Rect, WinBitmap::Ptr Bitmap, POINT Pos);
-				void					Draw(vint dstX, vint dstY, vint dstW, vint dstH, WinBitmap::Ptr Bitmap, vint srcX, vint srcY, vint srcW, vint srcH);
-				void					Draw(RECT dstRect, WinBitmap::Ptr Bitmap, RECT srcRect);
-
-				void					Draw(vint dstX, vint dstY, WinBitmap::Ptr Bitmap, unsigned char Alpha);
-				void					Draw(POINT Pos, WinBitmap::Ptr Bitmap, unsigned char Alpha);
-				void					Draw(vint dstX, vint dstY, vint dstW, vint dstH, WinBitmap::Ptr Bitmap, unsigned char Alpha);
-				void					Draw(RECT Rect, WinBitmap::Ptr Bitmap, unsigned char Alpha);
-				void					Draw(vint dstX, vint dstY, vint dstW, vint dstH, WinBitmap::Ptr Bitmap, vint srcX, vint srcY, unsigned char Alpha);
-				void					Draw(RECT Rect, WinBitmap::Ptr Bitmap, POINT Pos, unsigned char Alpha);
-				void					Draw(vint dstX, vint dstY, vint dstW, vint dstH, WinBitmap::Ptr Bitmap, vint srcX, vint srcY, vint srcW, vint srcH, unsigned char Alpha);
-				void					Draw(RECT dstRect, WinBitmap::Ptr Bitmap, RECT srcRect, unsigned char Alpha);
-			};
-
-			class WinControlDC : public WinDC
-			{
-			protected:
-				HWND					FControlHandle;
-			public:
-				WinControlDC(HWND Handle);
-				~WinControlDC();
-			};
-
-			class WinProxyDC : public WinDC
-			{
-			public:
-				WinProxyDC();
-				~WinProxyDC();
-
-				void					Initialize(HDC Handle);
-			};
-
-			class WinImageDC : public WinDC
-			{
-			public:
-				WinImageDC();
-				~WinImageDC();
-			};
-		}
-	}
-}
-
-#endif
-
-/***********************************************************************
-.\GRAPHICSELEMENT\WINDOWSDIRECT2D\GUIGRAPHICSLAYOUTPROVIDERWINDOWSDIRECT2D.H
-***********************************************************************/
-/***********************************************************************
-Vczh Library++ 3.0
-Developer: Zihan Chen(vczh)
-GacUI::Native Window::Direct2D Provider for Windows Implementation::Renderer
-
-Interfaces:
-***********************************************************************/
-
-#ifndef VCZH_PRESENTATION_ELEMENTS_GUIGRAPHICSLAYOUTPROVIDERWINDOWSDIRECT2D
-#define VCZH_PRESENTATION_ELEMENTS_GUIGRAPHICSLAYOUTPROVIDERWINDOWSDIRECT2D
-
-
-namespace vl
-{
-	namespace presentation
-	{
-		namespace elements_windows_d2d
-		{
-			class WindowsDirect2DLayoutProvider : public Object, public elements::IGuiGraphicsLayoutProvider
-			{
-			public:
-				 Ptr<elements::IGuiGraphicsParagraph>		CreateParagraph(const WString& text, elements::IGuiGraphicsRenderTarget* renderTarget, elements::IGuiGraphicsParagraphCallback* callback)override;
-			};
-		}
-	}
-}
-
-#endif
-
-/***********************************************************************
-.\GRAPHICSELEMENT\WINDOWSGDI\GUIGRAPHICSLAYOUTPROVIDERWINDOWSGDI.H
-***********************************************************************/
-/***********************************************************************
-Vczh Library++ 3.0
-Developer: Zihan Chen(vczh)
-GacUI::Native Window::GDI Provider for Windows Implementation::Renderer
-
-Interfaces:
-***********************************************************************/
-
-#ifndef VCZH_PRESENTATION_ELEMENTS_GUIGRAPHICSLAYOUTPROVIDERWINDOWSGDI
-#define VCZH_PRESENTATION_ELEMENTS_GUIGRAPHICSLAYOUTPROVIDERWINDOWSGDI
-
-
-namespace vl
-{
-	namespace presentation
-	{
-		namespace elements_windows_gdi
-		{
-			class WindowsGDILayoutProvider : public Object, public elements::IGuiGraphicsLayoutProvider
-			{
-			public:
-				 Ptr<elements::IGuiGraphicsParagraph>		CreateParagraph(const WString& text, elements::IGuiGraphicsRenderTarget* renderTarget, elements::IGuiGraphicsParagraphCallback* callback)override;
-			};
-		}
-	}
-}
-
-#endif
-
-/***********************************************************************
-.\NATIVEWINDOW\WINDOWS\SERVICESIMPL\WINDOWSASYNCSERVICE.H
-***********************************************************************/
-/***********************************************************************
-Vczh Library++ 3.0
-Developer: Zihan Chen(vczh)
-GacUI::Native Window::Windows Implementation
-
-Interfaces:
-***********************************************************************/
-
-#ifndef VCZH_PRESENTATION_WINDOWS_SERVICESIMPL_WINDOWSASYNCSERVICE
-#define VCZH_PRESENTATION_WINDOWS_SERVICESIMPL_WINDOWSASYNCSERVICE
-
-
-namespace vl
-{
-	namespace presentation
-	{
-		namespace windows
-		{
-			class WindowsAsyncService : public INativeAsyncService
-			{
-			protected:
-				struct TaskItem
-				{
-					Semaphore*							semaphore;
-					Func<void()>						proc;
-
-					TaskItem();
-					TaskItem(Semaphore* _semaphore, const Func<void()>& _proc);
-					~TaskItem();
-				};
-
-				class DelayItem : public Object, public INativeDelay
-				{
-				public:
-					DelayItem(WindowsAsyncService* _service, const Func<void()>& _proc, bool _executeInMainThread, vint milliseconds);
-					~DelayItem();
-
-					WindowsAsyncService*				service;
-					Func<void()>						proc;
-					ExecuteStatus						status;
-					DateTime							executeTime;
-					bool								executeInMainThread;
-
-					ExecuteStatus						GetStatus()override;
-					bool								Delay(vint milliseconds)override;
-					bool								Cancel()override;
-				};
-			protected:
-				vint									mainThreadId;
-				SpinLock								taskListLock;
-				collections::List<TaskItem>				taskItems;
-				collections::List<Ptr<DelayItem>>		delayItems;
-			public:
-				WindowsAsyncService();
-				~WindowsAsyncService();
-
-				void									ExecuteAsyncTasks();
-				bool									IsInMainThread()override;
-				void									InvokeAsync(const Func<void()>& proc)override;
-				void									InvokeInMainThread(INativeWindow* window, const Func<void()>& proc)override;
-				bool									InvokeInMainThreadAndWait(INativeWindow* window, const Func<void()>& proc, vint milliseconds)override;
-				Ptr<INativeDelay>						DelayExecute(const Func<void()>& proc, vint milliseconds)override;
-				Ptr<INativeDelay>						DelayExecuteInMainThread(const Func<void()>& proc, vint milliseconds)override;
-			};
-		}
-	}
-}
-
-#endif
-
-/***********************************************************************
-.\NATIVEWINDOW\WINDOWS\SERVICESIMPL\WINDOWSCALLBACKSERVICE.H
-***********************************************************************/
-/***********************************************************************
-Vczh Library++ 3.0
-Developer: Zihan Chen(vczh)
-GacUI::Native Window::Windows Implementation
-
-Interfaces:
-***********************************************************************/
-
-#ifndef VCZH_PRESENTATION_WINDOWS_SERVICESIMPL_WINDOWSCALLBACKSERVICE
-#define VCZH_PRESENTATION_WINDOWS_SERVICESIMPL_WINDOWSCALLBACKSERVICE
-
-
-namespace vl
-{
-	namespace presentation
-	{
-		namespace windows
-		{
-			class WindowsCallbackService : public Object, public INativeCallbackService
-			{
-			protected:
-				collections::List<INativeControllerListener*>	listeners;
-
-			public:
-				WindowsCallbackService();
-
-				bool											InstallListener(INativeControllerListener* listener)override;
-				bool											UninstallListener(INativeControllerListener* listener)override;
-
-				void											InvokeMouseHook(WPARAM message, Point location);
-				void											InvokeGlobalTimer();
-				void											InvokeClipboardUpdated();
-				void											InvokeNativeWindowCreated(INativeWindow* window);
-				void											InvokeNativeWindowDestroyed(INativeWindow* window);
-			};
-		}
-	}
-}
-
-#endif
-
-/***********************************************************************
-.\NATIVEWINDOW\WINDOWS\SERVICESIMPL\WINDOWSCLIPBOARDSERVICE.H
-***********************************************************************/
-/***********************************************************************
-Vczh Library++ 3.0
-Developer: Zihan Chen(vczh)
-GacUI::Native Window::Windows Implementation
-
-Interfaces:
-***********************************************************************/
-
-#ifndef VCZH_PRESENTATION_WINDOWS_SERVICESIMPL_WINDOWSCLIPBOARDSERVICE
-#define VCZH_PRESENTATION_WINDOWS_SERVICESIMPL_WINDOWSCLIPBOARDSERVICE
-
-
-namespace vl
-{
-	namespace presentation
-	{
-		namespace windows
-		{
-			class WindowsClipboardService : public Object, public INativeClipboardService
-			{
-			protected:
-				HWND					ownerHandle;
-			public:
-				WindowsClipboardService();
-
-				void					SetOwnerHandle(HWND handle);
-				bool					ContainsText()override;
-				WString					GetText()override;
-				bool					SetText(const WString& value)override;
-			};
-		}
-	}
-}
-
-#endif
-
-/***********************************************************************
-.\NATIVEWINDOW\WINDOWS\SERVICESIMPL\WINDOWSDIALOGSERVICE.H
-***********************************************************************/
-/***********************************************************************
-Vczh Library++ 3.0
-Developer: Zihan Chen(vczh)
-GacUI::Native Window::Windows Implementation
-
-Interfaces:
-***********************************************************************/
-
-#ifndef VCZH_PRESENTATION_WINDOWS_SERVICESIMPL_WINDOWSDIALOGSERVICE
-#define VCZH_PRESENTATION_WINDOWS_SERVICESIMPL_WINDOWSDIALOGSERVICE
-
-
-namespace vl
-{
-	namespace presentation
-	{
-		namespace windows
-		{
-			class WindowsDialogService : public INativeDialogService
-			{
-				typedef HWND (*HandleRetriver)(INativeWindow*);
-			protected:
-				HandleRetriver									handleRetriver;
-
-			public:
-				WindowsDialogService(HandleRetriver _handleRetriver);
-
-				MessageBoxButtonsOutput			ShowMessageBox(INativeWindow* window, const WString& text, const WString& title, MessageBoxButtonsInput buttons, MessageBoxDefaultButton defaultButton, MessageBoxIcons icon, MessageBoxModalOptions modal)override;
-				bool							ShowColorDialog(INativeWindow* window, Color& selection, bool selected, ColorDialogCustomColorOptions customColorOptions, Color* customColors)override;
-				bool							ShowFontDialog(INativeWindow* window, FontProperties& selectionFont, Color& selectionColor, bool selected, bool showEffect, bool forceFontExist)override;
-				bool							ShowFileDialog(INativeWindow* window, collections::List<WString>& selectionFileNames, vint& selectionFilterIndex, FileDialogTypes dialogType, const WString& title, const WString& initialFileName, const WString& initialDirectory, const WString& defaultExtension, const WString& filter, FileDialogOptions options)override;
-			};
-		}
-	}
-}
-
-#endif
-
-/***********************************************************************
-.\NATIVEWINDOW\WINDOWS\SERVICESIMPL\WINDOWSIMAGESERVICE.H
-***********************************************************************/
-/***********************************************************************
-Vczh Library++ 3.0
-Developer: Zihan Chen(vczh)
-GacUI::Native Window::Windows Implementation
-
-Interfaces:
-***********************************************************************/
-
-#ifndef VCZH_PRESENTATION_WINDOWS_SERVICESIMPL_WINDOWSIMAGESERIVCE
-#define VCZH_PRESENTATION_WINDOWS_SERVICESIMPL_WINDOWSIMAGESERIVCE
-
-#include <wincodec.h>
-
-namespace vl
-{
-	namespace presentation
-	{
-		namespace windows
-		{
-			class WindowsImageFrame : public Object, public INativeImageFrame
-			{
-			protected:
-				INativeImage*													image;
-				ComPtr<IWICBitmap>												frameBitmap;
-				collections::Dictionary<void*, Ptr<INativeImageFrameCache>>		caches;
-
-				void										Initialize(IWICBitmapSource* bitmapSource);
-			public:
-				WindowsImageFrame(INativeImage* _image, IWICBitmapFrameDecode* frameDecode);
-				WindowsImageFrame(INativeImage* _image, IWICBitmap* sourceBitmap);
-				~WindowsImageFrame();
-
-				INativeImage*								GetImage()override;
-				Size										GetSize()override;
-				bool										SetCache(void* key, Ptr<INativeImageFrameCache> cache)override;
-				Ptr<INativeImageFrameCache>					GetCache(void* key)override;
-				Ptr<INativeImageFrameCache>					RemoveCache(void* key)override;
-				IWICBitmap*									GetFrameBitmap();
-			};
-
-			class WindowsImage : public Object, public INativeImage
-			{
-			protected:
-				INativeImageService*						imageService;
-				ComPtr<IWICBitmapDecoder>					bitmapDecoder;
-				collections::Array<Ptr<WindowsImageFrame>>	frames;
-			public:
-				WindowsImage(INativeImageService* _imageService, IWICBitmapDecoder* _bitmapDecoder);
-				~WindowsImage();
-
-				INativeImageService*						GetImageService()override;
-				FormatType									GetFormat()override;
-				vint										GetFrameCount()override;
-				INativeImageFrame*							GetFrame(vint index)override;
-			};
-
-			class WindowsBitmapImage : public Object, public INativeImage
-			{
-			protected:
-				INativeImageService*						imageService;
-				Ptr<WindowsImageFrame>						frame;
-				FormatType									formatType;
-			public:
-				WindowsBitmapImage(INativeImageService* _imageService, IWICBitmap* sourceBitmap, FormatType _formatType);
-				~WindowsBitmapImage();
-
-				INativeImageService*						GetImageService()override;
-				FormatType									GetFormat()override;
-				vint										GetFrameCount()override;
-				INativeImageFrame*							GetFrame(vint index)override;
-			};
-
-			class WindowsImageService : public Object, public INativeImageService
-			{
-			protected:
-				ComPtr<IWICImagingFactory>					imagingFactory;
-			public:
-				WindowsImageService();
-				~WindowsImageService();
-
-				Ptr<INativeImage>							CreateImageFromFile(const WString& path);
-				Ptr<INativeImage>							CreateImageFromMemory(void* buffer, vint length);
-				Ptr<INativeImage>							CreateImageFromStream(stream::IStream& stream);
-				Ptr<INativeImage>							CreateImageFromHBITMAP(HBITMAP handle);
-				Ptr<INativeImage>							CreateImageFromHICON(HICON handle);
-				IWICImagingFactory*							GetImagingFactory();
-			};
-
-			extern IWICImagingFactory*						GetWICImagingFactory();
-			extern IWICBitmap*								GetWICBitmap(INativeImageFrame* frame);
-			extern Ptr<INativeImage>						CreateImageFromHBITMAP(HBITMAP handle);
-			extern Ptr<INativeImage>						CreateImageFromHICON(HICON handle);
-		}
-	}
-}
-
-#endif
-
-/***********************************************************************
-.\NATIVEWINDOW\WINDOWS\SERVICESIMPL\WINDOWSINPUTSERVICE.H
-***********************************************************************/
-/***********************************************************************
-Vczh Library++ 3.0
-Developer: Zihan Chen(vczh)
-GacUI::Native Window::Windows Implementation
-
-Interfaces:
-***********************************************************************/
-
-#ifndef VCZH_PRESENTATION_WINDOWS_SERVICESIMPL_WINDOWSINPUTSERVICE
-#define VCZH_PRESENTATION_WINDOWS_SERVICESIMPL_WINDOWSINPUTSERVICE
-
-
-namespace vl
-{
-	namespace presentation
-	{
-		namespace windows
-		{
-			class WindowsInputService : public Object, public INativeInputService
-			{
-			protected:
-				HWND									ownerHandle;
-				HHOOK									mouseHook;
-				bool									isTimerEnabled;
-				HOOKPROC								mouseProc;
-
-				collections::Array<WString>				keyNames;
-				collections::Dictionary<WString, vint>	keys;
-
-				WString									GetKeyNameInternal(vint code);
-				void									InitializeKeyNames();
-			public:
-				WindowsInputService(HOOKPROC _mouseProc);
-
-				void									SetOwnerHandle(HWND handle);
-				void									StartHookMouse()override;
-				void									StopHookMouse()override;
-				bool									IsHookingMouse()override;
-				void									StartTimer()override;
-				void									StopTimer()override;
-				bool									IsTimerEnabled()override;
-				bool									IsKeyPressing(vint code)override;
-				bool									IsKeyToggled(vint code)override;
-				WString									GetKeyName(vint code)override;
-				vint									GetKey(const WString& name)override;
-			};
-
-			extern bool									WinIsKeyPressing(vint code);
-			extern bool									WinIsKeyToggled(vint code);
-		}
-	}
-}
-
-#endif
-
-/***********************************************************************
-.\NATIVEWINDOW\WINDOWS\SERVICESIMPL\WINDOWSRESOURCESERVICE.H
-***********************************************************************/
-/***********************************************************************
-Vczh Library++ 3.0
-Developer: Zihan Chen(vczh)
-GacUI::Native Window::Windows Implementation
-
-Interfaces:
-***********************************************************************/
-
-#ifndef VCZH_PRESENTATION_WINDOWS_SERVICESIMPL_WINDOWSRESOURCESERVICE
-#define VCZH_PRESENTATION_WINDOWS_SERVICESIMPL_WINDOWSRESOURCESERVICE
-
-
-namespace vl
-{
-	namespace presentation
-	{
-		namespace windows
-		{
-			class WindowsCursor : public Object, public INativeCursor
-			{
-			protected:
-				HCURSOR										handle;
-				bool										isSystemCursor;
-				SystemCursorType							systemCursorType;
-			public:
-				WindowsCursor(HCURSOR _handle);
-				WindowsCursor(SystemCursorType type);
-
-				bool										IsSystemCursor()override;
-				SystemCursorType							GetSystemCursorType()override;
-				HCURSOR										GetCursorHandle();
-			};
-
-			class WindowsResourceService : public Object, public INativeResourceService
-			{
-			protected:
-				collections::Array<Ptr<WindowsCursor>>		systemCursors;
-				FontProperties								defaultFont;
-			public:
-				WindowsResourceService();
-
-				INativeCursor*								GetSystemCursor(INativeCursor::SystemCursorType type)override;
-				INativeCursor*								GetDefaultSystemCursor()override;
-				FontProperties								GetDefaultFont()override;
-				void										SetDefaultFont(const FontProperties& value)override;
-			};
-		}
-	}
-}
-
-#endif
-
-/***********************************************************************
-.\NATIVEWINDOW\WINDOWS\SERVICESIMPL\WINDOWSSCREENSERVICE.H
-***********************************************************************/
-/***********************************************************************
-Vczh Library++ 3.0
-Developer: Zihan Chen(vczh)
-GacUI::Native Window::Windows Implementation
-
-Interfaces:
-***********************************************************************/
-
-#ifndef VCZH_PRESENTATION_WINDOWS_SERVICESIMPL_WINDOWSSCREENSERVICE
-#define VCZH_PRESENTATION_WINDOWS_SERVICESIMPL_WINDOWSSCREENSERVICE
-
-
-namespace vl
-{
-	namespace presentation
-	{
-		namespace windows
-		{
-			class WindowsScreen : public Object, public INativeScreen
-			{
-				friend class WindowsScreenService;
-			protected:
-				HMONITOR										monitor;
-			public:
-				WindowsScreen();
-
-				Rect											GetBounds()override;
-				Rect											GetClientBounds()override;
-				WString											GetName()override;
-				bool											IsPrimary()override;
-			};
-
-			class WindowsScreenService : public Object, public INativeScreenService
-			{
-				typedef HWND (*HandleRetriver)(INativeWindow*);
-			protected:
-				collections::List<Ptr<WindowsScreen>>			screens;
-				HandleRetriver									handleRetriver;
-			public:
-
-				struct MonitorEnumProcData
-				{
-					WindowsScreenService*	screenService;
-					vint						currentScreen;
-				};
-
-				WindowsScreenService(HandleRetriver _handleRetriver);
-
-				static BOOL CALLBACK							MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData);
-				void											RefreshScreenInformation();
-				vint											GetScreenCount()override;
-				INativeScreen*									GetScreen(vint index)override;
-				INativeScreen*									GetScreen(INativeWindow* window)override;
-			};
-		}
-	}
-}
-
-#endif
-
-/***********************************************************************
-.\NATIVEWINDOW\WINDOWS\WINNATIVEWINDOW.H
-***********************************************************************/
-/***********************************************************************
-Vczh Library++ 3.0
-Developer: Zihan Chen(vczh)
-GacUI::Native Window::Windows Implementation
-
-Interfaces:
-***********************************************************************/
-
-#ifndef VCZH_PRESENTATION_WINDOWS_WINNATIVEWINDOW
-#define VCZH_PRESENTATION_WINDOWS_WINNATIVEWINDOW
-
-
-namespace vl
-{
-	namespace presentation
-	{
-		namespace windows
-		{
-
-/***********************************************************************
-Windows Platform Native Controller
-***********************************************************************/
-
-			class INativeMessageHandler : public Interface
-			{
-			public:
-				virtual void								BeforeHandle(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, bool& skip) = 0;
-				virtual void								AfterHandle(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, bool& skip, LRESULT& result) = 0;
-			};
-
-			class IWindowsForm : public Interface
-			{
-			public:
-				virtual HWND								GetWindowHandle() = 0;
-				virtual Interface*							GetGraphicsHandler() = 0;
-				virtual void								SetGraphicsHandler(Interface* handler) = 0;
-				virtual bool								InstallMessageHandler(Ptr<INativeMessageHandler> handler) = 0;
-				virtual bool								UninstallMessageHandler(Ptr<INativeMessageHandler> handler) = 0;
-			};
-
-			extern INativeController*						CreateWindowsNativeController(HINSTANCE hInstance);
-			extern IWindowsForm*							GetWindowsFormFromHandle(HWND hwnd);
-			extern IWindowsForm*							GetWindowsForm(INativeWindow* window);
-			extern void										DestroyWindowsNativeController(INativeController* controller);
-			extern void										EnableCrossKernelCrashing();
-		}
-	}
-}
-
-#endif
-
-/***********************************************************************
-.\NATIVEWINDOW\WINDOWS\DIRECT2D\WINDIRECT2DAPPLICATION.H
-***********************************************************************/
-/***********************************************************************
-Vczh Library++ 3.0
-Developer: Zihan Chen(vczh)
-GacUI::Native Window::Direct2D Provider for Windows Implementation
-
-Interfaces:
-***********************************************************************/
-#ifndef VCZH_PRESENTATION_WINDOWS_GDI_WINDIRECT2DAPPLICATION
-#define VCZH_PRESENTATION_WINDOWS_GDI_WINDIRECT2DAPPLICATION
-
-#include <d2d1_1.h>
-#include <dwrite_1.h>
-#include <d3d11_1.h>
-
-namespace vl
-{
-	namespace presentation
-	{
-		namespace windows
-		{
-			extern ID2D1Factory*						GetDirect2DFactory();
-			extern IDWriteFactory*						GetDirectWriteFactory();
-			extern ID3D11Device*						GetD3D11Device();
-		}
-	}
-}
-
-extern int WinMainDirect2D(HINSTANCE hInstance, void(*RendererMain)());
-
-#endif
-
-/***********************************************************************
-.\NATIVEWINDOW\WINDOWS\GDI\WINGDIAPPLICATION.H
-***********************************************************************/
-/***********************************************************************
-Vczh Library++ 3.0
-Developer: Zihan Chen(vczh)
-GacUI::Native Window::GDI Provider for Windows Implementation
-
-Interfaces:
-***********************************************************************/
-#ifndef VCZH_PRESENTATION_WINDOWS_GDI_WINGDIAPPLICATION
-#define VCZH_PRESENTATION_WINDOWS_GDI_WINGDIAPPLICATION
-
-
-namespace vl
-{
-	namespace presentation
-	{
-		namespace windows
-		{
-			extern WinDC*									GetNativeWindowDC(INativeWindow* window);
-			extern HDC										GetNativeWindowHDC(INativeWindow* window);
-		}
-	}
-}
-
-extern int WinMainGDI(HINSTANCE hInstance, void(*RendererMain)());
-
-#endif
-
-/***********************************************************************
 .\GRAPHICSELEMENT\WINDOWSDIRECT2D\GUIGRAPHICSWINDOWSDIRECT2D.H
 ***********************************************************************/
 /***********************************************************************
@@ -1144,6 +20,10 @@ Interfaces:
 #ifndef VCZH_PRESENTATION_ELEMENTS_GUIGRAPHICSWINDOWSDIRECT2D
 #define VCZH_PRESENTATION_ELEMENTS_GUIGRAPHICSWINDOWSDIRECT2D
 
+#include <d2d1_1.h>
+#include <dwrite_1.h>
+#include <d2d1effects.h>
+#include <wincodec.h>
 
 namespace vl
 {
@@ -1216,6 +96,7 @@ Functionality
 				virtual void								DestroyBitmapCache(INativeImageFrame* frame)=0;
 				virtual void								SetTextAntialias(bool antialias, bool verticalAntialias)=0;
 
+				virtual ID2D1Effect*						GetFocusRectangleEffect() = 0;
 				virtual ID2D1SolidColorBrush*				CreateDirect2DBrush(Color color)=0;
 				virtual void								DestroyDirect2DBrush(Color color)=0;
 				virtual ID2D1LinearGradientBrush*			CreateDirect2DLinearBrush(Color c1, Color c2)=0;
@@ -1276,6 +157,38 @@ extern void RendererMainDirect2D();
 #endif
 
 /***********************************************************************
+.\GRAPHICSELEMENT\WINDOWSDIRECT2D\GUIGRAPHICSLAYOUTPROVIDERWINDOWSDIRECT2D.H
+***********************************************************************/
+/***********************************************************************
+Vczh Library++ 3.0
+Developer: Zihan Chen(vczh)
+GacUI::Native Window::Direct2D Provider for Windows Implementation::Renderer
+
+Interfaces:
+***********************************************************************/
+
+#ifndef VCZH_PRESENTATION_ELEMENTS_GUIGRAPHICSLAYOUTPROVIDERWINDOWSDIRECT2D
+#define VCZH_PRESENTATION_ELEMENTS_GUIGRAPHICSLAYOUTPROVIDERWINDOWSDIRECT2D
+
+
+namespace vl
+{
+	namespace presentation
+	{
+		namespace elements_windows_d2d
+		{
+			class WindowsDirect2DLayoutProvider : public Object, public elements::IGuiGraphicsLayoutProvider
+			{
+			public:
+				 Ptr<elements::IGuiGraphicsParagraph>		CreateParagraph(const WString& text, elements::IGuiGraphicsRenderTarget* renderTarget, elements::IGuiGraphicsParagraphCallback* callback)override;
+			};
+		}
+	}
+}
+
+#endif
+
+/***********************************************************************
 .\GRAPHICSELEMENT\WINDOWSDIRECT2D\GUIGRAPHICSRENDERERSWINDOWSDIRECT2D.H
 ***********************************************************************/
 /***********************************************************************
@@ -1317,6 +230,20 @@ namespace vl
 Renderers
 ***********************************************************************/
 
+			class GuiFocusRectangleElementRenderer : public Object, public IGuiGraphicsRenderer
+			{
+				DEFINE_GUI_GRAPHICS_RENDERER(GuiFocusRectangleElement, GuiFocusRectangleElementRenderer, IWindowsDirect2DRenderTarget)
+			protected:
+				ID2D1Effect*			focusRectangleEffect = nullptr;
+
+				void					InitializeInternal();
+				void					FinalizeInternal();
+				void					RenderTargetChangedInternal(IWindowsDirect2DRenderTarget* oldRenderTarget, IWindowsDirect2DRenderTarget* newRenderTarget);
+			public:
+
+				void					Render(Rect bounds)override;
+				void					OnElementStateChanged()override;
+			};
 
 			class GuiSolidBorderElementRenderer : public Object, public IGuiGraphicsRenderer
 			{
@@ -1542,6 +469,550 @@ Renderers
 #endif
 
 /***********************************************************************
+.\GRAPHICSELEMENT\WINDOWSGDI\GUIGRAPHICSLAYOUTPROVIDERWINDOWSGDI.H
+***********************************************************************/
+/***********************************************************************
+Vczh Library++ 3.0
+Developer: Zihan Chen(vczh)
+GacUI::Native Window::GDI Provider for Windows Implementation::Renderer
+
+Interfaces:
+***********************************************************************/
+
+#ifndef VCZH_PRESENTATION_ELEMENTS_GUIGRAPHICSLAYOUTPROVIDERWINDOWSGDI
+#define VCZH_PRESENTATION_ELEMENTS_GUIGRAPHICSLAYOUTPROVIDERWINDOWSGDI
+
+
+namespace vl
+{
+	namespace presentation
+	{
+		namespace elements_windows_gdi
+		{
+			class WindowsGDILayoutProvider : public Object, public elements::IGuiGraphicsLayoutProvider
+			{
+			public:
+				 Ptr<elements::IGuiGraphicsParagraph>		CreateParagraph(const WString& text, elements::IGuiGraphicsRenderTarget* renderTarget, elements::IGuiGraphicsParagraphCallback* callback)override;
+			};
+		}
+	}
+}
+
+#endif
+
+/***********************************************************************
+.\NATIVEWINDOW\WINDOWS\WINNATIVEDPIAWARENESS.H
+***********************************************************************/
+/***********************************************************************
+Vczh Library++ 3.0
+Developer: Zihan Chen(vczh)
+GacUI::Native Window::Windows Implementation
+
+Interfaces:
+***********************************************************************/
+
+#ifndef VCZH_PRESENTATION_WINDOWS_WINNATIVEDPIAWARENESS
+#define VCZH_PRESENTATION_WINDOWS_WINNATIVEDPIAWARENESS
+
+#include <Windows.h>
+#include <ShellScalingApi.h>
+
+namespace vl
+{
+	namespace presentation
+	{
+		namespace windows
+		{
+/***********************************************************************
+DPI Awareness Functions
+***********************************************************************/
+
+			extern void				InitDpiAwareness(bool dpiAware);
+			extern void				DpiAwared_GetDpiForMonitor(HMONITOR monitor, UINT* x, UINT* y);
+			extern void				DpiAwared_GetDpiForWindow(HWND handle, UINT* x, UINT* y);
+			extern void				DpiAwared_AdjustWindowRect(LPRECT rect, HWND handle, UINT dpi);
+			extern int				DpiAwared_GetSystemMetrics(int index, UINT dpi);
+		}
+	}
+}
+
+#endif
+
+/***********************************************************************
+.\NATIVEWINDOW\WINDOWS\GDI\WINGDI.H
+***********************************************************************/
+/*******************************************************************************
+Vczh Library++ 3.0
+Developer: Zihan Chen(vczh)
+GacUI::GDI Helper Library
+
+Classes:
+  WinRegion				: Region
+  WinTransform			: Vertex Transformation
+  WinBrush				: Brush for filling geometries
+  WinPen				: Pen for filling lines
+  WinFont				: Font
+  WinDC					: Device Context
+  WinControlDC			: Device Context from HWND
+  WinImageDC			: Device Context from images
+  WinProxyDC			: Device Context from HDC
+  WinDIB				: Device Independent Bitmap
+  WinMetaFileBuilder	: Metafile Builder
+  WinMetaFile			: Metafile Image
+  WinBitmap				: Bitmap
+
+Comments:
+  WinDC::PolyDraw
+    Points				: Points
+	Actions				: How to deal with points
+		PT_MOVETO		：MoveTo and consume 1 point
+		PT_LINETO		：LineTo and consume 1 point
+		PT_BEZIERTO		：Draw a bezier curve and consume 3 points
+		PT_LINETO and PT_BEZIERTO can be mixed with PT_CLOSFIGURE to close the geometry begins from the last PT_MOVETO that happened
+	PointCount			: Point count
+  WinDC::DrawBuffer
+    Format: See DrawText
+  Pen：
+	Style：
+		PS_SOLID, PS_DASH, PS_DOT, PS_DASHDOT, PS_DASHDOTDOT, PS_USERSTYLE (for Geometric pen)
+	EndCap：
+		PS_ENDCAP_ROUND, PS_ENDCAP_SQUARE, PS_ENDCAP_FLAT
+	Join：
+		PS_JOIN_BEVEL, PS_JOIN_MITER, PS_JOIN_ROUND
+  Brush：
+	Hatch：
+		HS_BDIAGONAL, HS_CROSS, HS_DIAGCROSS, HS_FDIAGONAL, HS_HORIZONTAL, HS_VERTICAL
+  Region：
+	Combine：
+		RGN_AND, RGN_OR, RGN_XOR, RGN_DIFF, RGN_COPY
+  ImageCopy：
+	Draw ROP：
+		BLACKNESS, DSTINVERT, MERGECOPY, MERGEPAINT, NOTSRCCOPY, NOTSRCERASE, 
+		PATCOPY, PATINVERT, PATPAINT, SRCAND, SRCCOPY, SRCERASE, SRCINVERT, SRCPAINT, WHITENESS
+
+  RasterOperation:
+	R2_BLACK, R2_COPYPEN, R2_MASKNOTPEN, R2_MASKPEN, R2_MASKPENNOT, R2_MERGENOTPEN, R2_MERGEPEN
+	R2_MERGEPENNOT, R2_NOP, R2_NOT, R2_NOTCOPYPEN, R2_NOTMASKPEN, R2_NOTMERGEPEN, R2_NOTXORPEN
+	R2_WHITE, R2_XORPEN
+  WinDIB：
+	TransformAlphaChannel()：	Convert to an GDI compatible bitmap with alpha channel after all pixels are filled.
+	Generate×××()：				Predefined alpha channel generation, TransformAlphaChannel should be called after that
+*******************************************************************************/
+
+#ifndef VCZH_PRESENTATION_WINDOWS_GDI_WINGDI
+#define VCZH_PRESENTATION_WINDOWS_GDI_WINGDI
+
+
+namespace vl
+{
+	namespace presentation
+	{
+		namespace windows
+		{
+
+/*********************************************************************************************************
+Geometry
+*********************************************************************************************************/
+
+			class WinRegion : public Object
+			{
+			public:
+				typedef Ptr<WinRegion>	Ptr;
+
+				friend bool IsEqual(WinRegion::Ptr Region1, WinRegion::Ptr Region2);
+			protected:
+				HRGN					FHandle;
+			public:
+				WinRegion(vint Left, vint Top, vint Right, vint Bottom, bool Rectangle);
+				WinRegion(RECT Rect, bool Rectangle);
+				WinRegion(vint Left, vint Top, vint Right, vint Bottom, vint EllipseWidth, vint EllipseHeight);
+				WinRegion(POINT* Points, vint Count, bool Alternate);
+				WinRegion(WinRegion::Ptr Region);
+				WinRegion(WinRegion::Ptr Region1, WinRegion::Ptr Region2, vint CombineMode);
+				WinRegion(HRGN RegionHandle);
+				~WinRegion();
+
+				HRGN					GetHandle();
+				bool					ContainPoint(POINT Point);
+				bool					ContainRect(RECT Rect);
+				RECT					GetBoundRect();
+				void					Move(vint OffsetX, vint OffsetY);
+			};
+
+			class WinTransform : public Object
+			{
+			protected:
+				XFORM					FTransform;
+			public:
+				WinTransform(XFORM Transform);
+				WinTransform(const WinTransform& Transform);
+
+				WinTransform&			operator=(const WinTransform& Transform);
+				WinTransform			operator*(const WinTransform& Transform);
+				const XFORM*			GetHandle()const;
+
+				static WinTransform		Translate(float OffsetX, float OffsetY);
+				static WinTransform		Scale(float ScaleX, float ScaleY);
+				static WinTransform		Rotate(float Angle);
+				static WinTransform		Rotate(float Cos, float Sin);
+				static WinTransform		ReflectX();
+				static WinTransform		ReflectY();
+				static WinTransform		Reflect(float VectorX, float VectorY);
+				static WinTransform		Reflect(float OriginX, float OriginY, float VectorX, float VectorY);
+				static WinTransform		AxisV(float Xx, float Xy, float Yx, float Yy);
+				static WinTransform		AxisA(float AngleX, float LenX, float AngleY, float LenY);
+			};
+		
+/*********************************************************************************************************
+Images
+*********************************************************************************************************/
+
+			class WinDC;
+			class WinControlDC;
+			class WinProxyDC;
+			class WinImageDC;
+
+			class WinMetaFileBuilder : public Object
+			{
+				friend class WinMetaFile;
+			protected:
+				vint					FWidth;
+				vint					FHeight;
+				WinProxyDC*				FDC;
+
+				void					Create(vint Width, vint Height);
+				void					Draw(HENHMETAFILE Handle);
+				void					Destroy();
+			public:
+
+				WinMetaFileBuilder(vint Width, vint Height);
+				~WinMetaFileBuilder();
+
+				void					LoadFrom(WinMetaFile* File);
+				void					SaveTo(WinMetaFile* File);
+				void					LoadFrom(WString FileName);
+				void					SaveTo(WString FileName);
+				WinDC*					GetWinDC();
+				vint					GetWidth();
+				vint					GetHeight();
+			};
+
+			class WinMetaFile : public Object
+			{
+				friend class WinMetaFileBuilder;
+			protected:
+				HENHMETAFILE			FHandle;
+				vint					FWidth;
+				vint					FHeight;
+			public:
+				WinMetaFile(WString FileName);
+				WinMetaFile(WinMetaFileBuilder* Builder);
+				~WinMetaFile();
+
+				HENHMETAFILE			GetHandle();
+				vint					GetWidth();
+				vint					GetHeight();
+			};
+
+			class WinBitmap : public Object
+			{
+			public:
+				typedef Ptr<WinBitmap>		Ptr;
+				enum BitmapBits
+				{
+					vbb2Bits,
+					vbb24Bits,
+					vbb32Bits
+				};
+			protected:
+				BitmapBits				FBits;
+				vint					FWidth;
+				vint					FHeight;
+				WinImageDC*				FDC;
+				HBITMAP					FHandle;
+				BYTE**					FScanLines;
+				bool					FAlphaChannelBuilt;
+
+				vint					GetBitsFromBB(BitmapBits BB);
+				vint					GetLineBytes(vint Width, BitmapBits BB);
+				void					FillBitmapInfoHeader(vint Width, vint Height, BitmapBits Bits, BITMAPINFOHEADER* Header);
+				HBITMAP					CreateDDB(vint Width, vint Height, BitmapBits Bits);
+				HBITMAP					CreateDIB(vint Width, vint Height, BitmapBits Bits, BYTE**& ScanLines);
+				void					Constructor(vint Width, vint Height, BitmapBits Bits, bool DIBSections);
+			public:
+				WinBitmap(vint Width, vint Height, BitmapBits Bits, bool DIBSections);
+				WinBitmap(WString FileName, bool Use32Bits, bool DIBSections);
+				~WinBitmap();
+
+				void					SaveToStream(stream::IStream& Output, bool DIBV5ClipboardFormat);
+				void					SaveToFile(WString FileName);
+
+				WinDC*					GetWinDC();
+				vint					GetWidth();
+				vint					GetHeight();
+				vint					GetLineBytes();
+				BYTE**					GetScanLines();
+				HBITMAP					GetBitmap();
+				BitmapBits				GetBitmapBits();
+				void					FillCompatibleHeader(BITMAPINFOHEADER* Header);
+
+				bool					CanBuildAlphaChannel();
+				bool					IsAlphaChannelBuilt();
+				void					BuildAlphaChannel(bool autoPremultiply);
+				void					GenerateTrans(COLORREF Color);
+				void					GenerateAlpha(BYTE Alpha);
+				void					GenerateTransAlpha(COLORREF Color, BYTE Alpha);
+				void					GenerateLuminance();
+				void					GenerateGrayLevel();
+				void					Generate(BYTE(*Function)(COLORREF));
+			};
+
+/*********************************************************************************************************
+Resources
+*********************************************************************************************************/
+
+			class WinBrush : public Object
+			{
+			public:
+				typedef Ptr<WinBrush>	Ptr;
+			protected:
+				HBRUSH					FHandle;
+				unsigned char*			FDIBMemory;
+			public:
+				WinBrush();
+				WinBrush(COLORREF Color);
+				WinBrush(vint Hatch, COLORREF Color);
+				WinBrush(WinBitmap::Ptr Bitmap);
+				~WinBrush();
+
+				HBRUSH					GetHandle();
+			};
+
+			class WinPen : public Object
+			{
+			public:
+				typedef Ptr<WinPen>		Ptr;
+			protected:
+				HPEN					FHandle;
+				unsigned char*			FDIBMemory;
+			public:
+				WinPen(vint Style, vint Width, COLORREF Color);
+				WinPen(vint Style, vint EndCap, vint Join, vint Width, COLORREF Color, DWORD styleCount = 0, const DWORD* styleArray = nullptr);
+				WinPen(vint Style, vint EndCap, vint Join, vint Hatch, vint Width, COLORREF Color);
+				WinPen(WinBitmap::Ptr DIB, vint Style, vint EndCap, vint Join, vint Width);
+				~WinPen();
+
+				HPEN					GetHandle();
+			};
+
+			class WinFont : public Object
+			{
+			public:
+				typedef Ptr<WinFont>		Ptr;
+			protected:
+				LOGFONT					FFontInfo;
+				HFONT					FHandle;
+			public:
+				WinFont(WString Name, vint Height, vint Width, vint Escapement, vint Orientation, vint Weight, bool Italic, bool Underline, bool StrikeOut, bool Antialise);
+				WinFont(LOGFONT* FontInfo);
+				~WinFont();
+
+				HFONT					GetHandle();
+				LOGFONT*				GetInfo();
+			};
+
+/*********************************************************************************************************
+Device Context
+*********************************************************************************************************/
+
+			extern WinBrush::Ptr		CreateDefaultBrush();
+			extern WinPen::Ptr			CreateDefaultPen();
+			extern WinFont::Ptr			CreateDefaultFont();
+
+			class IWinResourceService : public Interface
+			{
+			public:
+				virtual WinPen::Ptr		GetDefaultPen()=0;
+				virtual WinBrush::Ptr	GetDefaultBrush()=0;
+				virtual WinFont::Ptr	GetDefaultFont()=0;
+			};
+			extern IWinResourceService*	GetDefaultResourceService();
+			extern void					SetDefaultResourceService(IWinResourceService* Service);
+
+			class WinDC : public Object
+			{
+			protected:
+				HDC						FHandle;
+
+				WinPen::Ptr				FPen;
+				WinBrush::Ptr			FBrush;
+				WinFont::Ptr			FFont;
+
+				HPEN					FOldPen;
+				HBRUSH					FOldBrush;
+				HFONT					FOldFont;
+
+				void					Init();
+			public:
+				WinDC();
+				~WinDC();
+
+				HDC						GetHandle();
+
+				WinPen::Ptr				GetPen();
+				WinBrush::Ptr			GetBrush();
+				WinFont::Ptr			GetFont();
+				void					SetPen(WinPen::Ptr Pen);
+				void					SetBrush(WinBrush::Ptr Brush);
+				void					SetFont(WinFont::Ptr Font);
+				COLORREF				GetBackColor();
+				void					SetBackColor(COLORREF Color);
+				COLORREF				GetTextColor();
+				void					SetTextColor(COLORREF Color);
+				bool					GetBackTransparent();
+				void					SetBackTransparent(bool Transparent);
+				POINT					GetBrushOrigin();
+				void					SetBrushOrigin(POINT Point);
+				int						SetRasterOperation(int rop2);
+
+				void					DrawBuffer(vint X, vint Y, const wchar_t* Text, vint CharCount);
+				void					DrawBuffer(vint X, vint Y, const wchar_t* Text, vint CharCount, vint TabWidth, vint TabOriginX);
+				void					DrawBuffer(RECT Rect, const wchar_t* Text, vint CharCount, UINT Format);
+				void					DrawString(vint X, vint Y, WString Text);
+				void					DrawString(vint X, vint Y, WString Text, vint TabWidth, vint TabOriginX);
+				void					DrawString(RECT Rect, WString Text, UINT Format);
+
+				SIZE					MeasureString(WString Text, vint TabSize=-1);
+				SIZE					MeasureBuffer(const wchar_t* Text, vint CharCount, vint TabSize=-1);
+				SIZE					MeasureBuffer(const wchar_t* Text, vint TabSize=-1);
+				SIZE					MeasureWrapLineString(WString Text, vint MaxWidth);
+				SIZE					MeasureWrapLineBuffer(const wchar_t* Text, vint CharCount, vint MaxWidth);
+				SIZE					MeasureWrapLineBuffer(const wchar_t* Text, vint MaxWidth);
+
+				void					FillRegion(WinRegion::Ptr Region);
+				void					FrameRegion(WinRegion::Ptr Region, vint BlockWidth, vint BlockHeight);
+
+				void					MoveTo(vint X, vint Y);
+				void					LineTo(vint X, vint Y);
+				void					Rectangle(vint Left, vint Top, vint Right, vint Bottom);
+				void					Rectangle(RECT Rect);
+				void					FocusRectangle(vint Left, vint Top, vint Right, vint Bottom);
+				void					FocusRectangle(RECT Rect);
+				void					FillRect(vint Left, vint Top, vint Right, vint Bottom);
+				void					FillRect(RECT Rect);
+				void					Ellipse(vint Left, vint Top, vint Right, vint Bottom);
+				void					Ellipse(RECT Rect);
+				void					RoundRect(vint Left, vint Top, vint Right, vint Bottom, vint EllipseWidth, vint EllipseHeight);
+				void					RoundRect(RECT Rect, vint EllipseWidth, vint EllipseHeight);
+				void					PolyLine(const POINT* Points, vint Count);
+				void					PolyLineTo(const POINT* Points, vint Count);
+				void					PolyGon(const POINT* Points, vint Count);
+				void					PolyBezier(const POINT* Points, vint Count);
+				void					PolyBezierTo(const POINT* Points, vint Count);
+				void					PolyDraw(const POINT* Points, const BYTE* Actions, vint PointCount);
+				void					Arc(RECT Bound, POINT Start, POINT End);
+				void					Arc(vint Left, vint Top, vint Right, vint Bottom, vint StartX, vint StartY, vint EndX, vint EndY);
+				void					ArcTo(RECT Bound, POINT Start, POINT End);
+				void					ArcTo(vint Left, vint Top, vint Right, vint Bottom, vint StartX, vint StartY, vint EndX, vint EndY);
+				void					AngleArc(vint X, vint Y, vint Radius, float StartAngle, float SweepAngle);
+				void					AngleArc(vint X, vint Y, vint Radius, double StartAngle, double SweepAngle);
+				void					Chord(RECT Bound, POINT Start, POINT End);
+				void					Chord(vint Left, vint Top, vint Right, vint Bottom, vint StartX, vint StartY, vint EndX, vint EndY);
+				void					Pie(RECT Bound, POINT Start, POINT End);
+				void					Pie(vint Left, vint Top, vint Right, vint Bottom, vint StartX, vint StartY, vint EndX, vint EndY);
+				void					GradientRectH(TRIVERTEX* Vertices, vint VerticesCount, GRADIENT_RECT* Rectangles, vint RectangleCount);
+				void					GradientRectV(TRIVERTEX* Vertices, vint VerticesCount, GRADIENT_RECT* Rectangles, vint RectangleCount);
+				void					GradientTriangle(TRIVERTEX* Vertices, vint VerticesCount, GRADIENT_TRIANGLE* Triangles, vint TriangleCount);
+
+				void					BeginPath();
+				void					EndPath();
+				void					ClosePath();
+				void					WidenPath();
+				void					DiscardPath();
+				void					DrawPath();
+				void					FillPath();
+				void					DrawAndFillPath();
+				WinRegion::Ptr			RegionFromPath();
+
+				bool					PointInClip(POINT Point);
+				bool					RectInClip(RECT Rect);
+				void					ClipPath(vint CombineMode);
+				void					ClipRegion(WinRegion::Ptr Region);
+				void					RemoveClip();
+				void					MoveClip(vint OffsetX, vint OffsetY);
+				void					CombineClip(WinRegion::Ptr Region, vint CombineMode);
+				void					IntersetClipRect(RECT Rect);
+				void					ExcludeClipRect(RECT Rect);
+				WinRegion::Ptr			GetClipRegion();
+				RECT					GetClipBoundRect();
+
+				WinTransform			GetTransform();
+				void					SetTransform(const WinTransform& Transform);
+
+				void					Copy(vint dstX, vint dstY, vint dstW, vint dstH, WinDC* Source, vint srcX, vint srcY, DWORD DrawROP=SRCCOPY);
+				void					Copy(RECT dstRect, WinDC* Source, POINT srcPos, DWORD DrawROP=SRCCOPY);
+				void					Copy(vint dstX, vint dstY, vint dstW, vint dstH, WinDC* Source, vint srcX, vint srcY ,vint srcW, vint srcH, DWORD DrawROP=SRCCOPY);
+				void					Copy(RECT dstRect, WinDC* Source, RECT srcRect, DWORD DrawROP=SRCCOPY);
+				void					Copy(POINT UpperLeft, POINT UpperRight, POINT LowerLeft, WinDC* Source, vint srcX, vint srcY, vint srcW, vint srcH);
+				void					Copy(POINT UpperLeft, POINT UpperRight, POINT LowerLeft, WinDC* Source, RECT srcRect);
+				void					CopyTrans(vint dstX, vint dstY, vint dstW, vint dstH, WinDC* Source, vint srcX, vint srcY ,vint srcW, vint srcH, COLORREF Color);
+				void					CopyTrans(RECT dstRect, WinDC* Source, RECT srcRect, COLORREF Color);
+
+				void					Draw(vint dstX, vint dstY, WinMetaFile* MetaFile);
+				void					Draw(POINT Pos, WinMetaFile* MetaFile);
+				void					Draw(vint dstX, vint dstY, vint dstW, vint dstH, WinMetaFile* MetaFile);
+				void					Draw(RECT Rect, WinMetaFile* MetaFile);
+
+				void					Draw(vint dstX, vint dstY, WinBitmap::Ptr Bitmap);
+				void					Draw(POINT Pos, WinBitmap::Ptr Bitmap);
+				void					Draw(vint dstX, vint dstY, vint dstW, vint dstH, WinBitmap::Ptr Bitmap);
+				void					Draw(RECT Rect, WinBitmap::Ptr Bitmap);
+				void					Draw(vint dstX, vint dstY, vint dstW, vint dstH, WinBitmap::Ptr Bitmap, vint srcX, vint srcY);
+				void					Draw(RECT Rect, WinBitmap::Ptr Bitmap, POINT Pos);
+				void					Draw(vint dstX, vint dstY, vint dstW, vint dstH, WinBitmap::Ptr Bitmap, vint srcX, vint srcY, vint srcW, vint srcH);
+				void					Draw(RECT dstRect, WinBitmap::Ptr Bitmap, RECT srcRect);
+
+				void					Draw(vint dstX, vint dstY, WinBitmap::Ptr Bitmap, unsigned char Alpha);
+				void					Draw(POINT Pos, WinBitmap::Ptr Bitmap, unsigned char Alpha);
+				void					Draw(vint dstX, vint dstY, vint dstW, vint dstH, WinBitmap::Ptr Bitmap, unsigned char Alpha);
+				void					Draw(RECT Rect, WinBitmap::Ptr Bitmap, unsigned char Alpha);
+				void					Draw(vint dstX, vint dstY, vint dstW, vint dstH, WinBitmap::Ptr Bitmap, vint srcX, vint srcY, unsigned char Alpha);
+				void					Draw(RECT Rect, WinBitmap::Ptr Bitmap, POINT Pos, unsigned char Alpha);
+				void					Draw(vint dstX, vint dstY, vint dstW, vint dstH, WinBitmap::Ptr Bitmap, vint srcX, vint srcY, vint srcW, vint srcH, unsigned char Alpha);
+				void					Draw(RECT dstRect, WinBitmap::Ptr Bitmap, RECT srcRect, unsigned char Alpha);
+			};
+
+			class WinControlDC : public WinDC
+			{
+			protected:
+				HWND					FControlHandle;
+			public:
+				WinControlDC(HWND Handle);
+				~WinControlDC();
+			};
+
+			class WinProxyDC : public WinDC
+			{
+			public:
+				WinProxyDC();
+				~WinProxyDC();
+
+				void					Initialize(HDC Handle);
+			};
+
+			class WinImageDC : public WinDC
+			{
+			public:
+				WinImageDC();
+				~WinImageDC();
+			};
+		}
+	}
+}
+
+#endif
+
+/***********************************************************************
 .\GRAPHICSELEMENT\WINDOWSGDI\GUIGRAPHICSWINDOWSGDI.H
 ***********************************************************************/
 /***********************************************************************
@@ -1619,6 +1090,7 @@ Functionality
 			class IWindowsGDIResourceManager : public Interface
 			{
 			public:
+				virtual Ptr<windows::WinPen>				GetFocusRectanglePen()=0;
 				virtual Ptr<windows::WinPen>				CreateGdiPen(Color color)=0;
 				virtual void								DestroyGdiPen(Color color)=0;
 				virtual Ptr<windows::WinBrush>				CreateGdiBrush(Color color)=0;
@@ -1685,6 +1157,20 @@ namespace vl
 /***********************************************************************
 Renderers
 ***********************************************************************/
+
+			class GuiFocusRectangleElementRenderer : public Object, public IGuiGraphicsRenderer
+			{
+				DEFINE_GUI_GRAPHICS_RENDERER(GuiFocusRectangleElement, GuiFocusRectangleElementRenderer, IWindowsGDIRenderTarget)
+			protected:
+				Ptr<windows::WinPen>	pen;
+
+				void					InitializeInternal();
+				void					FinalizeInternal();
+				void					RenderTargetChangedInternal(IWindowsGDIRenderTarget* oldRenderTarget, IWindowsGDIRenderTarget* newRenderTarget);
+			public:
+				void					Render(Rect bounds)override;
+				void					OnElementStateChanged()override;
+			};
 
 			class GuiSolidBorderElementRenderer : public Object, public IGuiGraphicsRenderer
 			{
@@ -1764,13 +1250,27 @@ Renderers
 				void					OnElementStateChanged()override;
 			};
 
+			class GuiInnerShadowElementRenderer : public Object, public IGuiGraphicsRenderer
+			{
+				DEFINE_GUI_GRAPHICS_RENDERER(GuiInnerShadowElement, GuiInnerShadowElementRenderer, IWindowsGDIRenderTarget)
+			protected:
+				void					InitializeInternal();
+				void					FinalizeInternal();
+				void					RenderTargetChangedInternal(IWindowsGDIRenderTarget* oldRenderTarget, IWindowsGDIRenderTarget* newRenderTarget);
+			public:
+				GuiInnerShadowElementRenderer();
+
+				void					Render(Rect bounds)override;
+				void					OnElementStateChanged()override;
+			};
+
 			class GuiSolidLabelElementRenderer : public Object, public IGuiGraphicsRenderer
 			{
 				DEFINE_GUI_GRAPHICS_RENDERER(GuiSolidLabelElement, GuiSolidLabelElementRenderer, IWindowsGDIRenderTarget)
 			protected:
 				FontProperties			oldFont;
 				Ptr<windows::WinFont>	font;
-				vint						oldMaxWidth;
+				vint					oldMaxWidth;
 
 				void					UpdateMinSize();
 
@@ -2239,5 +1739,654 @@ UniscribeParagraph
 		}
 	}
 }
+
+#endif
+
+/***********************************************************************
+.\NATIVEWINDOW\WINDOWS\SERVICESIMPL\WINDOWSIMAGESERVICE.H
+***********************************************************************/
+/***********************************************************************
+Vczh Library++ 3.0
+Developer: Zihan Chen(vczh)
+GacUI::Native Window::Windows Implementation
+
+Interfaces:
+***********************************************************************/
+
+#ifndef VCZH_PRESENTATION_WINDOWS_SERVICESIMPL_WINDOWSIMAGESERIVCE
+#define VCZH_PRESENTATION_WINDOWS_SERVICESIMPL_WINDOWSIMAGESERIVCE
+
+
+namespace vl
+{
+	namespace presentation
+	{
+		namespace windows
+		{
+			class WindowsImageFrame : public Object, public INativeImageFrame
+			{
+			protected:
+				INativeImage*													image;
+				ComPtr<IWICBitmap>												frameBitmap;
+				collections::Dictionary<void*, Ptr<INativeImageFrameCache>>		caches;
+
+				void										Initialize(IWICBitmapSource* bitmapSource);
+			public:
+				WindowsImageFrame(INativeImage* _image, IWICBitmapFrameDecode* frameDecode);
+				WindowsImageFrame(INativeImage* _image, IWICBitmap* sourceBitmap);
+				~WindowsImageFrame();
+
+				INativeImage*								GetImage()override;
+				Size										GetSize()override;
+				bool										SetCache(void* key, Ptr<INativeImageFrameCache> cache)override;
+				Ptr<INativeImageFrameCache>					GetCache(void* key)override;
+				Ptr<INativeImageFrameCache>					RemoveCache(void* key)override;
+				IWICBitmap*									GetFrameBitmap();
+				void										SaveBitmapToStream(stream::IStream& stream);
+			};
+
+			class WindowsImage : public Object, public INativeImage
+			{
+			protected:
+				INativeImageService*						imageService;
+				ComPtr<IWICBitmapDecoder>					bitmapDecoder;
+				collections::Array<Ptr<WindowsImageFrame>>	frames;
+			public:
+				WindowsImage(INativeImageService* _imageService, IWICBitmapDecoder* _bitmapDecoder);
+				~WindowsImage();
+
+				INativeImageService*						GetImageService()override;
+				FormatType									GetFormat()override;
+				vint										GetFrameCount()override;
+				INativeImageFrame*							GetFrame(vint index)override;
+				void										SaveToStream(stream::IStream& stream, FormatType formatType)override;
+			};
+
+			class WindowsBitmapImage : public Object, public INativeImage
+			{
+			protected:
+				INativeImageService*						imageService;
+				Ptr<WindowsImageFrame>						frame;
+				FormatType									formatType;
+			public:
+				WindowsBitmapImage(INativeImageService* _imageService, IWICBitmap* sourceBitmap, FormatType _formatType);
+				~WindowsBitmapImage();
+
+				INativeImageService*						GetImageService()override;
+				FormatType									GetFormat()override;
+				vint										GetFrameCount()override;
+				INativeImageFrame*							GetFrame(vint index)override;
+				void										SaveToStream(stream::IStream& stream, FormatType formatType)override;
+			};
+
+			class WindowsImageService : public Object, public INativeImageService
+			{
+			protected:
+				ComPtr<IWICImagingFactory>					imagingFactory;
+			public:
+				WindowsImageService();
+				~WindowsImageService();
+
+				Ptr<INativeImage>							CreateImageFromFile(const WString& path);
+				Ptr<INativeImage>							CreateImageFromMemory(void* buffer, vint length);
+				Ptr<INativeImage>							CreateImageFromStream(stream::IStream& stream);
+				Ptr<INativeImage>							CreateImageFromHBITMAP(HBITMAP handle);
+				Ptr<INativeImage>							CreateImageFromHICON(HICON handle);
+				IWICImagingFactory*							GetImagingFactory();
+			};
+
+			extern IWICImagingFactory*						GetWICImagingFactory();
+			extern IWICBitmap*								GetWICBitmap(INativeImageFrame* frame);
+			extern Ptr<INativeImage>						CreateImageFromHBITMAP(HBITMAP handle);
+			extern Ptr<INativeImage>						CreateImageFromHICON(HICON handle);
+		}
+	}
+}
+
+#endif
+
+/***********************************************************************
+.\NATIVEWINDOW\WINDOWS\WINNATIVEWINDOW.H
+***********************************************************************/
+/***********************************************************************
+Vczh Library++ 3.0
+Developer: Zihan Chen(vczh)
+GacUI::Native Window::Windows Implementation
+
+Interfaces:
+***********************************************************************/
+
+#ifndef VCZH_PRESENTATION_WINDOWS_WINNATIVEWINDOW
+#define VCZH_PRESENTATION_WINDOWS_WINNATIVEWINDOW
+
+
+namespace vl
+{
+	namespace presentation
+	{
+		namespace windows
+		{
+
+/***********************************************************************
+Windows Platform Native Controller
+***********************************************************************/
+
+			class INativeMessageHandler : public Interface
+			{
+			public:
+				virtual void								BeforeHandle(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, bool& skip) = 0;
+				virtual void								AfterHandle(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, bool& skip, LRESULT& result) = 0;
+			};
+
+			class IWindowsForm : public Interface
+			{
+			public:
+				virtual HWND								GetWindowHandle() = 0;
+				virtual Interface*							GetGraphicsHandler() = 0;
+				virtual void								SetGraphicsHandler(Interface* handler) = 0;
+				virtual bool								InstallMessageHandler(Ptr<INativeMessageHandler> handler) = 0;
+				virtual bool								UninstallMessageHandler(Ptr<INativeMessageHandler> handler) = 0;
+			};
+
+			extern void										SetWindowDefaultIcon(UINT resourceId);
+			extern INativeController*						CreateWindowsNativeController(HINSTANCE hInstance);
+			extern IWindowsForm*							GetWindowsFormFromHandle(HWND hwnd);
+			extern IWindowsForm*							GetWindowsForm(INativeWindow* window);
+			extern void										DestroyWindowsNativeController(INativeController* controller);
+			extern void										EnableCrossKernelCrashing();
+		}
+	}
+}
+
+#endif
+
+/***********************************************************************
+.\NATIVEWINDOW\WINDOWS\DIRECT2D\WINDIRECT2DAPPLICATION.H
+***********************************************************************/
+/***********************************************************************
+Vczh Library++ 3.0
+Developer: Zihan Chen(vczh)
+GacUI::Native Window::Direct2D Provider for Windows Implementation
+
+Interfaces:
+***********************************************************************/
+#ifndef VCZH_PRESENTATION_WINDOWS_GDI_WINDIRECT2DAPPLICATION
+#define VCZH_PRESENTATION_WINDOWS_GDI_WINDIRECT2DAPPLICATION
+
+#include <d3d11_1.h>
+
+namespace vl
+{
+	namespace presentation
+	{
+		namespace windows
+		{
+			extern ID2D1Factory*						GetDirect2DFactory();
+			extern IDWriteFactory*						GetDirectWriteFactory();
+			extern ID3D11Device*						GetD3D11Device();
+		}
+	}
+}
+
+extern int WinMainDirect2D(HINSTANCE hInstance, void(*RendererMain)());
+
+#endif
+
+/***********************************************************************
+.\NATIVEWINDOW\WINDOWS\SERVICESIMPL\WINDOWSRESOURCESERVICE.H
+***********************************************************************/
+/***********************************************************************
+Vczh Library++ 3.0
+Developer: Zihan Chen(vczh)
+GacUI::Native Window::Windows Implementation
+
+Interfaces:
+***********************************************************************/
+
+#ifndef VCZH_PRESENTATION_WINDOWS_SERVICESIMPL_WINDOWSRESOURCESERVICE
+#define VCZH_PRESENTATION_WINDOWS_SERVICESIMPL_WINDOWSRESOURCESERVICE
+
+
+namespace vl
+{
+	namespace presentation
+	{
+		namespace windows
+		{
+			class WindowsCursor : public Object, public INativeCursor
+			{
+			protected:
+				HCURSOR										handle;
+				bool										isSystemCursor;
+				SystemCursorType							systemCursorType;
+			public:
+				WindowsCursor(HCURSOR _handle);
+				WindowsCursor(SystemCursorType type);
+
+				bool										IsSystemCursor()override;
+				SystemCursorType							GetSystemCursorType()override;
+				HCURSOR										GetCursorHandle();
+			};
+
+			class WindowsResourceService : public Object, public INativeResourceService
+			{
+			protected:
+				collections::Array<Ptr<WindowsCursor>>		systemCursors;
+				FontProperties								defaultFont;
+			public:
+				WindowsResourceService();
+
+				INativeCursor*								GetSystemCursor(INativeCursor::SystemCursorType type)override;
+				INativeCursor*								GetDefaultSystemCursor()override;
+				FontProperties								GetDefaultFont()override;
+				void										SetDefaultFont(const FontProperties& value)override;
+			};
+		}
+	}
+}
+
+#endif
+
+/***********************************************************************
+.\NATIVEWINDOW\WINDOWS\SERVICESIMPL\WINDOWSCLIPBOARDSERVICE.H
+***********************************************************************/
+/***********************************************************************
+Vczh Library++ 3.0
+Developer: Zihan Chen(vczh)
+GacUI::Native Window::Windows Implementation
+
+Interfaces:
+***********************************************************************/
+
+#ifndef VCZH_PRESENTATION_WINDOWS_SERVICESIMPL_WINDOWSCLIPBOARDSERVICE
+#define VCZH_PRESENTATION_WINDOWS_SERVICESIMPL_WINDOWSCLIPBOARDSERVICE
+
+
+namespace vl
+{
+	namespace presentation
+	{
+		namespace windows
+		{
+			class WindowsClipboardService;
+
+			class WindowsClipboardReader : public Object, public INativeClipboardReader
+			{
+				friend class WindowsClipboardService;
+			protected:
+				WindowsClipboardService*		service;
+				bool							ContainsFormat(UINT format);
+
+			public:
+				WindowsClipboardReader(WindowsClipboardService* _service);
+				~WindowsClipboardReader();
+
+				bool							ContainsText()override;
+				WString							GetText()override;
+
+				bool							ContainsDocument()override;
+				Ptr<DocumentModel>				GetDocument()override;
+
+				bool							ContainsImage()override;
+				Ptr<INativeImage>				GetImage()override;
+
+				void							CloseClipboard();
+			};
+
+			class WindowsClipboardWriter : public Object, public INativeClipboardWriter
+			{
+				friend class WindowsClipboardService;
+			protected:
+				WindowsClipboardService*		service;
+				Nullable<WString>				textData;
+				Ptr<DocumentModel>				documentData;
+				Ptr<INativeImage>				imageData;
+
+				void							SetClipboardData(UINT format, stream::MemoryStream& memoryStream);
+			public:
+				WindowsClipboardWriter(WindowsClipboardService* _service);
+				~WindowsClipboardWriter();
+
+				void							SetText(const WString& value)override;
+				void							SetDocument(Ptr<DocumentModel> value)override;
+				void							SetImage(Ptr<INativeImage> value)override;
+				bool							Submit()override;
+			};
+
+			class WindowsClipboardService : public Object, public INativeClipboardService
+			{
+				friend class WindowsClipboardReader;
+				friend class WindowsClipboardWriter;
+			protected:
+				HWND							ownerHandle;
+				UINT							WCF_Document;
+				UINT							WCF_RTF;
+				UINT							WCF_HTML;
+				WindowsClipboardReader*			reader = nullptr;
+
+			public:
+				WindowsClipboardService();
+
+				Ptr<INativeClipboardReader>		ReadClipboard()override;
+				Ptr<INativeClipboardWriter>		WriteClipboard()override;
+
+				void							SetOwnerHandle(HWND handle);
+			};
+		}
+	}
+}
+
+#endif
+
+/***********************************************************************
+.\NATIVEWINDOW\WINDOWS\SERVICESIMPL\WINDOWSASYNCSERVICE.H
+***********************************************************************/
+/***********************************************************************
+Vczh Library++ 3.0
+Developer: Zihan Chen(vczh)
+GacUI::Native Window::Windows Implementation
+
+Interfaces:
+***********************************************************************/
+
+#ifndef VCZH_PRESENTATION_WINDOWS_SERVICESIMPL_WINDOWSASYNCSERVICE
+#define VCZH_PRESENTATION_WINDOWS_SERVICESIMPL_WINDOWSASYNCSERVICE
+
+
+namespace vl
+{
+	namespace presentation
+	{
+		namespace windows
+		{
+			class WindowsAsyncService : public INativeAsyncService
+			{
+			protected:
+				struct TaskItem
+				{
+					Semaphore*							semaphore;
+					Func<void()>						proc;
+
+					TaskItem();
+					TaskItem(Semaphore* _semaphore, const Func<void()>& _proc);
+					~TaskItem();
+				};
+
+				class DelayItem : public Object, public INativeDelay
+				{
+				public:
+					DelayItem(WindowsAsyncService* _service, const Func<void()>& _proc, bool _executeInMainThread, vint milliseconds);
+					~DelayItem();
+
+					WindowsAsyncService*				service;
+					Func<void()>						proc;
+					ExecuteStatus						status;
+					DateTime							executeTime;
+					bool								executeInMainThread;
+
+					ExecuteStatus						GetStatus()override;
+					bool								Delay(vint milliseconds)override;
+					bool								Cancel()override;
+				};
+			protected:
+				vint									mainThreadId;
+				SpinLock								taskListLock;
+				collections::List<TaskItem>				taskItems;
+				collections::List<Ptr<DelayItem>>		delayItems;
+			public:
+				WindowsAsyncService();
+				~WindowsAsyncService();
+
+				void									ExecuteAsyncTasks();
+				bool									IsInMainThread(INativeWindow* window)override;
+				void									InvokeAsync(const Func<void()>& proc)override;
+				void									InvokeInMainThread(INativeWindow* window, const Func<void()>& proc)override;
+				bool									InvokeInMainThreadAndWait(INativeWindow* window, const Func<void()>& proc, vint milliseconds)override;
+				Ptr<INativeDelay>						DelayExecute(const Func<void()>& proc, vint milliseconds)override;
+				Ptr<INativeDelay>						DelayExecuteInMainThread(const Func<void()>& proc, vint milliseconds)override;
+			};
+		}
+	}
+}
+
+#endif
+
+/***********************************************************************
+.\NATIVEWINDOW\WINDOWS\SERVICESIMPL\WINDOWSSCREENSERVICE.H
+***********************************************************************/
+/***********************************************************************
+Vczh Library++ 3.0
+Developer: Zihan Chen(vczh)
+GacUI::Native Window::Windows Implementation
+
+Interfaces:
+***********************************************************************/
+
+#ifndef VCZH_PRESENTATION_WINDOWS_SERVICESIMPL_WINDOWSSCREENSERVICE
+#define VCZH_PRESENTATION_WINDOWS_SERVICESIMPL_WINDOWSSCREENSERVICE
+
+
+namespace vl
+{
+	namespace presentation
+	{
+		namespace windows
+		{
+			class WindowsScreen : public Object, public INativeScreen
+			{
+				friend class WindowsScreenService;
+			protected:
+				HMONITOR										monitor;
+
+			public:
+				WindowsScreen();
+
+				NativeRect										GetBounds()override;
+				NativeRect										GetClientBounds()override;
+				WString											GetName()override;
+				bool											IsPrimary()override;
+				double											GetScalingX()override;
+				double											GetScalingY()override;
+			};
+
+			class WindowsScreenService : public Object, public INativeScreenService
+			{
+				typedef HWND (*HandleRetriver)(INativeWindow*);
+			protected:
+				collections::List<Ptr<WindowsScreen>>			screens;
+				HandleRetriver									handleRetriver;
+
+			public:
+
+				struct MonitorEnumProcData
+				{
+					WindowsScreenService*						screenService;
+					vint										currentScreen;
+				};
+
+				WindowsScreenService(HandleRetriver _handleRetriver);
+
+				static BOOL CALLBACK							MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData);
+				void											RefreshScreenInformation();
+				vint											GetScreenCount()override;
+				INativeScreen*									GetScreen(vint index)override;
+				INativeScreen*									GetScreen(INativeWindow* window)override;
+			};
+		}
+	}
+}
+
+#endif
+
+/***********************************************************************
+.\NATIVEWINDOW\WINDOWS\SERVICESIMPL\WINDOWSCALLBACKSERVICE.H
+***********************************************************************/
+/***********************************************************************
+Vczh Library++ 3.0
+Developer: Zihan Chen(vczh)
+GacUI::Native Window::Windows Implementation
+
+Interfaces:
+***********************************************************************/
+
+#ifndef VCZH_PRESENTATION_WINDOWS_SERVICESIMPL_WINDOWSCALLBACKSERVICE
+#define VCZH_PRESENTATION_WINDOWS_SERVICESIMPL_WINDOWSCALLBACKSERVICE
+
+
+namespace vl
+{
+	namespace presentation
+	{
+		namespace windows
+		{
+			class WindowsCallbackService : public Object, public INativeCallbackService
+			{
+			protected:
+				collections::List<INativeControllerListener*>	listeners;
+
+			public:
+				WindowsCallbackService();
+
+				bool											InstallListener(INativeControllerListener* listener)override;
+				bool											UninstallListener(INativeControllerListener* listener)override;
+
+				void											InvokeMouseHook(WPARAM message, NativePoint location);
+				void											InvokeGlobalTimer();
+				void											InvokeClipboardUpdated();
+				void											InvokeNativeWindowCreated(INativeWindow* window);
+				void											InvokeNativeWindowDestroyed(INativeWindow* window);
+			};
+		}
+	}
+}
+
+#endif
+
+/***********************************************************************
+.\NATIVEWINDOW\WINDOWS\SERVICESIMPL\WINDOWSINPUTSERVICE.H
+***********************************************************************/
+/***********************************************************************
+Vczh Library++ 3.0
+Developer: Zihan Chen(vczh)
+GacUI::Native Window::Windows Implementation
+
+Interfaces:
+***********************************************************************/
+
+#ifndef VCZH_PRESENTATION_WINDOWS_SERVICESIMPL_WINDOWSINPUTSERVICE
+#define VCZH_PRESENTATION_WINDOWS_SERVICESIMPL_WINDOWSINPUTSERVICE
+
+
+namespace vl
+{
+	namespace presentation
+	{
+		namespace windows
+		{
+			class WindowsInputService : public Object, public INativeInputService
+			{
+			protected:
+				HWND									ownerHandle;
+				HHOOK									mouseHook;
+				bool									isTimerEnabled;
+				HOOKPROC								mouseProc;
+
+				collections::Array<WString>				keyNames;
+				collections::Dictionary<WString, VKEY>	keys;
+
+				WString									GetKeyNameInternal(VKEY code);
+				void									InitializeKeyNames();
+			public:
+				WindowsInputService(HOOKPROC _mouseProc);
+
+				void									SetOwnerHandle(HWND handle);
+				void									StartHookMouse()override;
+				void									StopHookMouse()override;
+				bool									IsHookingMouse()override;
+				void									StartTimer()override;
+				void									StopTimer()override;
+				bool									IsTimerEnabled()override;
+				bool									IsKeyPressing(VKEY code)override;
+				bool									IsKeyToggled(VKEY code)override;
+				WString									GetKeyName(VKEY code)override;
+				VKEY									GetKey(const WString& name)override;
+			};
+
+			extern bool									WinIsKeyPressing(VKEY code);
+			extern bool									WinIsKeyToggled(VKEY code);
+		}
+	}
+}
+
+#endif
+
+/***********************************************************************
+.\NATIVEWINDOW\WINDOWS\SERVICESIMPL\WINDOWSDIALOGSERVICE.H
+***********************************************************************/
+/***********************************************************************
+Vczh Library++ 3.0
+Developer: Zihan Chen(vczh)
+GacUI::Native Window::Windows Implementation
+
+Interfaces:
+***********************************************************************/
+
+#ifndef VCZH_PRESENTATION_WINDOWS_SERVICESIMPL_WINDOWSDIALOGSERVICE
+#define VCZH_PRESENTATION_WINDOWS_SERVICESIMPL_WINDOWSDIALOGSERVICE
+
+
+namespace vl
+{
+	namespace presentation
+	{
+		namespace windows
+		{
+			class WindowsDialogService : public INativeDialogService
+			{
+				typedef HWND (*HandleRetriver)(INativeWindow*);
+			protected:
+				HandleRetriver									handleRetriver;
+
+			public:
+				WindowsDialogService(HandleRetriver _handleRetriver);
+
+				MessageBoxButtonsOutput			ShowMessageBox(INativeWindow* window, const WString& text, const WString& title, MessageBoxButtonsInput buttons, MessageBoxDefaultButton defaultButton, MessageBoxIcons icon, MessageBoxModalOptions modal)override;
+				bool							ShowColorDialog(INativeWindow* window, Color& selection, bool selected, ColorDialogCustomColorOptions customColorOptions, Color* customColors)override;
+				bool							ShowFontDialog(INativeWindow* window, FontProperties& selectionFont, Color& selectionColor, bool selected, bool showEffect, bool forceFontExist)override;
+				bool							ShowFileDialog(INativeWindow* window, collections::List<WString>& selectionFileNames, vint& selectionFilterIndex, FileDialogTypes dialogType, const WString& title, const WString& initialFileName, const WString& initialDirectory, const WString& defaultExtension, const WString& filter, FileDialogOptions options)override;
+			};
+		}
+	}
+}
+
+#endif
+
+/***********************************************************************
+.\NATIVEWINDOW\WINDOWS\GDI\WINGDIAPPLICATION.H
+***********************************************************************/
+/***********************************************************************
+Vczh Library++ 3.0
+Developer: Zihan Chen(vczh)
+GacUI::Native Window::GDI Provider for Windows Implementation
+
+Interfaces:
+***********************************************************************/
+#ifndef VCZH_PRESENTATION_WINDOWS_GDI_WINGDIAPPLICATION
+#define VCZH_PRESENTATION_WINDOWS_GDI_WINGDIAPPLICATION
+
+
+namespace vl
+{
+	namespace presentation
+	{
+		namespace windows
+		{
+			extern WinDC*									GetNativeWindowDC(INativeWindow* window);
+			extern HDC										GetNativeWindowHDC(INativeWindow* window);
+		}
+	}
+}
+
+extern int WinMainGDI(HINSTANCE hInstance, void(*RendererMain)());
 
 #endif

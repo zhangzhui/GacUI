@@ -34,11 +34,17 @@ Type List (Basic)
 			F(presentation::AxisDirection)\
 			F(presentation::TextPos)\
 			F(presentation::GridPos)\
+			F(presentation::NativeCoordinate)\
 			F(presentation::Point)\
+			F(presentation::NativePoint)\
 			F(presentation::Size)\
+			F(presentation::NativeSize)\
 			F(presentation::Rect)\
+			F(presentation::NativeRect)\
 			F(presentation::Margin)\
+			F(presentation::NativeMargin)\
 			F(presentation::FontProperties)\
+			F(presentation::VKEY)\
 			F(presentation::GlobalStringKey)\
 			F(presentation::INativeImageFrame)\
 			F(presentation::INativeImage)\
@@ -53,6 +59,8 @@ Type List (Basic)
 			F(presentation::INativeImageService)\
 			F(presentation::INativeResourceService)\
 			F(presentation::INativeAsyncService)\
+			F(presentation::INativeClipboardReader)\
+			F(presentation::INativeClipboardWriter)\
 			F(presentation::INativeClipboardService)\
 			F(presentation::INativeScreenService)\
 			F(presentation::INativeInputService)\
@@ -99,72 +107,94 @@ Type List (Basic)
 Type List (Elements)
 ***********************************************************************/
 
-#define GUIREFLECTIONELEMENT_TYPELIST(F)\
+#define GUIREFLECTIONELEMENT_EXTRA_TYPELIST(F)\
 			F(presentation::elements::IGuiGraphicsElement)\
 			F(presentation::elements::IGuiGraphicsParagraph)\
 			F(presentation::elements::IGuiGraphicsParagraph::CaretRelativePosition)\
 			F(presentation::elements::ElementShapeType)\
 			F(presentation::elements::ElementShape)\
+			F(presentation::elements::Gui3DSplitterElement::Direction)\
+			F(presentation::elements::GuiGradientBackgroundElement::Direction)\
+			F(presentation::elements::text::TextLines)\
+			F(presentation::elements::text::ColorItem)\
+			F(presentation::elements::text::ColorEntry)\
+
+#define GUIREFLECTIONELEMENT_CLASS_TYPELIST(F)\
+			F(presentation::elements::GuiFocusRectangleElement)\
 			F(presentation::elements::GuiSolidBorderElement)\
 			F(presentation::elements::Gui3DBorderElement)\
 			F(presentation::elements::Gui3DSplitterElement)\
-			F(presentation::elements::Gui3DSplitterElement::Direction)\
 			F(presentation::elements::GuiSolidBackgroundElement)\
 			F(presentation::elements::GuiGradientBackgroundElement)\
-			F(presentation::elements::GuiGradientBackgroundElement::Direction)\
 			F(presentation::elements::GuiInnerShadowElement)\
 			F(presentation::elements::GuiSolidLabelElement)\
 			F(presentation::elements::GuiImageFrameElement)\
 			F(presentation::elements::GuiPolygonElement)\
-			F(presentation::elements::text::TextLines)\
-			F(presentation::elements::text::ColorItem)\
-			F(presentation::elements::text::ColorEntry)\
 			F(presentation::elements::GuiColorizedTextElement)\
 			F(presentation::elements::GuiDocumentElement)\
+
+#define GUIREFLECTIONELEMENT_TYPELIST(F)\
+			GUIREFLECTIONELEMENT_CLASS_TYPELIST(F)\
+			GUIREFLECTIONELEMENT_EXTRA_TYPELIST(F)\
 
 /***********************************************************************
 Type List (Compositions)
 ***********************************************************************/
 
-#define GUIREFLECTIONCOMPOSITION_TYPELIST(F)\
+#define GUIREFLECTIONCOMPOSITION_EXTRA_TYPELIST(F)\
 			F(presentation::compositions::KeyDirection)\
 			F(presentation::compositions::IGuiAxis)\
 			F(presentation::compositions::GuiDefaultAxis)\
 			F(presentation::compositions::GuiAxis)\
-			F(presentation::compositions::GuiGraphicsComposition)\
 			F(presentation::compositions::GuiGraphicsComposition::MinSizeLimitation)\
-			F(presentation::compositions::GuiGraphicsSite)\
-			F(presentation::compositions::GuiWindowComposition)\
-			F(presentation::compositions::GuiBoundsComposition)\
-			F(presentation::compositions::GuiStackComposition)\
 			F(presentation::compositions::GuiStackComposition::Direction)\
-			F(presentation::compositions::GuiStackItemComposition)\
-			F(presentation::compositions::GuiCellOption)\
 			F(presentation::compositions::GuiCellOption::ComposeType)\
-			F(presentation::compositions::GuiTableComposition)\
-			F(presentation::compositions::GuiCellComposition)\
-			F(presentation::compositions::GuiTableSplitterCompositionBase)\
-			F(presentation::compositions::GuiRowSplitterComposition)\
-			F(presentation::compositions::GuiColumnSplitterComposition)\
-			F(presentation::compositions::FlowAlignment)\
-			F(presentation::compositions::GuiFlowComposition)\
+			F(presentation::compositions::GuiCellOption)\
 			F(presentation::compositions::GuiFlowOption)\
 			F(presentation::compositions::GuiFlowOption::BaselineType)\
-			F(presentation::compositions::GuiFlowItemComposition)\
-			F(presentation::compositions::GuiSideAlignedComposition)\
+			F(presentation::compositions::FlowAlignment)\
 			F(presentation::compositions::GuiSideAlignedComposition::Direction)\
-			F(presentation::compositions::GuiPartialViewComposition)\
-			F(presentation::compositions::GuiSharedSizeItemComposition)\
-			F(presentation::compositions::GuiSharedSizeRootComposition)\
-			F(presentation::compositions::GuiRepeatCompositionBase)\
-			F(presentation::compositions::GuiRepeatStackComposition)\
-			F(presentation::compositions::GuiRepeatFlowComposition)\
+			F(presentation::compositions::ResponsiveDirection)\
 			F(presentation::compositions::IGuiShortcutKeyItem)\
 			F(presentation::compositions::IGuiShortcutKeyManager)\
 			F(presentation::compositions::GuiShortcutKeyManager)\
 			F(presentation::compositions::IGuiAltAction)\
 			F(presentation::compositions::IGuiAltActionContainer)\
 			F(presentation::compositions::IGuiAltActionHost)\
+			F(presentation::compositions::IGuiTabAction)\
+
+#define GUIREFLECTIONCOMPOSITION_CLASS_TYPELIST(F)\
+			F(presentation::compositions::GuiGraphicsComposition)\
+			F(presentation::compositions::GuiGraphicsSite)\
+			F(presentation::compositions::GuiWindowComposition)\
+			F(presentation::compositions::GuiBoundsComposition)\
+			F(presentation::compositions::GuiStackComposition)\
+			F(presentation::compositions::GuiStackItemComposition)\
+			F(presentation::compositions::GuiTableComposition)\
+			F(presentation::compositions::GuiCellComposition)\
+			F(presentation::compositions::GuiTableSplitterCompositionBase)\
+			F(presentation::compositions::GuiRowSplitterComposition)\
+			F(presentation::compositions::GuiColumnSplitterComposition)\
+			F(presentation::compositions::GuiFlowComposition)\
+			F(presentation::compositions::GuiFlowItemComposition)\
+			F(presentation::compositions::GuiSideAlignedComposition)\
+			F(presentation::compositions::GuiPartialViewComposition)\
+			F(presentation::compositions::GuiSharedSizeItemComposition)\
+			F(presentation::compositions::GuiSharedSizeRootComposition)\
+			F(presentation::compositions::GuiRepeatCompositionBase)\
+			F(presentation::compositions::GuiRepeatStackComposition)\
+			F(presentation::compositions::GuiRepeatFlowComposition)\
+			F(presentation::compositions::GuiResponsiveCompositionBase)\
+			F(presentation::compositions::GuiResponsiveSharedComposition)\
+			F(presentation::compositions::GuiResponsiveViewComposition)\
+			F(presentation::compositions::GuiResponsiveFixedComposition)\
+			F(presentation::compositions::GuiResponsiveStackComposition)\
+			F(presentation::compositions::GuiResponsiveGroupComposition)\
+			F(presentation::compositions::GuiResponsiveContainerComposition)\
+
+#define GUIREFLECTIONCOMPOSITION_TYPELIST(F)\
+			GUIREFLECTIONCOMPOSITION_CLASS_TYPELIST(F)\
+			GUIREFLECTIONCOMPOSITION_EXTRA_TYPELIST(F)\
 
 /***********************************************************************
 Type List (Events)
@@ -176,6 +206,8 @@ Type List (Events)
 			F(presentation::compositions::GuiKeyEventArgs)\
 			F(presentation::compositions::GuiCharEventArgs)\
 			F(presentation::compositions::GuiMouseEventArgs)\
+			F(presentation::compositions::ControlSignal)\
+			F(presentation::compositions::GuiControlSignalEventArgs)\
 			F(presentation::compositions::GuiItemEventArgs)\
 			F(presentation::compositions::GuiItemMouseEventArgs)\
 			F(presentation::compositions::GuiNodeEventArgs)\
@@ -185,58 +217,46 @@ Type List (Events)
 Type List (Templates)
 ***********************************************************************/
 
-#define GUIREFLECTIONTEMPLATES_TYPELIST(F)\
+#define GUIREFLECTIONTEMPLATES_EXTRA_TYPELIST(F)\
 			F(presentation::controls::ButtonState)\
 			F(presentation::controls::ColumnSortingState)\
+			F(presentation::controls::TabPageOrder)\
 			F(presentation::templates::BoolOption)\
 			F(presentation::controls::ITextBoxCommandExecutor)\
-			F(presentation::controls::IComboBoxCommandExecutor)\
 			F(presentation::controls::IScrollCommandExecutor)\
 			F(presentation::controls::ITabCommandExecutor)\
 			F(presentation::controls::IDatePickerCommandExecutor)\
+			F(presentation::controls::IRibbonGroupCommandExecutor)\
+			F(presentation::controls::IRibbonGalleryCommandExecutor)\
 			F(presentation::controls::GuiComponent)\
 			F(presentation::controls::IGuiAnimation)\
 			F(presentation::controls::IGuiAnimationCoroutine::IImpl)\
 			F(presentation::controls::IGuiAnimationCoroutine)\
 			F(presentation::controls::GuiInstanceRootObject)\
+			F(presentation::templates::GuiCommonScrollBehavior)\
+
+#define GUIREFLECTIONTEMPLATES_CLASS_TYPELIST(F)\
 			F(presentation::templates::GuiTemplate)\
 			F(presentation::templates::GuiListItemTemplate)\
-			F(presentation::templates::GuiControlTemplate)\
-			F(presentation::templates::GuiLabelTemplate)\
-			F(presentation::templates::GuiSinglelineTextBoxTemplate)\
-			F(presentation::templates::GuiDocumentLabelTemplate)\
-			F(presentation::templates::GuiMultilineTextBoxTemplate)\
-			F(presentation::templates::GuiDocumentViewerTemplate)\
-			F(presentation::templates::GuiMenuTemplate)\
-			F(presentation::templates::GuiWindowTemplate)\
-			F(presentation::templates::GuiButtonTemplate)\
-			F(presentation::templates::GuiSelectableButtonTemplate)\
-			F(presentation::templates::GuiToolstripButtonTemplate)\
-			F(presentation::templates::GuiListViewColumnHeaderTemplate)\
-			F(presentation::templates::GuiComboBoxTemplate)\
-			F(presentation::templates::GuiScrollTemplate)\
-			F(presentation::templates::GuiScrollViewTemplate)\
-			F(presentation::templates::GuiListControlTemplate)\
-			F(presentation::templates::GuiTextListTemplate)\
-			F(presentation::templates::GuiListViewTemplate)\
-			F(presentation::templates::GuiTreeViewTemplate)\
-			F(presentation::templates::GuiTabTemplate)\
-			F(presentation::templates::GuiDatePickerTemplate)\
-			F(presentation::templates::GuiDateComboBoxTemplate)\
-			F(presentation::templates::GuiTextListItemTemplate)\
-			F(presentation::templates::GuiTreeItemTemplate)\
-			F(presentation::templates::GuiGridCellTemplate)\
-			F(presentation::templates::GuiGridVisualizerTemplate)\
-			F(presentation::templates::GuiGridEditorTemplate)\
 			F(presentation::templates::GuiCommonDatePickerLook)\
 			F(presentation::templates::GuiCommonScrollViewLook)\
-			F(presentation::templates::GuiCommonScrollBehavior)\
+			GUI_CONTROL_TEMPLATE_DECL(GUIREFLECTIONTEMPLATES_##F)\
+			GUI_ITEM_TEMPLATE_DECL(GUIREFLECTIONTEMPLATES_##F)\
+			F(presentation::controls::list::MainColumnVisualizerTemplate)\
+			F(presentation::controls::list::SubColumnVisualizerTemplate)\
+			F(presentation::controls::list::HyperlinkVisualizerTemplate)\
+			F(presentation::controls::list::FocusRectangleVisualizerTemplate)\
+			F(presentation::controls::list::CellBorderVisualizerTemplate)\
+
+#define GUIREFLECTIONTEMPLATES_TYPELIST(F)\
+			GUIREFLECTIONTEMPLATES_CLASS_TYPELIST(F)\
+			GUIREFLECTIONTEMPLATES_EXTRA_TYPELIST(F)\
 
 /***********************************************************************
 Type List (Controls)
 ***********************************************************************/
 
-#define GUIREFLECTIONCONTROLS_TYPELIST(F)\
+#define GUIREFLECTIONCONTROLS_EXTRA_TYPELIST(F)\
 			F(presentation::controls::GuiApplication)\
 			F(presentation::theme::ThemeName)\
 			F(presentation::theme::ITheme)\
@@ -248,40 +268,23 @@ Type List (Controls)
 			F(presentation::controls::GuiFileDialogBase)\
 			F(presentation::controls::GuiOpenFileDialog)\
 			F(presentation::controls::GuiSaveFileDialog)\
-			F(presentation::controls::GuiControl)\
-			F(presentation::controls::GuiCustomControl)\
-			F(presentation::controls::GuiLabel)\
-			F(presentation::controls::GuiButton)\
-			F(presentation::controls::GuiSelectableButton)\
 			F(presentation::controls::GuiSelectableButton::GroupController)\
 			F(presentation::controls::GuiSelectableButton::MutexGroupController)\
-			F(presentation::controls::GuiScroll)\
-			F(presentation::controls::GuiTabPage)\
-			F(presentation::controls::GuiTab)\
-			F(presentation::controls::GuiScrollView)\
-			F(presentation::controls::GuiScrollContainer)\
-			F(presentation::controls::GuiControlHost)\
-			F(presentation::controls::GuiWindow)\
-			F(presentation::controls::GuiPopup)\
-			F(presentation::controls::GuiTooltip)\
-			F(presentation::controls::GuiListControl)\
 			F(presentation::controls::GuiListControl::IItemProviderCallback)\
 			F(presentation::controls::GuiListControl::IItemArrangerCallback)\
 			F(presentation::controls::GuiListControl::IItemProvider)\
+			F(presentation::controls::GuiListControl::EnsureItemVisibleResult)\
 			F(presentation::controls::GuiListControl::IItemArranger)\
-			F(presentation::controls::GuiSelectableListControl)\
 			F(presentation::controls::list::ItemProviderBase)\
 			F(presentation::controls::list::RangedItemArrangerBase)\
+			F(presentation::controls::list::FreeHeightItemArranger)\
 			F(presentation::controls::list::FixedHeightItemArranger)\
 			F(presentation::controls::list::FixedSizeMultiColumnItemArranger)\
 			F(presentation::controls::list::FixedHeightMultiColumnItemArranger)\
 			F(presentation::controls::list::ITextItemView)\
 			F(presentation::controls::list::TextItem)\
+			F(presentation::controls::list::TextItemProvider)\
 			F(presentation::controls::TextListView)\
-			F(presentation::controls::GuiVirtualTextList)\
-			F(presentation::controls::GuiTextList)\
-			F(presentation::controls::GuiListViewColumnHeader)\
-			F(presentation::controls::GuiListViewBase)\
 			F(presentation::controls::list::IListViewItemView)\
 			F(presentation::controls::list::ListViewColumnItemArranger)\
 			F(presentation::controls::list::ListViewColumnItemArranger::IColumnItemViewCallback)\
@@ -289,61 +292,40 @@ Type List (Controls)
 			F(presentation::controls::list::ListViewItem)\
 			F(presentation::controls::list::ListViewColumn)\
 			F(presentation::controls::ListViewView)\
-			F(presentation::controls::GuiVirtualListView)\
-			F(presentation::controls::GuiListView)\
+			F(presentation::controls::list::ListViewItemProvider)\
 			F(presentation::controls::IGuiMenuService)\
 			F(presentation::controls::IGuiMenuService::Direction)\
-			F(presentation::controls::GuiMenu)\
-			F(presentation::controls::GuiMenuBar)\
-			F(presentation::controls::GuiMenuButton)\
+			F(presentation::controls::IGuiMenuDropdownProvider)\
 			F(presentation::controls::tree::INodeProviderCallback)\
 			F(presentation::controls::tree::INodeProvider)\
 			F(presentation::controls::tree::INodeRootProvider)\
 			F(presentation::controls::tree::INodeItemView)\
+			F(presentation::controls::tree::NodeItemProvider)\
 			F(presentation::controls::tree::MemoryNodeProvider)\
 			F(presentation::controls::tree::NodeRootProviderBase)\
 			F(presentation::controls::tree::MemoryNodeRootProvider)\
-			F(presentation::controls::GuiVirtualTreeListControl)\
 			F(presentation::controls::tree::ITreeViewItemView)\
 			F(presentation::controls::tree::TreeViewItem)\
 			F(presentation::controls::tree::TreeViewItemRootProvider)\
-			F(presentation::controls::GuiVirtualTreeView)\
-			F(presentation::controls::GuiTreeView)\
-			F(presentation::controls::GuiComboBoxBase)\
-			F(presentation::controls::GuiComboBoxListControl)\
 			F(presentation::controls::GuiToolstripCommand)\
-			F(presentation::controls::GuiToolstripMenu)\
-			F(presentation::controls::GuiToolstripMenuBar)\
-			F(presentation::controls::GuiToolstripToolBar)\
-			F(presentation::controls::GuiToolstripButton)\
+			F(presentation::controls::RibbonButtonSize)\
+			F(presentation::controls::GalleryPos)\
+			F(presentation::controls::list::GalleryGroup)\
+			F(presentation::controls::list::GroupedDataSource)\
 			F(presentation::controls::GuiDocumentItem)\
 			F(presentation::controls::GuiDocumentCommonInterface)\
 			F(presentation::controls::GuiDocumentCommonInterface::EditMode)\
-			F(presentation::controls::GuiDocumentViewer)\
-			F(presentation::controls::GuiDocumentLabel)\
 			F(presentation::controls::GuiTextBoxCommonInterface)\
-			F(presentation::controls::GuiMultilineTextBox)\
-			F(presentation::controls::GuiSinglelineTextBox)\
 			F(presentation::controls::list::IDataGridContext)\
 			F(presentation::controls::list::IDataVisualizerFactory)\
 			F(presentation::controls::list::IDataVisualizer)\
 			F(presentation::controls::list::IDataEditorFactory)\
 			F(presentation::controls::list::IDataEditor)\
 			F(presentation::controls::list::IDataGridView)\
-			F(presentation::controls::GuiVirtualDataGrid)\
 			F(presentation::controls::list::DataVisualizerBase)\
 			F(presentation::controls::list::DataVisualizerFactory)\
 			F(presentation::controls::list::DataEditorBase)\
 			F(presentation::controls::list::DataEditorFactory)\
-			F(presentation::controls::list::MainColumnVisualizerTemplate)\
-			F(presentation::controls::list::SubColumnVisualizerTemplate)\
-			F(presentation::controls::list::HyperlinkVisualizerTemplate)\
-			F(presentation::controls::list::CellBorderVisualizerTemplate)\
-			F(presentation::controls::GuiDatePicker)\
-			F(presentation::controls::GuiDateComboBox)\
-			F(presentation::controls::GuiBindableTextList)\
-			F(presentation::controls::GuiBindableListView)\
-			F(presentation::controls::GuiBindableTreeView)\
 			F(presentation::controls::list::IDataProcessorCallback)\
 			F(presentation::controls::list::IDataFilter)\
 			F(presentation::controls::list::IDataSorter)\
@@ -357,11 +339,76 @@ Type List (Controls)
 			F(presentation::controls::list::DataReverseSorter)\
 			F(presentation::controls::list::DataColumn)\
 			F(presentation::controls::list::DataProvider)\
+
+#define GUIREFLECTIONCONTROLS_CLASS_TYPELIST(F)\
+			F(presentation::controls::GuiDisposedFlag)\
+			F(presentation::controls::GuiControl)\
+			F(presentation::controls::GuiCustomControl)\
+			F(presentation::controls::GuiLabel)\
+			F(presentation::controls::GuiButton)\
+			F(presentation::controls::GuiSelectableButton)\
+			F(presentation::controls::GuiScroll)\
+			F(presentation::controls::GuiTabPage)\
+			F(presentation::controls::GuiTab)\
+			F(presentation::controls::GuiScrollView)\
+			F(presentation::controls::GuiScrollContainer)\
+			F(presentation::controls::GuiControlHost)\
+			F(presentation::controls::GuiWindow)\
+			F(presentation::controls::GuiPopup)\
+			F(presentation::controls::GuiTooltip)\
+			F(presentation::controls::GuiListControl)\
+			F(presentation::controls::GuiSelectableListControl)\
+			F(presentation::controls::GuiVirtualTextList)\
+			F(presentation::controls::GuiTextList)\
+			F(presentation::controls::GuiListViewColumnHeader)\
+			F(presentation::controls::GuiListViewBase)\
+			F(presentation::controls::GuiVirtualListView)\
+			F(presentation::controls::GuiListView)\
+			F(presentation::controls::GuiMenu)\
+			F(presentation::controls::GuiMenuBar)\
+			F(presentation::controls::GuiMenuButton)\
+			F(presentation::controls::GuiVirtualTreeListControl)\
+			F(presentation::controls::GuiVirtualTreeView)\
+			F(presentation::controls::GuiTreeView)\
+			F(presentation::controls::GuiComboBoxBase)\
+			F(presentation::controls::GuiComboBoxListControl)\
+			F(presentation::controls::GuiToolstripMenu)\
+			F(presentation::controls::GuiToolstripMenuBar)\
+			F(presentation::controls::GuiToolstripToolBar)\
+			F(presentation::controls::GuiToolstripButton)\
+			F(presentation::controls::GuiToolstripNestedContainer)\
+			F(presentation::controls::GuiToolstripGroupContainer)\
+			F(presentation::controls::GuiToolstripGroup)\
+			F(presentation::controls::GuiRibbonTab)\
+			F(presentation::controls::GuiRibbonTabPage)\
+			F(presentation::controls::GuiRibbonGroup)\
+			F(presentation::controls::GuiRibbonIconLabel)\
+			F(presentation::controls::GuiRibbonButtons)\
+			F(presentation::controls::GuiRibbonToolstrips)\
+			F(presentation::controls::GuiRibbonGallery)\
+			F(presentation::controls::GuiRibbonToolstripMenu)\
+			F(presentation::controls::GuiBindableRibbonGalleryList)\
+			F(presentation::controls::GuiDocumentViewer)\
+			F(presentation::controls::GuiDocumentLabel)\
+			F(presentation::controls::GuiMultilineTextBox)\
+			F(presentation::controls::GuiSinglelineTextBox)\
+			F(presentation::controls::GuiVirtualDataGrid)\
+			F(presentation::controls::GuiDatePicker)\
+			F(presentation::controls::GuiDateComboBox)\
+			F(presentation::controls::GuiBindableTextList)\
+			F(presentation::controls::GuiBindableListView)\
+			F(presentation::controls::GuiBindableTreeView)\
 			F(presentation::controls::GuiBindableDataGrid)\
+
+#define GUIREFLECTIONCONTROLS_TYPELIST(F)\
+			GUIREFLECTIONCONTROLS_CLASS_TYPELIST(F)\
+			GUIREFLECTIONCONTROLS_EXTRA_TYPELIST(F)\
 
 /***********************************************************************
 Type List
 ***********************************************************************/
+
+#define GUIREFLECTIONTEMPLATES_DECL_TYPE_INFO(NAME, BASE) DECL_TYPE_INFO(presentation::templates::NAME)
 
 			GUIREFLECTIONBASIC_TYPELIST(DECL_TYPE_INFO)
 			GUIREFLECTIONELEMENT_TYPELIST(DECL_TYPE_INFO)
@@ -369,6 +416,8 @@ Type List
 			GUIREFLECTIONEVENT_TYPELIST(DECL_TYPE_INFO)
 			GUIREFLECTIONTEMPLATES_TYPELIST(DECL_TYPE_INFO)
 			GUIREFLECTIONCONTROLS_TYPELIST(DECL_TYPE_INFO)
+
+#undef GUIREFLECTIONTEMPLATES_DECL_TYPE_INFO
 
 #pragma warning(push)
 #pragma warning(disable:4250)
@@ -741,7 +790,7 @@ Interface Proxy (Controls)
 					INVOKEGET_INTERFACE_PROXY(FindItem, itemIndex, key);
 				}
 
-				bool EnsureItemVisible(vint itemIndex)override
+				presentation::controls::GuiListControl::EnsureItemVisibleResult EnsureItemVisible(vint itemIndex)override
 				{
 					INVOKEGET_INTERFACE_PROXY(EnsureItemVisible, itemIndex);
 				}
@@ -863,30 +912,20 @@ Interface Proxy (Controls)
 					INVOKEGET_INTERFACE_PROXY_NOPARAMS(GetChildCount);
 				}
 
-				presentation::controls::tree::INodeProvider* GetParent()override
+				Ptr<presentation::controls::tree::INodeProvider> GetParent()override
 				{
 					INVOKEGET_INTERFACE_PROXY_NOPARAMS(GetParent);
 				}
 
-				presentation::controls::tree::INodeProvider* GetChild(vint index)override
+				Ptr<presentation::controls::tree::INodeProvider> GetChild(vint index)override
 				{
 					INVOKEGET_INTERFACE_PROXY(GetChild, index);
-				}
-
-				void Increase()override
-				{
-					INVOKE_INTERFACE_PROXY_NOPARAMS(Increase);
-				}
-
-				void Release()override
-				{
-					INVOKE_INTERFACE_PROXY_NOPARAMS(Release);
 				}
 			END_INTERFACE_PROXY(presentation::controls::tree::INodeProvider)
 
 			BEGIN_INTERFACE_PROXY_NOPARENT_SHAREDPTR(presentation::controls::tree::INodeRootProvider)
 
-				presentation::controls::tree::INodeProvider* GetRootNode()override
+				Ptr<presentation::controls::tree::INodeProvider> GetRootNode()override
 				{
 					INVOKEGET_INTERFACE_PROXY_NOPARAMS(GetRootNode);
 				}
@@ -896,7 +935,7 @@ Interface Proxy (Controls)
 					INVOKEGET_INTERFACE_PROXY_NOPARAMS(CanGetNodeByVisibleIndex);
 				}
 
-				presentation::controls::tree::INodeProvider* GetNodeByVisibleIndex(vint index)override
+				Ptr<presentation::controls::tree::INodeProvider> GetNodeByVisibleIndex(vint index)override
 				{
 					INVOKEGET_INTERFACE_PROXY(GetNodeByVisibleIndex, index);
 				}
@@ -929,14 +968,9 @@ Interface Proxy (Controls)
 
 			BEGIN_INTERFACE_PROXY_NOPARENT_SHAREDPTR(presentation::controls::tree::INodeItemView)
 
-				presentation::controls::tree::INodeProvider* RequestNode(vint index)override
+				Ptr<presentation::controls::tree::INodeProvider> RequestNode(vint index)override
 				{
 					INVOKEGET_INTERFACE_PROXY(RequestNode, index);
-				}
-
-				void ReleaseNode(presentation::controls::tree::INodeProvider* node)override
-				{
-					INVOKE_INTERFACE_PROXY(ReleaseNode, node);
 				}
 
 				vint CalculateNodeVisibilityIndex(presentation::controls::tree::INodeProvider* node)override
@@ -965,11 +999,6 @@ Interface Proxy (Controls)
 					INVOKEGET_INTERFACE_PROXY_NOPARAMS(GetListViewControlTemplate);
 				}
 
-				presentation::description::Value GetViewModelContext()override
-				{
-					INVOKEGET_INTERFACE_PROXY_NOPARAMS(GetViewModelContext);
-				}
-
 				void RequestSaveData()override
 				{
 					INVOKE_INTERFACE_PROXY_NOPARAMS(RequestSaveData);
@@ -978,11 +1007,6 @@ Interface Proxy (Controls)
 			END_INTERFACE_PROXY(presentation::controls::list::IDataGridContext)
 
 			BEGIN_INTERFACE_PROXY_NOPARENT_SHAREDPTR(presentation::controls::list::IDataGridView)
-
-				description::Value GetViewModelContext()override
-				{
-					INVOKEGET_INTERFACE_PROXY_NOPARAMS(GetViewModelContext);
-				}
 
 				bool IsColumnSortable(vint column)override
 				{

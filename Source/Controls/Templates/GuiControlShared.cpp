@@ -1,6 +1,6 @@
-#include "GuiCommonTemplates.h"
-#include "../../GraphicsComposition/GuiGraphicsCompositionBase.h"
+#include "GuiControlShared.h"
 #include "../GuiWindowControls.h"
+#include "../../GraphicsHost/GuiGraphicsHost.h"
 
 namespace vl
 {

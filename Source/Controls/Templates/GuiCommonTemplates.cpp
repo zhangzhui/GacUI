@@ -1,6 +1,9 @@
 #include "GuiCommonTemplates.h"
 #include "GuiThemeStyleFactory.h"
 #include "../ListControlPackage/GuiComboControls.h"
+#include "../ListControlPackage/GuiTextListControls.h"
+#include "../../GraphicsComposition/GuiGraphicsTableComposition.h"
+#include "../../GraphicsComposition/GuiGraphicsSpecializedComposition.h"
 
 namespace vl
 {
@@ -58,12 +61,20 @@ GuiCommonDatePickerLook
 				}
 			}
 
-			void GuiCommonDatePickerLook::SetDay(const DateTime& day, vint& index, bool currentMonth)
+			void GuiCommonDatePickerLook::SetDay(const DateTime& day, vint& index, vint monthOffset)
 			{
 				dateDays[index] = day;
 				GuiSolidLabelElement* label = labelDays[index];
 				label->SetText(itow(day.day));
-				label->SetColor(currentMonth ? primaryTextColor : secondaryTextColor);
+				label->SetColor(monthOffset == 0 ? primaryTextColor : secondaryTextColor);
+
+				wchar_t alt[] = L"D00";
+				if (monthOffset == -1) alt[0] = L'C';
+				else if (monthOffset == 1) alt[0] = L'E';
+				alt[1] = (wchar_t)(L'0' + day.day / 10);
+				alt[2] = (wchar_t)(L'0' + day.day % 10);
+				buttonDays[index]->SetAlt(alt);
+
 				index++;
 			}
 
@@ -142,17 +153,17 @@ GuiCommonDatePickerLook
 				for (vint i = 0; i < showPrev; i++)
 				{
 					DateTime day = DateTime::FromDateTime(yearPrev, monthPrev, countPrev - (showPrev - i - 1));
-					SetDay(day, index, false);
+					SetDay(day, index, -1);
 				}
 				for (vint i = 0; i < show; i++)
 				{
 					DateTime day = DateTime::FromDateTime(year, month, i + 1);
-					SetDay(day, index, true);
+					SetDay(day, index, 0);
 				}
 				for (vint i = 0; i < showNext; i++)
 				{
 					DateTime day = DateTime::FromDateTime(yearNext, monthNext, i + 1);
-					SetDay(day, index, false);
+					SetDay(day, index, 1);
 				}
 			}
 
@@ -189,6 +200,7 @@ GuiCommonDatePickerLook
 						listYears->GetItems().Add(new list::TextItem(itow(i)));
 					}
 					comboYear = new GuiComboBoxListControl(theme::ThemeName::ComboBox, listYears);
+					comboYear->SetAlt(L"Y");
 					comboYear->GetBoundsComposition()->SetAlignmentToParent(Margin(0, 0, 2, 0));
 					comboYear->SelectedIndexChanged.AttachMethod(this, &GuiCommonDatePickerLook::comboYearMonth_SelectedIndexChanged);
 				}
@@ -196,6 +208,7 @@ GuiCommonDatePickerLook
 					listMonths = new GuiTextList(theme::ThemeName::TextList);
 					listMonths->SetHorizontalAlwaysVisible(false);
 					comboMonth = new GuiComboBoxListControl(theme::ThemeName::ComboBox, listMonths);
+					comboMonth->SetAlt(L"M");
 					comboMonth->GetBoundsComposition()->SetAlignmentToParent(Margin(2, 0, 0, 0));
 					comboMonth->SelectedIndexChanged.AttachMethod(this, &GuiCommonDatePickerLook::comboYearMonth_SelectedIndexChanged);
 				}
@@ -464,9 +477,11 @@ GuiCommonScrollViewLook
 				horizontalScroll = new GuiScroll(theme::ThemeName::HScroll);
 				horizontalScroll->GetBoundsComposition()->SetAlignmentToParent(Margin(0, 0, 0, 0));
 				horizontalScroll->SetEnabled(false);
+				horizontalScroll->SetAutoFocus(false);
 				verticalScroll = new GuiScroll(theme::ThemeName::VScroll);
 				verticalScroll->GetBoundsComposition()->SetAlignmentToParent(Margin(0, 0, 0, 0));
 				verticalScroll->SetEnabled(false);
+				verticalScroll->SetAutoFocus(false);
 
 				tableComposition = new GuiTableComposition;
 				AddChild(tableComposition);

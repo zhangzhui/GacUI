@@ -10,7 +10,6 @@ Interfaces:
 #define VCZH_PRESENTATION_CONTROLS_GUISCROLLCONTROLS
 
 #include "GuiBasicControls.h"
-#include "Templates/GuiControlTemplates.h"
 
 namespace vl
 {
@@ -53,8 +52,14 @@ Scrolls
 				vint									position = 0;
 				vint									smallMove = 1;
 				vint									bigMove = 10;
+				bool									autoFocus = true;
+
+				void									OnActiveAlt()override;
+				bool									IsTabAvailable()override;
+				void									OnKeyDown(compositions::GuiGraphicsComposition* sender, compositions::GuiKeyEventArgs& arguments);
+				void									OnMouseDown(compositions::GuiGraphicsComposition* sender, compositions::GuiMouseEventArgs& arguments);
 			public:
-				/// <summary>Create a control with a specified style controller.</summary>
+				/// <summary>Create a control with a specified default theme.</summary>
 				/// <param name="themeName">The theme name for retriving a default control template.</param>
 				GuiScroll(theme::ThemeName themeName);
 				~GuiScroll();
@@ -107,6 +112,13 @@ Scrolls
 				/// <summary>Get the maximum possible position.</summary>
 				/// <returns>The maximum possible position.</returns>
 				vint									GetMaxPosition();
+
+				/// <summary>Test if the scroll gets focus when it is clicked.</summary>
+				/// <returns>Returns true if the scroll gets focus when it is clicked</returns>
+				bool									GetAutoFocus();
+				/// <summary>Set if the scroll gets focus when it is clicked.</summary>
+				/// <param name="value">Set to true to make this scroll get focus when it is clicked.</param>
+				void									SetAutoFocus(bool value);
 			};
 		}
 	}

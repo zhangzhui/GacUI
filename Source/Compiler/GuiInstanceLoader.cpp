@@ -108,7 +108,7 @@ IGuiInstanceLoader
 
 		Ptr<workflow::WfBaseConstructorCall> IGuiInstanceLoader::CreateRootInstance(GuiResourcePrecompileContext& precompileContext, types::ResolvingResult& resolvingResult, const TypeInfo& typeInfo, ArgumentMap& arguments, GuiResourceError::List& errors)
 		{
-			CHECK_FAIL(L"IGuiInstanceLoader::CreateControlTemplateArgument(types::ResolvingResult&, const TypeInfo&, Ptr<workflow::WfExpression>, collections::List<WString>&)#This function is not implemented.");
+			CHECK_FAIL(L"IGuiInstanceLoader::CreateRootInstance(GuiResourcePrecompileContext&, types::ResolvingResult&, const TypeInfo&, Ptr<workflow::WfExpression>, ArgumentMap&, GuiResourceError::List&)#This function is not implemented.");
 		}
 
 		Ptr<workflow::WfStatement> IGuiInstanceLoader::InitializeRootInstance(GuiResourcePrecompileContext& precompileContext, types::ResolvingResult& resolvingResult, const TypeInfo& typeInfo, GlobalStringKey variableName, ArgumentMap& arguments, GuiResourceError::List& errors)
@@ -118,17 +118,17 @@ IGuiInstanceLoader
 
 		Ptr<workflow::WfStatement> IGuiInstanceLoader::CreateInstance(GuiResourcePrecompileContext& precompileContext, types::ResolvingResult& resolvingResult, const TypeInfo& typeInfo, GlobalStringKey variableName, ArgumentMap& arguments, GuiResourceTextPos tagPosition, GuiResourceError::List& errors)
 		{
-			CHECK_FAIL(L"IGuiInstanceLoader::CreateInstance(types::ResolvingResult&, const TypeInfo&, GlobalStringKey, ArgumentMap&, collections::List<WString>&)#This function is not implemented.");
+			CHECK_FAIL(L"IGuiInstanceLoader::CreateInstance(GuiResourcePrecompileContext&, types::ResolvingResult&, const TypeInfo&, GlobalStringKey, ArgumentMap&, GuiResourceTextPos, GuiResourceError::List&)#This function is not implemented.");
 		}
 
 		Ptr<workflow::WfStatement> IGuiInstanceLoader::AssignParameters(GuiResourcePrecompileContext& precompileContext, types::ResolvingResult& resolvingResult, const TypeInfo& typeInfo, GlobalStringKey variableName, ArgumentMap& arguments, GuiResourceTextPos attPosition, GuiResourceError::List& errors)
 		{
-			CHECK_FAIL(L"IGuiInstanceLoader::AssignParameters(types::ResolvingResult&, const TypeInfo&, GlobalStringKey, ArgumentMap&, collections::List<WString>&)#This function is not implemented.");
+			CHECK_FAIL(L"IGuiInstanceLoader::AssignParameters(GuiResourcePrecompileContext&, types::ResolvingResult&, const TypeInfo&, GlobalStringKey, ArgumentMap&, GuiResourceTextPos, GuiResourceError::List&)#This function is not implemented.");
 		}
 
 		Ptr<workflow::WfExpression> IGuiInstanceLoader::GetParameter(GuiResourcePrecompileContext& precompileContext, types::ResolvingResult& resolvingResult, const PropertyInfo& propertyInfo, GlobalStringKey variableName, GuiResourceTextPos attPosition, GuiResourceError::List& errors)
 		{
-			CHECK_FAIL(L"IGuiInstanceLoader::GetParameter(types::ResolvingResult&, const PropertyInfo&, GlobalStringKey, collections::List<WString>&)#This function is not implemented.");
+			CHECK_FAIL(L"IGuiInstanceLoader::GetParameter(GuiResourcePrecompileContext&, types::ResolvingResult&, const PropertyInfo&, GlobalStringKey, GuiResourceTextPos, GuiResourceError::List&)#This function is not implemented.");
 		}
 
 /***********************************************************************
@@ -496,6 +496,39 @@ GuiDefaultInstanceLoader
 				return
 					GetDefaultConstructor(typeInfo.typeInfo->GetTypeDescriptor()) != nullptr ||
 					GetInstanceConstructor(typeInfo.typeInfo->GetTypeDescriptor()) != nullptr;
+			}
+
+			Ptr<workflow::WfBaseConstructorCall> CreateRootInstance(GuiResourcePrecompileContext& precompileContext, types::ResolvingResult& resolvingResult, const TypeInfo& typeInfo, ArgumentMap& arguments, GuiResourceError::List& errors)override
+			{
+				CTOR_PARAM_PREFIX
+
+				if (arguments.Count() > 0)
+				{
+					auto call = MakePtr<WfBaseConstructorCall>();
+
+					auto baseTd = typeInfo.typeInfo->GetTypeDescriptor()->GetBaseTypeDescriptor(0);
+					auto baseTypeInfo = MakePtr<TypeDescriptorTypeInfo>(baseTd, TypeInfoHint::Normal);
+					call->type = GetTypeFromTypeInfo(baseTypeInfo.Obj());
+
+					auto ctor = baseTd->GetConstructorGroup()->GetMethod(0);
+					vint count = ctor->GetParameterCount();
+					for (vint i = 0; i < count; i++)
+					{
+						auto key = GlobalStringKey::Get(CTOR_PARAM_NAME(ctor->GetParameter(0)->GetName()));
+
+						vint index = arguments.Keys().IndexOf(key);
+						if (index == -1)
+						{
+							return nullptr;
+						}
+						else
+						{
+							call->arguments.Add(arguments.GetByIndex(index)[0].expression);
+						}
+					}
+					return call;
+				}
+				return nullptr;
 			}
 
 			Ptr<workflow::WfStatement> CreateInstance(GuiResourcePrecompileContext& precompileContext, types::ResolvingResult& resolvingResult, const TypeInfo& typeInfo, GlobalStringKey variableName, ArgumentMap& arguments, GuiResourceTextPos tagPosition, GuiResourceError::List& errors)override
@@ -994,18 +1027,18 @@ GuiInstanceLoaderManager
 Helper Functions
 ***********************************************************************/
 
-		void SplitBySemicolon(const WString& input, collections::List<WString>& fragments)
+		void Split(const WString& input, const WString& delimiter, collections::List<WString>& fragments)
 		{
 			const wchar_t* attValue = input.Buffer();
-			while(*attValue)
+			while (*attValue)
 			{
 				// split the value by ';'
-				const wchar_t* attSemicolon = wcschr(attValue, L';');
+				const wchar_t* attSemicolon = wcsstr(attValue, delimiter.Buffer());
 				WString pattern;
-				if(attSemicolon)
+				if (attSemicolon)
 				{
 					pattern = WString(attValue, vint(attSemicolon - attValue));
-					attValue = attSemicolon + 1;
+					attValue = attSemicolon + delimiter.Length();
 				}
 				else
 				{
@@ -1016,6 +1049,16 @@ Helper Functions
 
 				fragments.Add(pattern);
 			}
+		}
+
+		void SplitTypeName(const WString& input, collections::List<WString>& fragments)
+		{
+			Split(input, L"::", fragments);
+		}
+
+		void SplitBySemicolon(const WString& input, collections::List<WString>& fragments)
+		{
+			Split(input, L";", fragments);
 		}
 	}
 }

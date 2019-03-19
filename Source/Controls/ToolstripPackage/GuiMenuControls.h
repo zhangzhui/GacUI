@@ -71,22 +71,36 @@ Menu Service
 				virtual void							MenuClosed(GuiMenu* menu);
 			};
 
+			/// <summary>IGuiMenuService is a required service to tell a ribbon group that this control has a dropdown to display.</summary>
+			class IGuiMenuDropdownProvider : public virtual IDescriptable, public Description<IGuiMenuDropdownProvider>
+			{
+			public:
+				/// <summary>The identifier for this service.</summary>
+				static const wchar_t* const				Identifier;
+
+				/// <summary>Get the dropdown to display.</summary>
+				/// <returns>The dropdown to display. Returns null to indicate the dropdown cannot be displaied temporary.</returns>
+				virtual GuiMenu*						ProvideDropdownMenu() = 0;
+			};
+
 /***********************************************************************
 Menu
 ***********************************************************************/
 
 			/// <summary>Popup menu.</summary>
-			class GuiMenu : public GuiPopup, private IGuiMenuService, public Description<GuiMenu>
+			class GuiMenu : public GuiPopup, protected IGuiMenuService, public Description<GuiMenu>
 			{
 				GUI_SPECIFY_CONTROL_TEMPLATE_TYPE(MenuTemplate, GuiPopup)
 			private:
 				IGuiMenuService*						parentMenuService;
+				bool									hideOnDeactivateAltHost = true;
 
 				IGuiMenuService*						GetParentMenuService()override;
 				Direction								GetPreferredDirection()override;
 				bool									IsActiveState()override;
 				bool									IsSubMenuActivatedByMouseDown()override;
 				void									MenuItemExecuted()override;
+
 			protected:
 				GuiControl*								owner;
 
@@ -95,7 +109,7 @@ Menu
 				void									OnWindowOpened(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
 				void									OnWindowClosed(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
 			public:
-				/// <summary>Create a control with a specified style controller.</summary>
+				/// <summary>Create a control with a specified default theme.</summary>
 				/// <param name="themeName">The theme name for retriving a default control template.</param>
 				/// <param name="_owner">The owner menu item of the parent menu.</param>
 				GuiMenu(theme::ThemeName themeName, GuiControl* _owner);
@@ -104,18 +118,26 @@ Menu
 				/// <summary>Update the reference to the parent <see cref="IGuiMenuService"/>. This function is not required to call outside the menu or menu item control.</summary>
 				void									UpdateMenuService();
 				IDescriptable*							QueryService(const WString& identifier)override;
+
+				/// <summary>Test if this menu hide after pressing ESC key to exit to the upper level of ALT shortcuts.</summary>
+				/// <returns>Returns true if this menu hide after pressing ESC key to exit to the upper level of ALT shortcuts.</returns>
+				bool									GetHideOnDeactivateAltHost();
+				/// <summary>Set if this menu hide after pressing ESC key to exit to the upper level of ALT shortcuts.</summary>
+				/// <param name="value">Set to true to make this menu hide after pressing ESC key to exit to the upper level of ALT shortcuts.</param>
+				void									SetHideOnDeactivateAltHost(bool value);
 			};
 			
 			/// <summary>Menu bar.</summary>
-			class GuiMenuBar : public GuiControl, private IGuiMenuService, public Description<GuiMenuBar>
+			class GuiMenuBar : public GuiControl, protected IGuiMenuService, public Description<GuiMenuBar>
 			{
 			private:
 				IGuiMenuService*						GetParentMenuService()override;
 				Direction								GetPreferredDirection()override;
 				bool									IsActiveState()override;
 				bool									IsSubMenuActivatedByMouseDown()override;
+
 			public:
-				/// <summary>Create a control with a specified style controller.</summary>
+				/// <summary>Create a control with a specified default theme.</summary>
 				/// <param name="themeName">The theme name for retriving a default control template.</param>
 				GuiMenuBar(theme::ThemeName themeName);
 				~GuiMenuBar();
@@ -128,7 +150,7 @@ MenuButton
 ***********************************************************************/
 
 			/// <summary>Menu item.</summary>
-			class GuiMenuButton : public GuiSelectableButton, public Description<GuiMenuButton>
+			class GuiMenuButton : public GuiSelectableButton, private IGuiMenuDropdownProvider, public Description<GuiMenuButton>
 			{
 				GUI_SPECIFY_CONTROL_TEMPLATE_TYPE(ToolstripButtonTemplate, GuiSelectableButton)
 
@@ -137,6 +159,7 @@ MenuButton
 				Ptr<IEventHandler>						hostClickedHandler;
 				Ptr<IEventHandler>						hostMouseEnterHandler;
 				Ptr<GuiImageData>						image;
+				Ptr<GuiImageData>						largeImage;
 				WString									shortcutText;
 				GuiMenu*								subMenu;
 				bool									ownedSubMenu;
@@ -145,9 +168,8 @@ MenuButton
 				bool									cascadeAction;
 
 				GuiButton*								GetSubMenuHost();
-				void									OpenSubMenuInternal();
+				bool									OpenSubMenuInternal();
 				void									OnParentLineChanged()override;
-				bool									IsAltAvailable()override;
 				compositions::IGuiAltActionHost*		GetActivatingAltHost()override;
 
 				void									OnSubMenuWindowOpened(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
@@ -156,19 +178,35 @@ MenuButton
 				void									OnClicked(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
 
 				virtual IGuiMenuService::Direction		GetSubMenuDirection();
+
+			private:
+				GuiMenu*								ProvideDropdownMenu()override;
+
 			public:
-				/// <summary>Create a control with a specified style controller.</summary>
+				/// <summary>Create a control with a specified default theme.</summary>
 				/// <param name="themeName">The theme name for retriving a default control template.</param>
 				GuiMenuButton(theme::ThemeName themeName);
 				~GuiMenuButton();
 
+				/// <summary>Before sub menu opening event.</summary>
+				compositions::GuiNotifyEvent			BeforeSubMenuOpening;
+				/// <summary>After sub menu opening event.</summary>
+				compositions::GuiNotifyEvent			AfterSubMenuOpening;
 				/// <summary>Sub menu opening changed event.</summary>
 				compositions::GuiNotifyEvent			SubMenuOpeningChanged;
+				/// <summary>Large image changed event.</summary>
+				compositions::GuiNotifyEvent			LargeImageChanged;
 				/// <summary>Image changed event.</summary>
 				compositions::GuiNotifyEvent			ImageChanged;
 				/// <summary>Shortcut text changed event.</summary>
 				compositions::GuiNotifyEvent			ShortcutTextChanged;
 
+				/// <summary>Get the large image for the menu button.</summary>
+				/// <returns>The large image for the menu button.</returns>
+				Ptr<GuiImageData>						GetLargeImage();
+				/// <summary>Set the large image for the menu button.</summary>
+				/// <param name="value">The large image for the menu button.</param>
+				void									SetLargeImage(Ptr<GuiImageData> value);
 				/// <summary>Get the image for the menu button.</summary>
 				/// <returns>The image for the menu button.</returns>
 				Ptr<GuiImageData>						GetImage();
@@ -222,6 +260,8 @@ MenuButton
 				/// <summary>Enable or disable cascade action.</summary>
 				/// <param name="value">Set to true to enable cascade action.</param>
 				void									SetCascadeAction(bool value);
+
+				IDescriptable*							QueryService(const WString& identifier)override;
 			};
 		}
 	}

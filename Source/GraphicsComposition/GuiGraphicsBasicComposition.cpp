@@ -1,4 +1,4 @@
-#include "../GraphicsElement/GuiGraphicsHost.h"
+#include "../GraphicsHost/GuiGraphicsHost.h"
 
 namespace vl
 {
@@ -29,7 +29,7 @@ GuiWindowComposition
 				{
 					if (auto window = relatedHostRecord->host->GetNativeWindow())
 					{
-						bounds = Rect(Point(0, 0), window->GetClientSize());
+						bounds = Rect(Point(0, 0), window->Convert(window->GetClientSize()));
 					}
 				}
 				UpdatePreviousBounds(bounds);

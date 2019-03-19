@@ -138,7 +138,7 @@ WorkflowGenerateCreatingVisitor
 				else if (errorCount == errors.Count())
 				{
 					errors.Add(GuiResourceError({ resolvingResult.resource }, setTarget->tagPosition,
-						L"[INTERNAL ERROR] Precompile: Something is wrong when retriving the property \"" +
+						L"[INTERNAL-ERROR] Precompile: Something is wrong when retriving the property \"" +
 						propInfo.propertyName.ToString() +
 						L"\" from an instance of type \"" +
 						propInfo.typeInfo.typeName.ToString() +
@@ -173,7 +173,7 @@ WorkflowGenerateCreatingVisitor
 				else if (errorCount == errors.Count())
 				{
 					errors.Add(GuiResourceError({ resolvingResult.resource }, value->tagPosition,
-						L"[INTERNAL ERROR] Precompile: Something is wrong when assigning to property " +
+						L"[INTERNAL-ERROR] Precompile: Something is wrong when assigning to property " +
 						propInfo.propertyName.ToString() +
 						L" to an instance of type \"" +
 						propInfo.typeInfo.typeName.ToString() +
@@ -229,7 +229,7 @@ WorkflowGenerateCreatingVisitor
 						propNames += L"\"" + pairedProp.ToString() + L"\"";
 					}
 					errors.Add(GuiResourceError({ resolvingResult.resource }, value->tagPosition,
-						L"[INTERNAL ERROR] Precompile: Something is wrong when assigning to properties " +
+						L"[INTERNAL-ERROR] Precompile: Something is wrong when assigning to properties " +
 						propNames +
 						L" to an instance of type \"" +
 						propInfo.typeInfo.typeName.ToString() +
@@ -301,20 +301,14 @@ WorkflowGenerateCreatingVisitor
 
 			void FillCtorArguments(GuiConstructorRepr* repr, IGuiInstanceLoader* loader, const IGuiInstanceLoader::TypeInfo& typeInfo, IGuiInstanceLoader::ArgumentMap& arguments)
 			{
-				List<GlobalStringKey> ctorProps;
-				loader->GetPropertyNames(typeInfo, ctorProps);
-
 				WORKFLOW_ENVIRONMENT_VARIABLE_ADD
 
-				FOREACH(GlobalStringKey, prop, ctorProps)
+				FOREACH_INDEXER(GlobalStringKey, prop, index, repr->setters.Keys())
 				{
-					auto propInfo = loader->GetPropertyType({ typeInfo,prop });
-					if (propInfo->usage != GuiInstancePropertyInfo::ConstructorArgument) continue;
-
-					auto index = repr->setters.Keys().IndexOf(prop);
-					if (index == -1) continue;
-
 					auto setter = repr->setters.Values()[index];
+					auto propertyResolving = resolvingResult.propertyResolvings[setter->values[0].Obj()];
+					if (propertyResolving.info->usage != GuiInstancePropertyInfo::ConstructorArgument) continue;
+
 					if (setter->binding == GlobalStringKey::Empty)
 					{
 						FOREACH(Ptr<GuiValueRepr>, value, setter->values)
@@ -328,24 +322,22 @@ WorkflowGenerateCreatingVisitor
 					}
 					else if (auto binder = GetInstanceLoaderManager()->GetInstanceBinder(setter->binding))
 					{
-						auto propInfo = IGuiInstanceLoader::PropertyInfo(typeInfo, prop);
-						auto resolvedPropInfo = loader->GetPropertyType(propInfo);
 						auto value = setter->values[0].Cast<GuiTextRepr>();
-						if (auto expression = binder->GenerateConstructorArgument(precompileContext, resolvingResult, loader, propInfo, resolvedPropInfo, value->text, value->tagPosition, errors))
+						if (auto expression = binder->GenerateConstructorArgument(precompileContext, resolvingResult, loader, propertyResolving.propertyInfo, propertyResolving.info, value->text, value->tagPosition, errors))
 						{
 							Workflow_RecordScriptPosition(precompileContext, value->tagPosition, expression);
 
 							IGuiInstanceLoader::ArgumentInfo argument;
 							argument.expression = expression;
-							argument.typeInfo = resolvedPropInfo->acceptableTypes[0];
+							argument.typeInfo = propertyResolving.info->acceptableTypes[0];
 							argument.attPosition = setter->attPosition;
 							arguments.Add(prop, argument);
 						}
 					}
-					else
+					else if (setter->binding != GlobalStringKey::_Set)
 					{
 						errors.Add(GuiResourceError({ resolvingResult.resource }, setter->attPosition,
-							L"[INTERNAL ERROR] Precompile: The appropriate IGuiInstanceBinder of binding \"-" +
+							L"[INTERNAL-ERROR] Precompile: The appropriate IGuiInstanceBinder of binding \"-" +
 							setter->binding.ToString() +
 							L"\" cannot be found."));
 					}
@@ -450,7 +442,7 @@ WorkflowGenerateCreatingVisitor
 					else if (errorCount == errors.Count())
 					{
 						errors.Add(GuiResourceError({ resolvingResult.resource }, repr->tagPosition,
-							L"[INTERNAL ERROR] Precompile: Something is wrong when creating an instance of type \"" +
+							L"[INTERNAL-ERROR] Precompile: Something is wrong when creating an instance of type \"" +
 							ctorTypeInfo.typeName.ToString() +
 							L"\"."));
 					}

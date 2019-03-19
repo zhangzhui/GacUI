@@ -162,6 +162,36 @@ GuiToolstripToolBarInstanceLoader
 #undef BASE_TYPE
 
 /***********************************************************************
+GuiToolstripGroupContainerInstanceLoader
+***********************************************************************/
+
+#define BASE_TYPE GuiTemplateControlInstanceLoader<GuiToolstripGroupContainer>
+			class GuiToolstripGroupContainerInstanceLoader : public GuiToolstripInstanceLoaderBase<BASE_TYPE>
+			{
+			public:
+				GuiToolstripGroupContainerInstanceLoader()
+					:GuiToolstripInstanceLoaderBase<BASE_TYPE>(description::TypeInfo<GuiToolstripGroupContainer>::content.typeName, theme::ThemeName::CustomControl)
+				{
+				}
+			};
+#undef BASE_TYPE
+
+/***********************************************************************
+GuiToolstripGroupInstanceLoader
+***********************************************************************/
+
+#define BASE_TYPE GuiTemplateControlInstanceLoader<GuiToolstripGroup>
+			class GuiToolstripGroupInstanceLoader : public GuiToolstripInstanceLoaderBase<BASE_TYPE>
+			{
+			public:
+				GuiToolstripGroupInstanceLoader()
+					:GuiToolstripInstanceLoaderBase<BASE_TYPE>(description::TypeInfo<GuiToolstripGroup>::content.typeName, theme::ThemeName::CustomControl)
+				{
+				}
+			};
+#undef BASE_TYPE
+
+/***********************************************************************
 GuiToolstripButtonInstanceLoader
 ***********************************************************************/
 
@@ -215,6 +245,84 @@ GuiToolstripButtonInstanceLoader
 #undef BASE_TYPE
 
 /***********************************************************************
+GuiRibbonToolstripMenuInstanceLoader
+***********************************************************************/
+
+#define BASE_TYPE GuiTemplateControlInstanceLoader<GuiRibbonToolstripMenu>
+			class GuiRibbonToolstripMenuInstanceLoader : public GuiToolstripInstanceLoaderBase<BASE_TYPE>
+			{
+			public:
+				static Ptr<WfExpression> ArgumentFunction(ArgumentMap&)
+				{
+					auto expr = MakePtr<WfLiteralExpression>();
+					expr->value = WfLiteralValue::Null;
+					return expr;
+				}
+			public:
+				GuiRibbonToolstripMenuInstanceLoader()
+					:GuiToolstripInstanceLoaderBase<BASE_TYPE>(description::TypeInfo<GuiRibbonToolstripMenu>::content.typeName, theme::ThemeName::RibbonToolstripMenu, ArgumentFunction)
+				{
+				}
+			};
+#undef BASE_TYPE
+
+/***********************************************************************
+GuiRibbonButtonsInstanceLoader
+***********************************************************************/
+
+#define BASE_TYPE GuiTemplateControlInstanceLoader<GuiRibbonButtons>
+			class GuiRibbonButtonsInstanceLoader : public BASE_TYPE
+			{
+			protected:
+				GlobalStringKey					_MaxSize;
+				GlobalStringKey					_MinSize;
+
+				void AddAdditionalArguments(types::ResolvingResult& resolvingResult, const TypeInfo& typeInfo, GlobalStringKey variableName, ArgumentMap& arguments, GuiResourceError::List& errors, Ptr<WfNewClassExpression> createControl)override
+				{
+					vint indexMaxSize = arguments.Keys().IndexOf(_MaxSize);
+					vint indexMinSize = arguments.Keys().IndexOf(_MinSize);
+					if (indexMaxSize != -1 && indexMinSize != -1)
+					{
+						createControl->arguments.Add(arguments.GetByIndex(indexMaxSize)[0].expression);
+						createControl->arguments.Add(arguments.GetByIndex(indexMinSize)[0].expression);
+					}
+				}
+			public:
+				GuiRibbonButtonsInstanceLoader()
+					:BASE_TYPE(description::TypeInfo<GuiRibbonButtons>::content.typeName, theme::ThemeName::RibbonButtons)
+				{
+					_MaxSize = GlobalStringKey::Get(L"MaxSize");
+					_MinSize = GlobalStringKey::Get(L"MinSize");
+				}
+
+				void GetRequiredPropertyNames(const TypeInfo& typeInfo, collections::List<GlobalStringKey>& propertyNames)override
+				{
+					if (CanCreate(typeInfo))
+					{
+						propertyNames.Add(_MaxSize);
+						propertyNames.Add(_MinSize);
+					}
+				}
+
+				void GetPropertyNames(const TypeInfo& typeInfo, collections::List<GlobalStringKey>& propertyNames)override
+				{
+					GetRequiredPropertyNames(typeInfo, propertyNames);
+				}
+
+				Ptr<GuiInstancePropertyInfo> GetPropertyType(const PropertyInfo& propertyInfo)override
+				{
+					if (propertyInfo.propertyName == _MaxSize || propertyInfo.propertyName == _MinSize)
+					{
+						auto info = GuiInstancePropertyInfo::Assign(TypeInfoRetriver<RibbonButtonSize>::CreateTypeInfo());
+						info->usage = GuiInstancePropertyInfo::ConstructorArgument;
+						return info;
+					}
+					return IGuiInstanceLoader::GetPropertyType(propertyInfo);
+				}
+			};
+#undef BASE_TYPE
+
+/***********************************************************************
 Initialization
 ***********************************************************************/
 
@@ -223,7 +331,11 @@ Initialization
 				manager->SetLoader(new GuiToolstripMenuInstanceLoader);
 				manager->SetLoader(new GuiToolstripMenuBarInstanceLoader);
 				manager->SetLoader(new GuiToolstripToolBarInstanceLoader);
+				manager->SetLoader(new GuiToolstripGroupContainerInstanceLoader);
+				manager->SetLoader(new GuiToolstripGroupInstanceLoader);
 				manager->SetLoader(new GuiToolstripButtonInstanceLoader);
+				manager->SetLoader(new GuiRibbonButtonsInstanceLoader);
+				manager->SetLoader(new GuiRibbonToolstripMenuInstanceLoader);
 			}
 		}
 	}

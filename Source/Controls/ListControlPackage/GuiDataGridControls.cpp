@@ -1,5 +1,7 @@
 #include "GuiDataGridControls.h"
 #include "GuiDataGridExtensions.h"
+#include "../../GraphicsComposition/GuiGraphicsTableComposition.h"
+#include "../../GraphicsHost/GuiGraphicsHost.h"
 
 namespace vl
 {
@@ -65,67 +67,57 @@ DefaultDataGridItemTemplate
 					return -1;
 				}
 
-				void DefaultDataGridItemTemplate::OnCellButtonUp(compositions::GuiGraphicsComposition* sender, bool openEditor)
+				bool DefaultDataGridItemTemplate::IsInEditor(GuiVirtualDataGrid* dataGrid, compositions::GuiMouseEventArgs& arguments)
 				{
-					if (auto dataGrid = dynamic_cast<GuiVirtualDataGrid*>(listControl))
-					{
-						vint index = GetCellColumnIndex(sender);
-						if (index != -1)
-						{
-							if (currentEditor && dataGrid->GetSelectedCell().column == index)
-							{
-								return;
-							}
+					if (!dataGrid->currentEditor) return false;
+					auto editorComposition = dataGrid->currentEditor->GetTemplate();
+					auto currentComposition = arguments.eventSource;
 
-							vint currentRow = GetIndex();
-							dataGrid->StartEdit(currentRow, index);
+					while (currentComposition)
+					{
+						if (currentComposition == editorComposition)
+						{
+							return true;
+						}
+						else if (currentComposition == this)
+						{
+							break;
+						}
+						else
+						{
+							currentComposition = currentComposition->GetParent();
 						}
 					}
-				}
 
-				bool DefaultDataGridItemTemplate::IsInEditor(compositions::GuiMouseEventArgs& arguments)
-				{
-					if (auto dataGrid = dynamic_cast<GuiVirtualDataGrid*>(listControl))
-					{
-						if (!dataGrid->currentEditor) return false;
-						auto editorComposition = dataGrid->currentEditor->GetTemplate();
-						auto currentComposition = arguments.eventSource;
-
-						while (currentComposition)
-						{
-							if (currentComposition == editorComposition)
-							{
-								arguments.handled = true;
-								return true;
-							}
-							else if (currentComposition == this)
-							{
-								break;
-							}
-							else
-							{
-								currentComposition = currentComposition->GetParent();
-							}
-						}
-
-					}
 					return false;
 				}
 
 				void DefaultDataGridItemTemplate::OnCellButtonDown(compositions::GuiGraphicsComposition* sender, compositions::GuiMouseEventArgs& arguments)
 				{
-					IsInEditor(arguments);
+					if (auto dataGrid = dynamic_cast<GuiVirtualDataGrid*>(listControl))
+					{
+						if (IsInEditor(dataGrid, arguments))
+						{
+							arguments.handled = true;
+						}
+					}
 				}
 
 				void DefaultDataGridItemTemplate::OnCellLeftButtonUp(compositions::GuiGraphicsComposition* sender, compositions::GuiMouseEventArgs& arguments)
 				{
 					if (auto dataGrid = dynamic_cast<GuiVirtualDataGrid*>(listControl))
 					{
-						if (!IsInEditor(arguments))
+						if (IsInEditor(dataGrid, arguments))
 						{
-							if (dataGrid->GetVisuallyEnabled())
+							arguments.handled = true;
+						}
+						else if (dataGrid->GetVisuallyEnabled())
+						{
+							vint index = GetCellColumnIndex(sender);
+							if (index != -1)
 							{
-								OnCellButtonUp(sender, true);
+								vint currentRow = GetIndex();
+								dataGrid->SelectCell({ currentRow,index }, true);
 							}
 						}
 					}
@@ -135,11 +127,17 @@ DefaultDataGridItemTemplate
 				{
 					if (auto dataGrid = dynamic_cast<GuiVirtualDataGrid*>(listControl))
 					{
-						if (!IsInEditor(arguments))
+						if (IsInEditor(dataGrid, arguments))
 						{
-							if (dataGrid->GetVisuallyEnabled())
+							arguments.handled = true;
+						}
+						else if (dataGrid->GetVisuallyEnabled())
+						{
+							vint index = GetCellColumnIndex(sender);
+							if (index != -1)
 							{
-								OnCellButtonUp(sender, false);
+								vint currentRow = GetIndex();
+								dataGrid->SelectCell({ currentRow,index }, false);
 							}
 						}
 					}
@@ -209,9 +207,11 @@ DefaultDataGridItemTemplate
 
 					SelectedChanged.AttachMethod(this, &DefaultDataGridItemTemplate::OnSelectedChanged);
 					FontChanged.AttachMethod(this, &DefaultDataGridItemTemplate::OnFontChanged);
+					ContextChanged.AttachMethod(this, &DefaultDataGridItemTemplate::OnContextChanged);
 
 					SelectedChanged.Execute(compositions::GuiEventArgs(this));
 					FontChanged.Execute(compositions::GuiEventArgs(this));
+					ContextChanged.Execute(compositions::GuiEventArgs(this));
 				}
 
 				void DefaultDataGridItemTemplate::OnSelectedChanged(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments)
@@ -231,6 +231,18 @@ DefaultDataGridItemTemplate
 					if (currentEditor)
 					{
 						currentEditor->GetTemplate()->SetFont(GetFont());
+					}
+				}
+
+				void DefaultDataGridItemTemplate::OnContextChanged(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments)
+				{
+					FOREACH(Ptr<IDataVisualizer>, visualizer, dataVisualizers)
+					{
+						visualizer->GetTemplate()->SetContext(GetContext());
+					}
+					if (currentEditor)
+					{
+						currentEditor->GetTemplate()->SetContext(GetContext());
 					}
 				}
 
@@ -279,6 +291,8 @@ DefaultDataGridItemTemplate
 					{
 						auto cell = textTable->GetSitedCell(0, column);
 						auto* editorBounds = currentEditor->GetTemplate();
+						editorBounds->SetFont(GetFont());
+						editorBounds->SetContext(GetContext());
 						if (editorBounds->GetParent() && editorBounds->GetParent() != cell)
 						{
 							editorBounds->GetParent()->RemoveChild(editorBounds);
@@ -328,12 +342,34 @@ GuiVirtualDataGrid (Editor)
 
 			using namespace list;
 
+			compositions::IGuiAltActionHost* GuiVirtualDataGrid::GetActivatingAltHost()
+			{
+				if (currentEditor)
+				{
+					if (auto focusControl = currentEditor->GetTemplate()->GetFocusControl())
+					{
+						if (auto action = focusControl->QueryTypedService<IGuiAltAction>())
+						{
+							if (action->IsAltAvailable() && action->IsAltEnabled())
+							{
+								SetAltComposition(currentEditor->GetTemplate());
+								SetAltControl(focusControl, true);
+								return this;
+							}
+						}
+					}
+				}
+				SetAltComposition(nullptr);
+				SetAltControl(nullptr, false);
+				return GuiVirtualListView::GetActivatingAltHost();
+			}
+
 			void GuiVirtualDataGrid::OnItemModified(vint start, vint count, vint newCount)
 			{
 				GuiVirtualListView::OnItemModified(start, count, newCount);
 				if(!GetItemProvider()->IsEditing())
 				{
-					StopEdit(false);
+					StopEdit();
 				}
 			}
 
@@ -365,19 +401,22 @@ GuiVirtualDataGrid (Editor)
 
 			void GuiVirtualDataGrid::NotifySelectCell(vint row, vint column)
 			{
-				selectedCell = { row, column };
-				SelectedCellChanged.Execute(GetNotifyEventArguments());
-
-				auto style = GetArranger()->GetVisibleStyle(row);
-				if (auto itemStyle = dynamic_cast<DefaultDataGridItemTemplate*>(style))
+				if (selectedCell.row != row || selectedCell.column != column)
 				{
-					itemStyle->NotifySelectCell(column);
+					selectedCell = { row, column };
+					SelectedCellChanged.Execute(GetNotifyEventArguments());
+
+					auto style = GetArranger()->GetVisibleStyle(row);
+					if (auto itemStyle = dynamic_cast<DefaultDataGridItemTemplate*>(style))
+					{
+						itemStyle->NotifySelectCell(column);
+					}
 				}
 			}
 
 			bool GuiVirtualDataGrid::StartEdit(vint row, vint column)
 			{
-				StopEdit(true);
+				StopEdit();
 				NotifySelectCell(row, column);
 
 				auto style = GetArranger()->GetVisibleStyle(row);
@@ -388,6 +427,10 @@ GuiVirtualDataGrid (Editor)
 						currentEditorOpeningEditor = true;
 						currentEditorPos = { row,column };
 						currentEditor = factory->CreateEditor(this);
+						if (auto focusControl = currentEditor->GetTemplate()->GetFocusControl())
+						{
+							focusControl->SetAlt(L"E");
+						}
 						currentEditor->BeforeEditCell(GetItemProvider(), row, column);
 						itemStyle->NotifyOpenEditor(column, currentEditor.Obj());
 						currentEditorOpeningEditor = false;
@@ -397,7 +440,7 @@ GuiVirtualDataGrid (Editor)
 				return false;
 			}
 
-			void GuiVirtualDataGrid::StopEdit(bool forOpenNewEditor)
+			void GuiVirtualDataGrid::StopEdit()
 			{
 				if (GetItemProvider()->IsEditing())
 				{
@@ -411,12 +454,10 @@ GuiVirtualDataGrid (Editor)
 						{
 							NotifyCloseEditor();
 						}
-						if (!forOpenNewEditor)
-						{
-							NotifySelectCell(-1, -1);
-						}
 					}
 				}
+				SetAltComposition(nullptr);
+				SetAltControl(nullptr, false);
 				currentEditor = nullptr;
 				currentEditorPos = { -1,-1 };
 			}
@@ -427,12 +468,7 @@ GuiVirtualDataGrid (IDataGridContext)
 
 			templates::GuiListViewTemplate* GuiVirtualDataGrid::GetListViewControlTemplate()
 			{
-				return GetControlTemplateObject();
-			}
-
-			description::Value GuiVirtualDataGrid::GetViewModelContext()
-			{
-				return dataGridView->GetViewModelContext();
+				return GetControlTemplateObject(true);
 			}
 
 			void GuiVirtualDataGrid::RequestSaveData()
@@ -491,6 +527,89 @@ GuiVirtualDataGrid
 				}
 			}
 
+			void GuiVirtualDataGrid::OnSelectionChanged(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments)
+			{
+				if (!skipOnSelectionChanged)
+				{
+					vint row = GetSelectedItemIndex();
+					if (row != -1)
+					{
+						if (selectedCell.row != row && selectedCell.column != -1)
+						{
+							SelectCell({ row,selectedCell.column }, false);
+						}
+						else
+						{
+							SelectCell({ row,0 }, false);
+						}
+					}
+					else
+					{
+						StopEdit();
+						NotifySelectCell(-1, -1);
+					}
+				}
+			}
+
+			void GuiVirtualDataGrid::OnKeyDown(compositions::GuiGraphicsComposition* sender, compositions::GuiKeyEventArgs& arguments)
+			{
+				if (selectedCell.row != -1)
+				{
+					if (arguments.code == VKEY::_RETURN)
+					{
+						RequestSaveData();
+						SelectCell(selectedCell, !currentEditor);
+						arguments.handled = true;
+						if (!currentEditor)
+						{
+							SetFocus();
+						}
+						arguments.handled = true;
+					}
+					else if (arguments.code == VKEY::_ESCAPE)
+					{
+						if (currentEditor)
+						{
+							SelectCell(currentEditorPos, false);
+							SetFocus();
+							arguments.handled = true;
+						}
+					}
+					else
+					{
+						vint columnOffset = 0;
+						switch (arguments.code)
+						{
+						case VKEY::_LEFT:
+							columnOffset = -1;
+							arguments.handled = true;
+							break;
+						case VKEY::_RIGHT:
+							columnOffset = 1;
+							arguments.handled = true;
+							break;
+						default:
+							return;
+						}
+
+						vint column = selectedCell.column + columnOffset;
+						if (column < 0)
+						{
+							column = 0;
+						}
+						else if (column >= listViewItemView->GetColumnCount())
+						{
+							column = listViewItemView->GetColumnCount();
+						}
+						SelectCell({ selectedCell.row, column }, false);
+					}
+				}
+			}
+
+			void GuiVirtualDataGrid::OnKeyUp(compositions::GuiGraphicsComposition* sender, compositions::GuiKeyEventArgs& arguments)
+			{
+			}
+
 			GuiVirtualDataGrid::GuiVirtualDataGrid(theme::ThemeName themeName, GuiListControl::IItemProvider* _itemProvider)
 				:GuiVirtualListView(themeName, _itemProvider)
 			{
@@ -501,12 +620,19 @@ GuiVirtualDataGrid
 				{
 					auto mainProperty = [](const Value&) { return new MainColumnVisualizerTemplate; };
 					auto subProperty = [](const Value&) { return new SubColumnVisualizerTemplate; };
+					auto focusRectangleProperty = [](const Value&) { return new FocusRectangleVisualizerTemplate; };
 					auto cellBorderProperty = [](const Value&) { return new CellBorderVisualizerTemplate; };
 
-					auto mainFactory = MakePtr<DataVisualizerFactory>(mainProperty);
-					auto subFactory = MakePtr<DataVisualizerFactory>(subProperty);
-					defaultMainColumnVisualizerFactory = MakePtr<DataVisualizerFactory>(cellBorderProperty, mainFactory);
-					defaultSubColumnVisualizerFactory = MakePtr<DataVisualizerFactory>(cellBorderProperty, subFactory);
+					defaultMainColumnVisualizerFactory = 
+						MakePtr<DataVisualizerFactory>(cellBorderProperty,
+							MakePtr<DataVisualizerFactory>(focusRectangleProperty,
+								MakePtr<DataVisualizerFactory>(mainProperty)
+						));
+					defaultSubColumnVisualizerFactory = 
+						MakePtr<DataVisualizerFactory>(cellBorderProperty,
+							MakePtr<DataVisualizerFactory>(focusRectangleProperty,
+								MakePtr<DataVisualizerFactory>(subProperty)
+						));
 				}
 
 				CHECK_ERROR(listViewItemView != nullptr, L"GuiVirtualDataGrid::GuiVirtualDataGrid(IStyleController*, GuiListControl::IItemProvider*)#Missing IListViewItemView from item provider.");
@@ -514,7 +640,11 @@ GuiVirtualDataGrid
 				CHECK_ERROR(dataGridView != nullptr, L"GuiVirtualDataGrid::GuiVirtualDataGrid(IStyleController*, GuiListControl::IItemProvider*)#Missing IDataGridView from item provider.");
 
 				SetViewToDefault();
+
 				ColumnClicked.AttachMethod(this, &GuiVirtualDataGrid::OnColumnClicked);
+				SelectionChanged.AttachMethod(this, &GuiVirtualDataGrid::OnSelectionChanged);
+				focusableComposition->GetEventReceiver()->keyDown.AttachMethod(this, &GuiVirtualDataGrid::OnKeyDown);
+				focusableComposition->GetEventReceiver()->keyUp.AttachMethod(this, &GuiVirtualDataGrid::OnKeyUp);
 				SelectedCellChanged.SetAssociatedComposition(boundsComposition);
 			}
 
@@ -540,36 +670,47 @@ GuiVirtualDataGrid
 				return selectedCell;
 			}
 
-			void GuiVirtualDataGrid::SetSelectedCell(const GridPos& value)
+			bool GuiVirtualDataGrid::SelectCell(const GridPos& value, bool openEditor)
 			{
-				if (selectedCell == value)
+				bool validPos = 0 <= value.row && value.row < GetItemProvider()->Count() && 0 <= value.column && value.column < listViewItemView->GetColumnCount();
+
+				if (validPos && selectedCell == value)
 				{
-					return;
+					if (currentEditor && !openEditor)
+					{
+						StopEdit();
+					}
+					else if (!currentEditor && openEditor)
+					{
+						StartEdit(value.row, value.column);
+					}
+					return currentEditor != nullptr;
 				}
 
-				bool validPos = 0 <= value.row && value.row < GetItemProvider()->Count() && 0 <= value.column && value.column < listViewItemView->GetColumnCount();
-				StopEdit(true);
-
+				StopEdit();
 				if (validPos)
 				{
 					NotifySelectCell(value.row, value.column);
+					if (openEditor)
+					{
+						EnsureItemVisible(value.row);
+						if (GetMultiSelect())
+						{
+							ClearSelection();
+						}
+
+						skipOnSelectionChanged = true;
+						SetSelected(value.row, true);
+						skipOnSelectionChanged = false;
+						return StartEdit(value.row, value.column);
+					}
 				}
 				else
 				{
 					NotifySelectCell(-1, -1);
-				}
-
-				if (validPos)
-				{
-					EnsureItemVisible(value.row);
-					ClearSelection();
-					SetSelected(value.row, true);
-					StartEdit(value.row, value.column);
-				}
-				else
-				{
 					ClearSelection();
 				}
+				return false;
 			}
 		}
 	}

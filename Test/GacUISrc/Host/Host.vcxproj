@@ -30,7 +30,7 @@
     <ProjectGuid>{2E5D31F7-CE73-4683-8A01-64C48F40E258}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>Host</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -121,6 +121,9 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;VCZH_CHECK_MEMORY_LEAKS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <DisableLanguageExtensions>false</DisableLanguageExtensions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -155,6 +158,9 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;VCZH_CHECK_MEMORY_LEAKS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <DisableLanguageExtensions>false</DisableLanguageExtensions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -191,6 +197,9 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <DisableLanguageExtensions>false</DisableLanguageExtensions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -212,6 +221,9 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <DisableLanguageExtensions>false</DisableLanguageExtensions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -225,21 +237,38 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <Xml Include="Resources\DarkSkin\DarkSkin.xml" />
+    <Xml Include="Resources\DarkSkin\Index.xml" />
     <Xml Include="Resources\DarkSkin\Resource.xml" />
+    <Xml Include="Resources\DarkSkin\Style.xml" />
+    <Xml Include="Resources\DarkSkin\Template_Button.xml" />
+    <Xml Include="Resources\DarkSkin\Template_Document.xml" />
+    <Xml Include="Resources\DarkSkin\Template_List.xml" />
+    <Xml Include="Resources\DarkSkin\Template_Misc.xml" />
+    <Xml Include="Resources\DarkSkin\Template_Ribbon.xml" />
+    <Xml Include="Resources\DarkSkin\Template_Scroll.xml" />
+    <Xml Include="Resources\DarkSkin\Template_Tab.xml" />
+    <Xml Include="Resources\DarkSkin\Template_TextBox.xml" />
+    <Xml Include="Resources\DarkSkin\Template_Toolstrip.xml" />
+    <Xml Include="Resources\DarkSkin\Template_Window.xml" />
     <Xml Include="Resources\FullControlTest\AnimationTabPage.xml" />
     <Xml Include="Resources\FullControlTest\DataGridComponents.xml" />
     <Xml Include="Resources\FullControlTest\DataGridTabPage.xml" />
+    <Xml Include="Resources\FullControlTest\DatePickerTabPage.xml" />
     <Xml Include="Resources\FullControlTest\DocumentComponents.xml" />
-    <Xml Include="Resources\FullControlTest\DocumentTabPage.xml" />
+    <Xml Include="Resources\FullControlTest\DocumentEditorBase.xml" />
+    <Xml Include="Resources\FullControlTest\DocumentEditorRibbon.xml" />
+    <Xml Include="Resources\FullControlTest\DocumentEditorToolstrip.xml" />
     <Xml Include="Resources\FullControlTest\ElementTabPage.xml" />
     <Xml Include="Resources\FullControlTest\Images\ImageLoader.xml" />
     <Xml Include="Resources\FullControlTest\Images\LargeImages.xml" />
     <Xml Include="Resources\FullControlTest\Images\MiscImages.xml" />
     <Xml Include="Resources\FullControlTest\Images\SmallImages.xml" />
     <Xml Include="Resources\FullControlTest\ListViewTabPage.xml" />
+    <Xml Include="Resources\FullControlTest\LocalizedStringsTabPage.xml" />
     <Xml Include="Resources\FullControlTest\RepeatComponents.xml" />
     <Xml Include="Resources\FullControlTest\RepeatTabPage.xml" />
     <Xml Include="Resources\FullControlTest\Resource.xml" />
+    <Xml Include="Resources\FullControlTest\ResponsiveTabPage.xml" />
     <Xml Include="Resources\FullControlTest\TextBoxTabPage.xml" />
     <Xml Include="Resources\FullControlTest\TextListTabPage.xml" />
     <Xml Include="Resources\FullControlTest\ToolbarImages\Images.xml" />
@@ -251,6 +280,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AutoComplete_Grammar.cpp" />
+    <ClCompile Include="CompositionDumper.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="ResourceCompiler.cpp" />
     <ClCompile Include="TsfTestWindow.cpp" />

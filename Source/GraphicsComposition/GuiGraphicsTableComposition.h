@@ -6,10 +6,10 @@ GacUI::Composition System
 Interfaces:
 ***********************************************************************/
 
-#ifndef VCZH_PRESENTATION_ELEMENTS_GUIGRAPHICSTABLECOMPOSITION
-#define VCZH_PRESENTATION_ELEMENTS_GUIGRAPHICSTABLECOMPOSITION
+#ifndef VCZH_PRESENTATION_COMPOSITION_GUIGRAPHICSTABLECOMPOSITION
+#define VCZH_PRESENTATION_COMPOSITION_GUIGRAPHICSTABLECOMPOSITION
 
-#include "GuiGraphicsBasicComposition.h"
+#include "IncludeForward.h"
 
 namespace vl
 {
@@ -21,12 +21,6 @@ namespace vl
 /***********************************************************************
 Table Compositions
 ***********************************************************************/
-
-			class GuiTableComposition;
-			class GuiCellComposition;
-			class GuiTableSplitterCompositionBase;
-			class GuiRowSplitterComposition;
-			class GuiColumnSplitterComposition;
 
 			/// <summary>
 			/// Represnets a sizing configuration for a row or a column.
@@ -119,8 +113,6 @@ Table Compositions
 				collections::Array<vint>					rowSizes;
 				collections::Array<vint>					columnSizes;
 
-				Rect										previousContentBounds;
-				Size										previousContentMinSize;
 				Size										tableContentMinSize;
 
 				vint								GetSiteIndex(vint _rows, vint _columns, vint _row, vint _column);
@@ -152,8 +144,6 @@ Table Compositions
 														vint max
 														);
 				
-				void								UpdateCellBoundsInternal();
-				void								UpdateTableContentMinSize();
 				void								OnRenderContextChanged()override;
 			public:
 				GuiTableComposition();

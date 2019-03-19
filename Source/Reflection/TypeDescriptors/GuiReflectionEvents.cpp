@@ -44,6 +44,7 @@ Type Declaration
 				CLASS_MEMBER_FIELD(shift)
 				CLASS_MEMBER_FIELD(alt)
 				CLASS_MEMBER_FIELD(capslock)
+				CLASS_MEMBER_FIELD(autoRepeatKeyDown)
 			END_CLASS_MEMBER(GuiKeyEventArgs)
 
 			BEGIN_CLASS_MEMBER(GuiCharEventArgs)
@@ -71,6 +72,18 @@ Type Declaration
 				CLASS_MEMBER_FIELD(wheel)
 				CLASS_MEMBER_FIELD(nonClient)
 			END_CLASS_MEMBER(GuiMouseEventArgs)
+
+			BEGIN_ENUM_ITEM(ControlSignal)
+				ENUM_CLASS_ITEM(RenderTargetChanged)
+				ENUM_CLASS_ITEM(ParentLineChanged)
+				ENUM_CLASS_ITEM(ServiceAdded)
+			END_ENUM_ITEM(ControlSignal)
+
+			BEGIN_CLASS_MEMBER(GuiControlSignalEventArgs)
+				CLASS_MEMBER_BASE(GuiEventArgs)
+				
+				CLASS_MEMBER_FIELD(controlSignal)
+			END_CLASS_MEMBER(GuiControlSignalEventArgs)
 
 			BEGIN_CLASS_MEMBER(GuiItemEventArgs)
 				CLASS_MEMBER_BASE(GuiEventArgs)

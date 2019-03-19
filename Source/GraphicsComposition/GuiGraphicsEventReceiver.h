@@ -6,8 +6,8 @@ GacUI::Event Model
 Interfaces:
 ***********************************************************************/
 
-#ifndef VCZH_PRESENTATION_ELEMENTS_GUIGRAPHICSEVENTRECEIVER
-#define VCZH_PRESENTATION_ELEMENTS_GUIGRAPHICSEVENTRECEIVER
+#ifndef VCZH_PRESENTATION_COMPOSITION_GUIGRAPHICSEVENTRECEIVER
+#define VCZH_PRESENTATION_COMPOSITION_GUIGRAPHICSEVENTRECEIVER
 
 #include "../NativeWindow/GuiNativeWindow.h"
 
@@ -29,8 +29,6 @@ namespace vl
 {
 	namespace presentation
 	{
-		using namespace reflection;
-
 		namespace compositions
 		{
 			class GuiGraphicsComposition;
@@ -266,7 +264,7 @@ Predefined Events
 			};
 			
 			/// <summary>Keyboard event arguments.</summary>
-			struct GuiKeyEventArgs : public GuiEventArgs, public NativeWindowKeyInfo, public Description<GuiKeyEventArgs>
+			struct GuiKeyEventArgs : public GuiEventArgs, public WindowKeyInfo, public Description<GuiKeyEventArgs>
 			{
 				/// <summary>Create an event arguments with <see cref="compositionSource"/> and <see cref="eventSource"/> set to null.</summary>
 				GuiKeyEventArgs()
@@ -282,7 +280,7 @@ Predefined Events
 			};
 			
 			/// <summary>Char input event arguments.</summary>
-			struct GuiCharEventArgs : public GuiEventArgs, public NativeWindowCharInfo, public Description<GuiCharEventArgs>
+			struct GuiCharEventArgs : public GuiEventArgs, public WindowCharInfo, public Description<GuiCharEventArgs>
 			{
 				/// <summary>Create an event arguments with <see cref="compositionSource"/> and <see cref="eventSource"/> set to null.</summary>
 				GuiCharEventArgs()
@@ -298,7 +296,7 @@ Predefined Events
 			};
 			
 			/// <summary>Mouse event arguments.</summary>
-			struct GuiMouseEventArgs : public GuiEventArgs, public NativeWindowMouseInfo, public Description<GuiMouseEventArgs>
+			struct GuiMouseEventArgs : public GuiEventArgs, public WindowMouseInfo, public Description<GuiMouseEventArgs>
 			{
 				/// <summary>Create an event arguments with <see cref="compositionSource"/> and <see cref="eventSource"/> set to null.</summary>
 				GuiMouseEventArgs()
@@ -313,11 +311,42 @@ Predefined Events
 				}
 			};
 
+			/// <summary>Control signal.</summary>
+			enum class ControlSignal
+			{
+				/// <summary>Render target changed.</summary>
+				RenderTargetChanged,
+				/// <summary>Render target changed.</summary>
+				ParentLineChanged,
+				/// <summary>Service added changed.</summary>
+				ServiceAdded,
+			};
+
+			/// <summary>Control signal event arguments.</summary>
+			struct GuiControlSignalEventArgs : public GuiEventArgs, public Description<GuiControlSignalEventArgs>
+			{
+				/// <summary>The event raiser composition.</summary>
+				ControlSignal				controlSignal = ControlSignal::ParentLineChanged;
+
+				/// <summary>Create an event arguments with <see cref="compositionSource"/> and <see cref="eventSource"/> set to null.</summary>
+				GuiControlSignalEventArgs()
+				{
+				}
+
+				/// <summary>Create an event arguments with <see cref="compositionSource"/> and <see cref="eventSource"/> set to a specified value.</summary>
+				/// <param name="composition">The speciied value to set <see cref="compositionSource"/> and <see cref="eventSource"/>.</param>
+				GuiControlSignalEventArgs(GuiGraphicsComposition* composition)
+					:GuiEventArgs(composition)
+				{
+				}
+			};
+
 			typedef GuiGraphicsEvent<GuiEventArgs>				GuiNotifyEvent;
 			typedef GuiGraphicsEvent<GuiRequestEventArgs>		GuiRequestEvent;
 			typedef GuiGraphicsEvent<GuiKeyEventArgs>			GuiKeyEvent;
 			typedef GuiGraphicsEvent<GuiCharEventArgs>			GuiCharEvent;
 			typedef GuiGraphicsEvent<GuiMouseEventArgs>			GuiMouseEvent;
+			typedef GuiGraphicsEvent<GuiControlSignalEventArgs>	GuiControlSignalEvent;
 
 /***********************************************************************
 Predefined Item Events

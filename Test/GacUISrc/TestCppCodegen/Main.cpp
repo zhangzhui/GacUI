@@ -2,7 +2,8 @@
 
 #include "Source/DarkSkinReflection.h"
 #include "Source/DemoReflection.h"
-#include <Windows.h>
+#include "../../../Source/NativeWindow/Windows/WinNativeWindow.h"
+#include "resource.h"
 
 using namespace vl;
 using namespace vl::collections;
@@ -20,7 +21,8 @@ void GuiMain()
 	LoadDemoTypes();
 #endif
 
-	theme::RegisterTheme(L"DarkSkin", MakePtr<darkskin::Theme>());
+	windows::SetWindowDefaultIcon(MAINICON);
+	theme::RegisterTheme(MakePtr<darkskin::Theme>());
 	{
 		demo::MainWindow window;
 		window.ForceCalculateSizeImmediately();

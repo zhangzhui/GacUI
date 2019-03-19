@@ -16,6 +16,11 @@ namespace vl
 {
 	namespace presentation
 	{
+		namespace compositions
+		{
+			class GuiShortcutKeyManager;
+		}
+
 		namespace controls
 		{
 
@@ -82,16 +87,16 @@ GuiDocumentCommonInterface
 				void										InvokeModifiedChanged();
 				void										UpdateCaretPoint();
 				void										Move(TextPos caret, bool shift, bool frontSide);
-				bool										ProcessKey(vint code, bool shift, bool ctrl);
+				bool										ProcessKey(VKEY code, bool shift, bool ctrl);
 				void										InstallDocumentViewer(GuiControl* _sender, compositions::GuiGraphicsComposition* _container, compositions::GuiGraphicsComposition* eventComposition, compositions::GuiGraphicsComposition* focusableComposition);
 				void										SetActiveHyperlink(Ptr<DocumentHyperlinkRun::Package> package);
 				void										ActivateActiveHyperlink(bool activate);
-				void										AddShortcutCommand(vint key, const Func<void()>& eventHandler);
+				void										AddShortcutCommand(VKEY key, const Func<void()>& eventHandler);
 				void										EditTextInternal(TextPos begin, TextPos end, const Func<void(TextPos, TextPos, vint&, vint&)>& editor);
 				void										EditStyleInternal(TextPos begin, TextPos end, const Func<void(TextPos, TextPos)>& editor);
 				
 				void										MergeBaselineAndDefaultFont(Ptr<DocumentModel> document);
-				void										OnFontChanged(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
+				void										OnFontChanged();
 				void										OnCaretNotify(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
 				void										OnGotFocus(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
 				void										OnLostFocus(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
@@ -242,6 +247,11 @@ GuiDocumentCommonInterface
 				/// <param name="begin">The begin position of the range.</param>
 				/// <param name="end">The end position of the range.</param>
 				Ptr<DocumentStyleProperties>				SummarizeStyle(TextPos begin, TextPos end);
+				/// <summary>Summarize the style name in a specified range.</summary>
+				/// <returns>The style name summary.</returns>
+				/// <param name="begin">The begin position of the range.</param>
+				/// <param name="end">The end position of the range.</param>
+				Nullable<WString>							SummarizeStyleName(TextPos begin, TextPos end);
 				/// <summary>Set the alignment of paragraphs in a specified range.</summary>
 				/// <param name="begin">The begin position of the range.</param>
 				/// <param name="end">The end position of the range.</param>
@@ -341,6 +351,7 @@ GuiDocumentViewer
 				GUI_SPECIFY_CONTROL_TEMPLATE_TYPE(DocumentViewerTemplate, GuiScrollContainer)
 			protected:
 
+				void										UpdateDisplayFont()override;
 				Point										GetDocumentViewPosition()override;
 				void										EnsureRectVisible(Rect bounds)override;
 			public:
@@ -361,8 +372,11 @@ GuiDocumentViewer
 			class GuiDocumentLabel : public GuiControl, public GuiDocumentCommonInterface, public Description<GuiDocumentLabel>
 			{
 				GUI_SPECIFY_CONTROL_TEMPLATE_TYPE(DocumentLabelTemplate, GuiControl)
+			protected:
+
+				void										UpdateDisplayFont()override;
 			public:
-				/// <summary>Create a control with a specified style controller.</summary>
+				/// <summary>Create a control with a specified default theme.</summary>
 				/// <param name="themeName">The theme name for retriving a default control template.</param>
 				GuiDocumentLabel(theme::ThemeName themeName);
 				~GuiDocumentLabel();

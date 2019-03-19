@@ -70,10 +70,11 @@ bool CodegenConfig::LoadConfigString(Ptr<GuiResourceFolder> folder, const WStrin
 	return false;
 }
 
-Ptr<CodegenConfig> CodegenConfig::LoadConfig(Ptr<GuiResource> resource)
+Ptr<CodegenConfig> CodegenConfig::LoadConfig(Ptr<GuiResource> resource, GuiResourceError::List& errors)
 {
 	Ptr<CodegenConfig> config = new CodegenConfig;
 	config->resource = resource;
+	config->metadata = resource->GetMetadata();
 
 	if (auto folder = resource->GetFolderByPath(L"GacGenConfig/Cpp/"))
 	{
@@ -95,13 +96,32 @@ Ptr<CodegenConfig> CodegenConfig::LoadConfig(Ptr<GuiResource> resource)
 		config->cppOutput = out;
 	}
 
-	if (auto folder = resource->GetFolderByPath(L"GacGenConfig/Res/"))
+	if (auto folder = resource->GetFolderByPath(L"GacGenConfig/ResX86/"))
 	{
 		auto out = MakePtr<CodegenConfig::ResOutput>();
 		LoadConfigString(folder, L"Resource", out->resource);
 		LoadConfigString(folder, L"Compressed", out->compressed);
+		LoadConfigString(folder, L"Assembly", out->assembly);
 
-		config->resOutput = out;
+		config->resOutputx32 = out;
+	}
+
+	if (auto folder = resource->GetFolderByPath(L"GacGenConfig/ResX64/"))
+	{
+		auto out = MakePtr<CodegenConfig::ResOutput>();
+		LoadConfigString(folder, L"Resource", out->resource);
+		LoadConfigString(folder, L"Compressed", out->compressed);
+		LoadConfigString(folder, L"Assembly", out->assembly);
+
+		config->resOutputx64 = out;
+	}
+
+	if (auto item = resource->GetValueByPath(L"GacGenConfig/Metadata"))
+	{
+		if (auto xml = item.Cast<XmlDocument>())
+		{
+			resource->GetMetadata()->LoadFromXml(xml, { resource }, errors);
+		}
 	}
 
 	return config;

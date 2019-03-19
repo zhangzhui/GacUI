@@ -262,7 +262,6 @@ DataColumn
 					Ptr<IDataVisualizerFactory>							GetVisualizerFactory();
 					/// <summary>Set the visualizer factory for the column.</summary>
 					/// <param name="value">The visualizer factory.</param>
-					/// <returns>The current column provider itself.</returns>
 					void												SetVisualizerFactory(Ptr<IDataVisualizerFactory> value);
 
 					/// <summary>Get the editor factory for the column.</summary>
@@ -270,7 +269,6 @@ DataColumn
 					Ptr<IDataEditorFactory>								GetEditorFactory();
 					/// <summary>Set the editor factory for the column.</summary>
 					/// <param name="value">The editor factory.</param>
-					/// <returns>The current column provider itself.</returns>
 					void												SetEditorFactory(Ptr<IDataEditorFactory> value);
 
 					/// <summary>Get the text value from an item.</summary>
@@ -341,7 +339,6 @@ DataProvider
 					Ptr<description::IValueReadonlyList>					itemSource;
 					Ptr<EventHandler>										itemChangedEventHandler;
 
-					description::Value										viewModelContext;
 					Ptr<IDataFilter>										additionalFilter;
 					Ptr<IDataFilter>										currentFilter;
 					Ptr<IDataSorter>										currentSorter;
@@ -362,9 +359,8 @@ DataProvider
 					ItemProperty<Ptr<GuiImageData>>							smallImageProperty;
 
 				public:
-					/// <summary>Create a data provider from a <see cref="IDataProvider"/>.</summary>
-					/// <param name="provider">The structured data provider.</param>
-					DataProvider(const description::Value& _viewModelContext);
+					/// <summary>Create a data provider.</summary>
+					DataProvider();
 					~DataProvider();
 
 					ListViewDataColumns&								GetDataColumns();
@@ -404,7 +400,6 @@ DataProvider
 					
 					// ===================== list::IDataGridView =====================
 
-					description::Value									GetViewModelContext()override;
 					bool												IsColumnSortable(vint column)override;
 					void												SortByColumn(vint column, bool ascending)override;
 					vint												GetSortedColumn()override;
@@ -430,9 +425,8 @@ GuiBindableDataGrid
 
 			public:
 				/// <summary>Create a bindable Data grid control.</summary>
-				/// <param name="_controlTemplate">The control template for this control.</param>
-				/// <param name="_viewModelContext">The view mode context, which will be passed to every visualizers and editors in this grid.</param>
-				GuiBindableDataGrid(theme::ThemeName themeName, const description::Value& _viewModelContext = description::Value());
+				/// <param name="themeName">The theme name for retriving a default control template.</param>
+				GuiBindableDataGrid(theme::ThemeName themeName);
 				~GuiBindableDataGrid();
 
 				/// <summary>Get all data columns indices in columns.</summary>

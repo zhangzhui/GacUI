@@ -1,6 +1,7 @@
 #include "GuiListViewControls.h"
 #include "GuiListViewItemTemplates.h"
 #include "../Templates/GuiThemeStyleFactory.h"
+#include "../../GraphicsComposition/GuiGraphicsStackComposition.h"
 
 namespace vl
 {
@@ -23,7 +24,7 @@ GuiListViewColumnHeader
 
 			void GuiListViewColumnHeader::AfterControlTemplateInstalled_(bool initialize)
 			{
-				GetControlTemplateObject()->SetSortingState(columnSortingState);
+				GetControlTemplateObject(true)->SetSortingState(columnSortingState);
 			}
 			
 			GuiListViewColumnHeader::GuiListViewColumnHeader(theme::ThemeName themeName)
@@ -50,7 +51,7 @@ GuiListViewColumnHeader
 				if (columnSortingState != value)
 				{
 					columnSortingState = value;
-					GetControlTemplateObject()->SetSortingState(columnSortingState);
+					GetControlTemplateObject(true)->SetSortingState(columnSortingState);
 				}
 			}
 
@@ -251,7 +252,8 @@ ListViewColumnItemArranger
 							for (vint i = 0; i < listViewItemView->GetColumnCount(); i++)
 							{
 								GuiListViewColumnHeader* button = new GuiListViewColumnHeader(theme::ThemeName::Unknown);
-								button->SetControlTemplate(listView->GetControlTemplateObject()->GetColumnHeaderTemplate());
+								button->SetAutoFocus(false);
+								button->SetControlTemplate(listView->GetControlTemplateObject(true)->GetColumnHeaderTemplate());
 								button->SetText(listViewItemView->GetColumnText(i));
 								button->SetSubMenu(columnItemView->GetDropdownPopup(i), false);
 								button->SetColumnSortingState(columnItemView->GetSortingState(i));
@@ -305,9 +307,9 @@ ListViewColumnItemArranger
 					listView = dynamic_cast<GuiListViewBase*>(value);
 					if (listView)
 					{
-						listView->GetContainerComposition()->AddChild(columnHeaders);
 						listViewItemView = dynamic_cast<IListViewItemView*>(listView->GetItemProvider()->RequestView(IListViewItemView::Identifier));
 						columnItemView = dynamic_cast<IColumnItemView*>(listView->GetItemProvider()->RequestView(IColumnItemView::Identifier));
+						listView->GetContainerComposition()->AddChild(columnHeaders);
 						if (columnItemView)
 						{
 							columnItemView->AttachCallback(columnItemViewCallback.Obj());

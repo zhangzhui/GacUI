@@ -15,6 +15,11 @@ namespace vl
 {
 	namespace presentation
 	{
+		namespace compositions
+		{
+			class IGuiShortcutKeyItem;
+		}
+
 		namespace controls
 		{
 			/// <summary>A command for toolstrip controls.</summary>
@@ -28,10 +33,11 @@ namespace vl
 					bool									ctrl;
 					bool									shift;
 					bool									alt;
-					vint									key;
+					VKEY									key;
 				};
 			protected:
 				Ptr<GuiImageData>							image;
+				Ptr<GuiImageData>							largeImage;
 				WString										text;
 				compositions::IGuiShortcutKeyItem*			shortcutKeyItem = nullptr;
 				bool										enabled = true;
@@ -63,6 +69,12 @@ namespace vl
 				/// <summary>Description changed event, raised when any description property is modified.</summary>
 				compositions::GuiNotifyEvent				DescriptionChanged;
 
+				/// <summary>Get the large image for this command.</summary>
+				/// <returns>The large image for this command.</returns>
+				Ptr<GuiImageData>							GetLargeImage();
+				/// <summary>Set the large image for this command.</summary>
+				/// <param name="value">The large image for this command.</param>
+				void										SetLargeImage(Ptr<GuiImageData> value);
 				/// <summary>Get the image for this command.</summary>
 				/// <returns>The image for this command.</returns>
 				Ptr<GuiImageData>							GetImage();

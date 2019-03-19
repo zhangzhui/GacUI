@@ -79,17 +79,14 @@ NodeItemProvider
 					/// <summary>Get the number of all sub nodes.</summary>
 					/// <returns>The number of all sub nodes.</returns>
 					virtual vint					GetChildCount()=0;
-					/// <summary>Get the parent node. This function increases the reference counter to the result node. If the sub node is not longer needed, a call to [M:vl.presentation.controls.tree.INodeProvider.Release] is required.</summary>
+					/// <summary>Get the parent node.</summary>
 					/// <returns>The parent node.</returns>
-					virtual INodeProvider*			GetParent()=0;
-					/// <summary>Get the instance of a specified sub node. This function increases the reference counter to the result node. If the sub node is not longer needed, a call to [M:vl.presentation.controls.tree.INodeProvider.Release] is required.</summary>
+					virtual Ptr<INodeProvider>		GetParent()=0;
+					/// <summary>Get the instance of a specified sub node.</summary>
 					/// <returns>The instance of a specified sub node.</returns>
 					/// <param name="index">The index of the sub node.</param>
-					virtual INodeProvider*			GetChild(vint index)=0;
-					/// <summary>Increase the reference counter. Use [M:vl.presentation.controls.tree.INodeProvider.Release] to decrease the reference counter.</summary>
-					virtual void					Increase()=0;
-					/// <summary>Decrease the reference counter. If the counter is zero, the node will be deleted. Use [M:vl.presentation.controls.tree.INodeProvider.Increase] to increase the reference counter.</summary>
-					virtual void					Release()=0;
+					virtual Ptr<INodeProvider>		GetChild(vint index)=0;
+					/// <summary>Increase the reference counter.</summary>
 				};
 				
 				/// <summary>Represents a root node provider.</summary>
@@ -98,14 +95,14 @@ NodeItemProvider
 				public:
 					/// <summary>Get the instance of the root node.</summary>
 					/// <returns>Returns the instance of the root node.</returns>
-					virtual INodeProvider*			GetRootNode()=0;
+					virtual Ptr<INodeProvider>		GetRootNode()=0;
 					/// <summary>Test does the provider provided an optimized algorithm to get an instance of a node by the index of all visible nodes. If this function returns true, [M:vl.presentation.controls.tree.INodeRootProvider.GetNodeByVisibleIndex] can be used.</summary>
 					/// <returns>Returns true if such an algorithm is provided.</returns>
 					virtual bool					CanGetNodeByVisibleIndex()=0;
-					/// <summary>Get a node by the index in all visible nodes. This requires [M:vl.presentation.controls.tree.INodeRootProvider.CanGetNodeByVisibleIndex] returning true. If the node is no longer needed, a call to the [M:vl.presentation.controls.tree.INodeProvider.Release] is needed, unless this is a root node so that its parent is null.</summary>
+					/// <summary>Get a node by the index in all visible nodes. This requires [M:vl.presentation.controls.tree.INodeRootProvider.CanGetNodeByVisibleIndex] returning true.</summary>
 					/// <returns>The node for the index in all visible nodes.</returns>
 					/// <param name="index">The index in all visible nodes.</param>
-					virtual INodeProvider*			GetNodeByVisibleIndex(vint index)=0;
+					virtual Ptr<INodeProvider>		GetNodeByVisibleIndex(vint index)=0;
 					/// <summary>Attach an node provider callback to this node provider.</summary>
 					/// <returns>Returns true if this operation succeeded.</returns>
 					/// <param name="value">The node provider callback.</param>
@@ -122,7 +119,7 @@ NodeItemProvider
 					/// <returns>The binding value of a node.</returns>
 					/// <param name="node">The node.</param>
 					virtual description::Value		GetBindingValue(INodeProvider* node) = 0;
-					/// <summary>Request a view for this node provider. If the specified view is not supported, it returns null. If you want to get a view of type IXXX, use IXXX::Identifier as the identifier. When the view object is no longer needed, A call to the [M:vl.presentation.controls.tree.INodeRootProvider.ReleaseView] is needed.</summary>
+					/// <summary>Request a view for this node provider. If the specified view is not supported, it returns null. If you want to get a view of type IXXX, use IXXX::Identifier as the identifier.</summary>
 					/// <returns>The view object.</returns>
 					/// <param name="identifier">The identifier for the requested view.</param>
 					virtual IDescriptable*			RequestView(const WString& identifier)=0;
@@ -135,20 +132,17 @@ NodeItemProvider
 				// Tree to ListControl (IItemProvider)
 				//-----------------------------------------------------------
 
-				/// <summary>The required <see cref="GuiListControl::IItemProvider"/> view for [T:vl.presentation.controls.tree.NodeItemStyleProvider]. [T:vl.presentation.controls.tree.NodeItemProvider] provides this view. In most of the cases, the NodeItemProvider class and this view is not required users to create, or even to touch. [T:vl.presentation.controls.GuiVirtualTreeListControl] already handled all of this.</summary>
+				/// <summary>The required <see cref="GuiListControl::IItemProvider"/> view for [T:vl.presentation.controls.tree.GuiVirtualTreeView]. [T:vl.presentation.controls.tree.NodeItemProvider] provides this view. In most of the cases, the NodeItemProvider class and this view is not required users to create, or even to touch. [T:vl.presentation.controls.GuiVirtualTreeListControl] already handled all of this.</summary>
 				class INodeItemView : public virtual IDescriptable, public Description<INodeItemView>
 				{
 				public:
 					/// <summary>The identifier of this view.</summary>
 					static const wchar_t* const		Identifier;
 
-					/// <summary>Get an instance of a node by the index in all visible nodes. If the node is no longer needed, a call to [M:vl.presentation.controls.tree.INodeItemView.ReleaseNode] is required.</summary>
+					/// <summary>Get an instance of a node by the index in all visible nodes.</summary>
 					/// <returns>The instance of a node by the index in all visible nodes.</returns>
 					/// <param name="index">The index in all visible nodes.</param>
-					virtual INodeProvider*			RequestNode(vint index)=0;
-					/// <summary>Release an instance of a node.</summary>
-					/// <param name="node">The instance of a node.</param>
-					virtual void					ReleaseNode(INodeProvider* node)=0;
+					virtual Ptr<INodeProvider>		RequestNode(vint index)=0;
 					/// <summary>Get the index in all visible nodes of a node.</summary>
 					/// <returns>The index in all visible nodes of a node.</returns>
 					/// <param name="node">The node to calculate the index.</param>
@@ -159,7 +153,7 @@ NodeItemProvider
 				class NodeItemProvider
 					: public list::ItemProviderBase
 					, protected virtual INodeProviderCallback
-					, protected virtual INodeItemView
+					, public virtual INodeItemView
 					, public Description<NodeItemProvider>
 				{
 					typedef collections::Dictionary<INodeProvider*, vint>			NodeIntMap;
@@ -168,7 +162,7 @@ NodeItemProvider
 					NodeIntMap						offsetBeforeChildModifieds;
 					
 
-					INodeProvider*					GetNodeByOffset(INodeProvider* provider, vint offset);
+					Ptr<INodeProvider>				GetNodeByOffset(Ptr<INodeProvider> provider, vint offset);
 					void							OnAttached(INodeRootProvider* provider)override;
 					void							OnBeforeItemModified(INodeProvider* parentNode, vint start, vint count, vint newCount)override;
 					void							OnAfterItemModified(INodeProvider* parentNode, vint start, vint count, vint newCount)override;
@@ -177,8 +171,7 @@ NodeItemProvider
 					vint							CalculateNodeVisibilityIndexInternal(INodeProvider* node);
 					vint							CalculateNodeVisibilityIndex(INodeProvider* node)override;
 					
-					INodeProvider*					RequestNode(vint index)override;
-					void							ReleaseNode(INodeProvider* node)override;
+					Ptr<INodeProvider>				RequestNode(vint index)override;
 				public:
 					/// <summary>Create an item provider using a node root provider.</summary>
 					/// <param name="_root">The node root provider.</param>
@@ -215,6 +208,7 @@ MemoryNodeProvider
 					{
 						friend class MemoryNodeProvider;
 					protected:
+						vint						offsetBeforeChildModified = 0;
 						MemoryNodeProvider*			ownerProvider;
 
 						void						OnBeforeChildModified(vint start, vint count, vint newCount);
@@ -235,7 +229,6 @@ MemoryNodeProvider
 					bool							expanding = false;
 					vint							childCount = 0;
 					vint							totalVisibleNodeCount = 1;
-					vint							offsetBeforeChildModified = 0;
 					Ptr<DescriptableObject>			data;
 					NodeCollection					children;
 
@@ -264,10 +257,8 @@ MemoryNodeProvider
 					vint							CalculateTotalVisibleNodes()override;
 
 					vint							GetChildCount()override;
-					INodeProvider*					GetParent()override;
-					INodeProvider*					GetChild(vint index)override;
-					void							Increase()override;
-					void							Release()override;
+					Ptr<INodeProvider>				GetParent()override;
+					Ptr<INodeProvider>				GetChild(vint index)override;
 				};
 
 				/// <summary>A general implementation for <see cref="INodeRootProvider"/>.</summary>
@@ -286,7 +277,7 @@ MemoryNodeProvider
 					~NodeRootProviderBase();
 					
 					bool							CanGetNodeByVisibleIndex()override;
-					INodeProvider*					GetNodeByVisibleIndex(vint index)override;
+					Ptr<INodeProvider>				GetNodeByVisibleIndex(vint index)override;
 					bool							AttachCallback(INodeProviderCallback* value)override;
 					bool							DetachCallback(INodeProviderCallback* value)override;
 					IDescriptable*					RequestView(const WString& identifier)override;
@@ -305,7 +296,7 @@ MemoryNodeProvider
 					MemoryNodeRootProvider();
 					~MemoryNodeRootProvider();
 
-					INodeProvider*					GetRootNode()override;
+					Ptr<INodeProvider>				GetRootNode()override;
 					/// <summary>Get the <see cref="MemoryNodeProvider"/> object from an <see cref="INodeProvider"/> object.</summary>
 					/// <returns>The corresponding <see cref="MemoryNodeProvider"/> object.</returns>
 					/// <param name="node">The node to get the memory node.</param>
@@ -337,7 +328,7 @@ GuiVirtualTreeListControl
 				void								OnNodeLeftButtonDoubleClick(compositions::GuiGraphicsComposition* sender, compositions::GuiNodeMouseEventArgs& arguments);
 			public:
 				/// <summary>Create a tree list control in virtual mode.</summary>
-				/// <param name="_controlTemplate">The control template for this control.</param>
+				/// <param name="themeName">The theme name for retriving a default control template.</param>
 				/// <param name="_nodeRootProvider">The node root provider for this control.</param>
 				GuiVirtualTreeListControl(theme::ThemeName themeName, Ptr<tree::INodeRootProvider> _nodeRootProvider);
 				~GuiVirtualTreeListControl();
@@ -385,7 +376,7 @@ TreeViewItemRootProvider
 
 			namespace tree
 			{
-				/// <summary>The required <see cref="INodeRootProvider"/> view for [T:vl.presentation.controls.tree.TreeViewNodeItemStyleProvider].</summary>
+				/// <summary>The required <see cref="INodeRootProvider"/> view for [T:vl.presentation.controls.GuiVirtualTreeView].</summary>
 				class ITreeViewItemView : public virtual IDescriptable, public Description<ITreeViewItemView>
 				{
 				public:
@@ -420,7 +411,7 @@ TreeViewItemRootProvider
 				/// <summary>The default implementation of <see cref="INodeRootProvider"/> for [T:vl.presentation.controls.GuiVirtualTreeView].</summary>
 				class TreeViewItemRootProvider
 					: public MemoryNodeRootProvider
-					, protected virtual ITreeViewItemView
+					, public virtual ITreeViewItemView
 					, public Description<TreeViewItemRootProvider>
 				{
 				protected:
@@ -467,8 +458,8 @@ GuiVirtualTreeView
 				void													OnItemCollapsed(tree::INodeProvider* node)override;
 				void													OnStyleInstalled(vint itemIndex, ItemStyle* style)override;
 			public:
-				/// <summary>Create a tree view control in virtual mode. A [T:vl.presentation.controls.tree.TreeViewNodeItemStyleProvider] is created as a node item style provider by default.</summary>
-				/// <param name="_controlTemplate">The control template for this control.</param>
+				/// <summary>Create a tree view control in virtual mode.</summary>
+				/// <param name="themeName">The theme name for retriving a default control template.</param>
 				/// <param name="_nodeRootProvider">The node root provider for this control.</param>
 				GuiVirtualTreeView(theme::ThemeName themeName, Ptr<tree::INodeRootProvider> _nodeRootProvider);
 				~GuiVirtualTreeView();
@@ -485,7 +476,7 @@ GuiTreeView
 				Ptr<tree::TreeViewItemRootProvider>						nodes;
 			public:
 				/// <summary>Create a tree view control.</summary>
-				/// <param name="_controlTemplate">The control template for this control.</param>
+				/// <param name="themeName">The theme name for retriving a default control template.</param>
 				GuiTreeView(theme::ThemeName themeName);
 				~GuiTreeView();
 

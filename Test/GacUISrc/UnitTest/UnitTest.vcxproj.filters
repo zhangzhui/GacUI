@@ -21,6 +21,9 @@
     <ClCompile Include="TestResource.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="TestReflectionTypeList.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\..\Resources\Resource.FailedInstance.Ctor3.xml.txt">
@@ -74,6 +77,18 @@
     <Text Include="..\..\Resources\Resource.FailedScript.Animations2.xml.txt">
       <Filter>Resource Files</Filter>
     </Text>
+    <Text Include="..\..\Resources\Resource.FailedScript.Strings.xml.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="..\..\Resources\Resource.FailedInstance.Inheriting1.xml.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="..\..\Resources\Resource.FailedInstance.Inheriting2.xml.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="..\..\Resources\Resource.FailedScript.Strings2.xml.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
   </ItemGroup>
   <ItemGroup>
     <Xml Include="..\..\Resources\Resource.FailedInstance.Ctor4.xml">
@@ -125,6 +140,18 @@
       <Filter>Resource Files</Filter>
     </Xml>
     <Xml Include="..\..\Resources\Resource.FailedScript.Animations2.xml">
+      <Filter>Resource Files</Filter>
+    </Xml>
+    <Xml Include="..\..\Resources\Resource.FailedScript.Strings.xml">
+      <Filter>Resource Files</Filter>
+    </Xml>
+    <Xml Include="..\..\Resources\Resource.FailedScript.Strings2.xml">
+      <Filter>Resource Files</Filter>
+    </Xml>
+    <Xml Include="..\..\Resources\Resource.FailedInstance.Inheriting1.xml">
+      <Filter>Resource Files</Filter>
+    </Xml>
+    <Xml Include="..\..\Resources\Resource.FailedInstance.Inheriting2.xml">
       <Filter>Resource Files</Filter>
     </Xml>
   </ItemGroup>

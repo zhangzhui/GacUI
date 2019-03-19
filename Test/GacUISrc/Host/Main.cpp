@@ -4,6 +4,7 @@
 #include <Windows.h>
 
 using namespace vl;
+using namespace vl::collections;
 using namespace vl::stream;
 using namespace vl::reflection::description;
 
@@ -53,7 +54,7 @@ void OpenMainWindow()
 {
 	{
 		auto theme = UnboxValue<Ptr<ThemeTemplates>>(Value::Create(L"darkskin::Theme"));
-		RegisterTheme(L"DarkSkin", theme);
+		RegisterTheme(theme);
 	}
 	{
 		auto window = UnboxValue<GuiWindow*>(Value::Create(L"demo::MainWindow"));
@@ -80,9 +81,21 @@ void GuiMain()
 
 #define BINARY_FOLDER L"../TestCppCodegen/"
 #define SOURCE_FOLDER L"../TestCppCodegen/Source/"
+#define COMPILE_DARKSKIN
+//#define COMPILE_DEMO
 
-	CompileResources(L"DarkSkin",	LR"(Resources/DarkSkin/Resource.xml)",			BINARY_FOLDER, SOURCE_FOLDER, true);
-	CompileResources(L"Demo",		LR"(Resources/FullControlTest/Resource.xml)",	BINARY_FOLDER, SOURCE_FOLDER, false);
+	List<WString> dependencies;
+#ifdef COMPILE_DARKSKIN
+	LoadResource(CompileResources(L"DarkSkin",	dependencies,	LR"(Resources/DarkSkin/Resource.xml)",			BINARY_FOLDER, SOURCE_FOLDER, true));
+#else
+	LoadResource(L"../TestCppCodegen/DarkSkin.UI.bin");
+#endif
+
+#ifdef COMPILE_DEMO
+	LoadResource(CompileResources(L"Demo",		dependencies,	LR"(Resources/FullControlTest/Resource.xml)",	BINARY_FOLDER, SOURCE_FOLDER, false));
+#else
+	LoadResource(L"../TestCppCodegen/Demo.UI.bin");
+#endif
 
 #undef BINARY_FOLDER
 #undef SOURCE_FOLDER

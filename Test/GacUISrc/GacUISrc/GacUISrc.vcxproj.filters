@@ -91,6 +91,12 @@
     <Filter Include="GacUI\Resources\DocumentEditor">
       <UniqueIdentifier>{3ac523cb-7f16-46f2-9eaf-001ca1c8ec48}</UniqueIdentifier>
     </Filter>
+    <Filter Include="GacUI\Resources\DocumentClipboard">
+      <UniqueIdentifier>{d604a797-bc1e-4c85-bbc9-bf7efd9bedd5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GacUI\GraphicsHost">
+      <UniqueIdentifier>{20826bcb-4800-4efd-a68e-a4445bb875d7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\Import\Vlpp.cpp">
@@ -150,9 +156,6 @@
     <ClCompile Include="..\..\..\Source\Controls\TextEditorPackage\EditorCallback\GuiTextColorizer.cpp">
       <Filter>GacUI\Controls\TextEditorPackage\EditorCallback</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\Source\Controls\TextEditorPackage\EditorCallback\GuiTextGeneralOperations.cpp">
-      <Filter>GacUI\Controls\TextEditorPackage\EditorCallback</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\Source\Controls\TextEditorPackage\EditorCallback\GuiTextUndoRedo.cpp">
       <Filter>GacUI\Controls\TextEditorPackage\EditorCallback</Filter>
     </ClCompile>
@@ -177,9 +180,6 @@
     <ClCompile Include="..\..\..\Source\GraphicsComposition\GuiGraphicsBasicComposition.cpp">
       <Filter>GacUI\GraphicsComposition</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\Source\GraphicsComposition\GuiGraphicsComposition.cpp">
-      <Filter>GacUI\GraphicsComposition</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\Source\GraphicsComposition\GuiGraphicsCompositionBase.cpp">
       <Filter>GacUI\GraphicsComposition</Filter>
     </ClCompile>
@@ -199,9 +199,6 @@
       <Filter>GacUI\GraphicsElement</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\Source\GraphicsElement\GuiGraphicsElement.cpp">
-      <Filter>GacUI\GraphicsElement</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\Source\GraphicsElement\GuiGraphicsHost.cpp">
       <Filter>GacUI\GraphicsElement</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\Source\GraphicsElement\GuiGraphicsResourceManager.cpp">
@@ -486,6 +483,51 @@
     <ClCompile Include="..\..\..\Source\Compiler\GuiInstanceAnimation.cpp">
       <Filter>GacUI\Compiler</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\Source\GraphicsComposition\GuiGraphicsResponsiveComposition.cpp">
+      <Filter>GacUI\GraphicsComposition</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Source\Compiler\GuiInstanceLocalizedStrings.cpp">
+      <Filter>GacUI\Compiler</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Source\Controls\ToolstripPackage\GuiRibbonControls.cpp">
+      <Filter>GacUI\Controls\ToolstripPackage</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Source\Controls\ToolstripPackage\GuiRibbonGalleryList.cpp">
+      <Filter>GacUI\Controls\ToolstripPackage</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Source\Controls\ToolstripPackage\GuiRibbonImpl.cpp">
+      <Filter>GacUI\Controls\ToolstripPackage</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Source\Resources\GuiDocumentClipboard_Document.cpp">
+      <Filter>GacUI\Resources\DocumentClipboard</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Source\Resources\GuiDocumentClipboard_HtmlFormat.cpp">
+      <Filter>GacUI\Resources\DocumentClipboard</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Source\Resources\GuiDocumentClipboard_RichTextFormat.cpp">
+      <Filter>GacUI\Resources\DocumentClipboard</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Source\GraphicsHost\GuiGraphicsHost.cpp">
+      <Filter>GacUI\GraphicsHost</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Source\GraphicsHost\GuiGraphicsHost_ShortcutKey.cpp">
+      <Filter>GacUI\GraphicsHost</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Source\GraphicsHost\GuiGraphicsHost_Alt.cpp">
+      <Filter>GacUI\GraphicsHost</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Source\GraphicsHost\GuiGraphicsHost_Tab.cpp">
+      <Filter>GacUI\GraphicsHost</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Source\GraphicsComposition\GuiGraphicsSharedSizeComposition.cpp">
+      <Filter>GacUI\GraphicsComposition</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Source\GraphicsComposition\GuiGraphicsRepeatComposition.cpp">
+      <Filter>GacUI\GraphicsComposition</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Source\NativeWindow\Windows\WinNativeDpiAwareness.cpp">
+      <Filter>GacUI\NativeWindow\Windows</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\Import\Vlpp.h">
@@ -581,9 +623,6 @@
     <ClInclude Include="..\..\..\Source\GraphicsComposition\GuiGraphicsBasicComposition.h">
       <Filter>GacUI\GraphicsComposition</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\Source\GraphicsComposition\GuiGraphicsComposition.h">
-      <Filter>GacUI\GraphicsComposition</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\Source\GraphicsComposition\GuiGraphicsCompositionBase.h">
       <Filter>GacUI\GraphicsComposition</Filter>
     </ClInclude>
@@ -609,9 +648,6 @@
       <Filter>GacUI\GraphicsElement</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\Source\GraphicsElement\GuiGraphicsElementInterfaces.h">
-      <Filter>GacUI\GraphicsElement</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\Source\GraphicsElement\GuiGraphicsHost.h">
       <Filter>GacUI\GraphicsElement</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\Source\GraphicsElement\GuiGraphicsResourceManager.h">
@@ -787,6 +823,57 @@
     </ClInclude>
     <ClInclude Include="..\..\..\Source\Compiler\GuiInstanceAnimation.h">
       <Filter>GacUI\Compiler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Source\GraphicsComposition\GuiGraphicsResponsiveComposition.h">
+      <Filter>GacUI\GraphicsComposition</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Source\Compiler\GuiInstanceLocalizedStrings.h">
+      <Filter>GacUI\Compiler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Source\Controls\ToolstripPackage\GuiRibbonControls.h">
+      <Filter>GacUI\Controls\ToolstripPackage</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Source\Controls\ToolstripPackage\GuiRibbonGalleryList.h">
+      <Filter>GacUI\Controls\ToolstripPackage</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Source\Controls\ToolstripPackage\GuiRibbonImpl.h">
+      <Filter>GacUI\Controls\ToolstripPackage</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Source\Resources\GuiDocumentClipboard.h">
+      <Filter>GacUI\Resources\DocumentClipboard</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Source\GraphicsHost\GuiGraphicsHost.h">
+      <Filter>GacUI\GraphicsHost</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Source\GraphicsHost\GuiGraphicsHost_ShortcutKey.h">
+      <Filter>GacUI\GraphicsHost</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Source\GraphicsHost\GuiGraphicsHost_Alt.h">
+      <Filter>GacUI\GraphicsHost</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Source\GraphicsHost\GuiGraphicsHost_Tab.h">
+      <Filter>GacUI\GraphicsHost</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Source\GraphicsComposition\GuiGraphicsSharedSizeComposition.h">
+      <Filter>GacUI\GraphicsComposition</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Source\GraphicsComposition\GuiGraphicsRepeatComposition.h">
+      <Filter>GacUI\GraphicsComposition</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Source\GraphicsComposition\IncludeAll.h">
+      <Filter>GacUI\GraphicsComposition</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Source\GraphicsComposition\IncludeForward.h">
+      <Filter>GacUI\GraphicsComposition</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Source\Controls\IncludeAll.h">
+      <Filter>GacUI\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Source\Controls\IncludeForward.h">
+      <Filter>GacUI\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Source\NativeWindow\Windows\WinNativeDpiAwareness.h">
+      <Filter>GacUI\NativeWindow\Windows</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

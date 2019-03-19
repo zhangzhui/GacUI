@@ -63,7 +63,7 @@ Instruction
 				TestType,				// flag, typeDescriptor	: Value -> <bool>													;
 				GetType,				//						: Value -> <ITypeDescriptor*>										;
 				Jump,					// label				: () -> ()															;
-				JumpIf,					// label				: () -> ()															;
+				JumpIf,					// label				: <bool> -> ()														;
 				Invoke,					// function, count		: Value-1, ..., Value-n -> Value									;
 				InvokeWithContext,		// function, count		: Value-1, ..., Value-n -> Value									;
 				GetProperty,			// IPropertyInfo*		: Value-this -> Value												;
@@ -730,7 +730,7 @@ Instance
 				void									InstallBaseObject(ITypeDescriptor* td, Value& value);
 			};
 
-			class WfInterfaceInstance : public Object, public reflection::Description<WfInterfaceInstance>
+			class WfInterfaceInstance : public Object, public reflection::IDescriptable, public reflection::Description<WfInterfaceInstance>
 			{
 				typedef reflection::description::ITypeDescriptor			ITypeDescriptor;
 				typedef reflection::description::IMethodInfo				IMethodInfo;
@@ -861,6 +861,15 @@ Assembly
 				void												Initialize();
 			};
 
+			/// <summary>Representing failures during loading an assembly</summary>
+			class WfAssemblyLoadErrors
+			{
+			public:
+				collections::List<WString>							unresolvedTypes;
+				collections::List<WString>							duplicatedTypes;
+				collections::List<WString>							unresolvedMembers;
+			};
+
 			/// <summary>Representing a Workflow assembly.</summary>
 			class WfAssembly : public Object, public reflection::Description<WfAssembly>
 			{
@@ -882,11 +891,15 @@ Assembly
 
 				/// <summary>Create an empty assembly.</summary>
 				WfAssembly();
-				/// <summary>Deserialize an assembly.</summary>
-				/// <param name="input">Serialized binary data.</param>
-				WfAssembly(stream::IStream& input);
 				
 				void												Initialize();
+
+				/// <summary>Deserialize an assembly.</summary>
+				/// <returns>The deserialized assembly. Returns null if there are errors.</returns>
+				/// <param name="input">Serialized binary data.</param>
+				/// <param name="errors">Errors during loading an assembly.</param>
+				static Ptr<WfAssembly>								Deserialize(stream::IStream& input, WfAssemblyLoadErrors& errors);
+
 				/// <summary>Serialize an assembly.</summary>
 				/// <param name="output">Serialized binary data.</param>
 				void												Serialize(stream::IStream& output);

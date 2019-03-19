@@ -9,18 +9,19 @@ namespace vl
 			using namespace presentation;
 			using namespace presentation::compositions;
 			using namespace presentation::controls;
+			using namespace presentation::controls::list;
 			using namespace presentation::templates;
 
 #ifndef VCZH_DEBUG_NO_REFLECTION
-
-/***********************************************************************
-Type Declaration
-***********************************************************************/
 
 #define _ ,
 
 #define GUI_TEMPLATE_PROPERTY_REFLECTION(CLASS, TYPE, NAME, VALUE)\
 	CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(NAME)
+
+/***********************************************************************
+Type Declaration (Extra)
+***********************************************************************/
 
 			BEGIN_ENUM_ITEM(ButtonState)
 				ENUM_CLASS_ITEM(Normal)
@@ -34,6 +35,14 @@ Type Declaration
 				ENUM_CLASS_ITEM(Descending)
 			END_ENUM_ITEM(ColumnSortingState)
 
+			BEGIN_ENUM_ITEM(TabPageOrder)
+				ENUM_CLASS_ITEM(Unknown)
+				ENUM_CLASS_ITEM(LeftToRight)
+				ENUM_CLASS_ITEM(RightToLeft)
+				ENUM_CLASS_ITEM(TopToBottom)
+				ENUM_CLASS_ITEM(BottomToTop)
+			END_ENUM_ITEM(TabPageOrder)
+
 			BEGIN_ENUM_ITEM(BoolOption)
 				ENUM_CLASS_ITEM(AlwaysTrue)
 				ENUM_CLASS_ITEM(AlwaysFalse)
@@ -45,12 +54,6 @@ Type Declaration
 
 				CLASS_MEMBER_METHOD(UnsafeSetText, { L"value" })
 			END_INTERFACE_MEMBER(ITextBoxCommandExecutor)
-
-			BEGIN_INTERFACE_MEMBER_NOPROXY(IComboBoxCommandExecutor)
-				CLASS_MEMBER_BASE(IDescriptable)
-
-				CLASS_MEMBER_METHOD(SelectItem, NO_PARAMETER)
-			END_INTERFACE_MEMBER(IComboBoxCommandExecutor)
 
 			BEGIN_INTERFACE_MEMBER_NOPROXY(IScrollCommandExecutor)
 				CLASS_MEMBER_METHOD(SmallDecrease, NO_PARAMETER)
@@ -64,7 +67,7 @@ Type Declaration
 
 			BEGIN_INTERFACE_MEMBER_NOPROXY(ITabCommandExecutor)
 				CLASS_MEMBER_BASE(IDescriptable)
-				CLASS_MEMBER_METHOD(ShowTab, { L"index" })
+				CLASS_MEMBER_METHOD(ShowTab, { L"index" _ L"setFocus" })
 			END_INTERFACE_MEMBER(ITabCommandExecutor)
 
 			BEGIN_INTERFACE_MEMBER_NOPROXY(IDatePickerCommandExecutor)
@@ -73,6 +76,18 @@ Type Declaration
 				CLASS_MEMBER_METHOD(NotifyDateNavigated, NO_PARAMETER)
 				CLASS_MEMBER_METHOD(NotifyDateSelected, NO_PARAMETER)
 			END_INTERFACE_MEMBER(IDatePickerCommandExecutor)
+
+			BEGIN_INTERFACE_MEMBER_NOPROXY(IRibbonGroupCommandExecutor)
+				CLASS_MEMBER_BASE(IDescriptable)
+				CLASS_MEMBER_METHOD(NotifyExpandButtonClicked, NO_PARAMETER)
+			END_INTERFACE_MEMBER(IRibbonGroupCommandExecutor)
+
+			BEGIN_INTERFACE_MEMBER_NOPROXY(IRibbonGalleryCommandExecutor)
+				CLASS_MEMBER_BASE(IDescriptable)
+				CLASS_MEMBER_METHOD(NotifyScrollUp, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(NotifyScrollDown, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(NotifyDropdown, NO_PARAMETER)
+			END_INTERFACE_MEMBER(IRibbonGalleryCommandExecutor)
 
 			BEGIN_CLASS_MEMBER(GuiComponent)
 			END_CLASS_MEMBER(GuiComponent)
@@ -99,6 +114,7 @@ Type Declaration
 				CLASS_MEMBER_STATIC_METHOD(PlayAndWaitAndPause, { L"impl" _ L"animation" })
 				CLASS_MEMBER_STATIC_METHOD(PlayInGroupAndPause, { L"impl" _ L"animation" _ L"groupId" })
 				CLASS_MEMBER_STATIC_METHOD(WaitForGroupAndPause, { L"impl" _ L"groupId" })
+				CLASS_MEMBER_STATIC_METHOD(ReturnAndExit, { L"impl" })
 				CLASS_MEMBER_STATIC_METHOD(Create, { L"creator" })
 			END_CLASS_MEMBER(IGuiAnimationCoroutine)
 
@@ -117,6 +133,25 @@ Type Declaration
 				CLASS_MEMBER_METHOD(AddAnimation, { L"animation" })
 				CLASS_MEMBER_METHOD(KillAnimation, { L"animation" })
 			END_CLASS_MEMBER(GuiInstanceRootObject)
+
+			BEGIN_CLASS_MEMBER(GuiCommonScrollBehavior)
+				CLASS_MEMBER_BASE(GuiComponent)
+				CLASS_MEMBER_CONSTRUCTOR(GuiCommonScrollBehavior*(), NO_PARAMETER)
+				
+				CLASS_MEMBER_METHOD(AttachScrollTemplate, { L"value" })
+				CLASS_MEMBER_METHOD(AttachDecreaseButton, { L"button" })
+				CLASS_MEMBER_METHOD(AttachIncreaseButton, { L"button" })
+				CLASS_MEMBER_METHOD(AttachHorizontalScrollHandle, { L"partialView" })
+				CLASS_MEMBER_METHOD(AttachVerticalScrollHandle, { L"partialView" })
+				CLASS_MEMBER_METHOD(AttachHorizontalTrackerHandle, { L"partialView" })
+				CLASS_MEMBER_METHOD(AttachVerticalTrackerHandle, { L"partialView" })
+				CLASS_MEMBER_METHOD(GetHorizontalTrackerHandlerPosition, { L"handle" _ L"totalSize" _ L"pageSize" _ L"position" })
+				CLASS_MEMBER_METHOD(GetVerticalTrackerHandlerPosition, { L"handle" _ L"totalSize" _ L"pageSize" _ L"position" })
+			END_CLASS_MEMBER(GuiCommonScrollBehavior)
+
+/***********************************************************************
+Type Declaration (Class)
+***********************************************************************/
 
 			BEGIN_CLASS_MEMBER(GuiTemplate)
 				CLASS_MEMBER_BASE(GuiBoundsComposition)
@@ -161,20 +196,30 @@ Type Declaration
 				CLASS_MEMBER_PROPERTY_READONLY_FAST(ContainerComposition)
 			END_CLASS_MEMBER(GuiCommonScrollViewLook)
 
-			BEGIN_CLASS_MEMBER(GuiCommonScrollBehavior)
-				CLASS_MEMBER_BASE(GuiComponent)
-				CLASS_MEMBER_CONSTRUCTOR(GuiCommonScrollBehavior*(), NO_PARAMETER)
-				
-				CLASS_MEMBER_METHOD(AttachScrollTemplate, { L"value" })
-				CLASS_MEMBER_METHOD(AttachDecreaseButton, { L"button" })
-				CLASS_MEMBER_METHOD(AttachIncreaseButton, { L"button" })
-				CLASS_MEMBER_METHOD(AttachHorizontalScrollHandle, { L"partialView" })
-				CLASS_MEMBER_METHOD(AttachVerticalScrollHandle, { L"partialView" })
-				CLASS_MEMBER_METHOD(AttachHorizontalTrackerHandle, { L"partialView" })
-				CLASS_MEMBER_METHOD(AttachVerticalTrackerHandle, { L"partialView" })
-				CLASS_MEMBER_METHOD(GetHorizontalTrackerHandlerPosition, { L"handle" _ L"totalSize" _ L"pageSize" _ L"position" })
-				CLASS_MEMBER_METHOD(GetVerticalTrackerHandlerPosition, { L"handle" _ L"totalSize" _ L"pageSize" _ L"position" })
-			END_CLASS_MEMBER(GuiCommonScrollBehavior)
+			BEGIN_CLASS_MEMBER(MainColumnVisualizerTemplate)
+				CLASS_MEMBER_BASE(GuiGridVisualizerTemplate)
+				CLASS_MEMBER_CONSTRUCTOR(MainColumnVisualizerTemplate*(), NO_PARAMETER)
+			END_CLASS_MEMBER(MainColumnVisualizerTemplate)
+
+			BEGIN_CLASS_MEMBER(SubColumnVisualizerTemplate)
+				CLASS_MEMBER_BASE(GuiGridVisualizerTemplate)
+				CLASS_MEMBER_CONSTRUCTOR(SubColumnVisualizerTemplate*(), NO_PARAMETER)
+			END_CLASS_MEMBER(SubColumnVisualizerTemplate)
+
+			BEGIN_CLASS_MEMBER(HyperlinkVisualizerTemplate)
+				CLASS_MEMBER_BASE(SubColumnVisualizerTemplate)
+				CLASS_MEMBER_CONSTRUCTOR(HyperlinkVisualizerTemplate*(), NO_PARAMETER)
+			END_CLASS_MEMBER(HyperlinkVisualizerTemplate)
+
+			BEGIN_CLASS_MEMBER(FocusRectangleVisualizerTemplate)
+				CLASS_MEMBER_BASE(GuiGridVisualizerTemplate)
+				CLASS_MEMBER_CONSTRUCTOR(FocusRectangleVisualizerTemplate*(), NO_PARAMETER)
+			END_CLASS_MEMBER(FocusRectangleVisualizerTemplate)
+
+			BEGIN_CLASS_MEMBER(CellBorderVisualizerTemplate)
+				CLASS_MEMBER_BASE(GuiGridVisualizerTemplate)
+				CLASS_MEMBER_CONSTRUCTOR(CellBorderVisualizerTemplate*(), NO_PARAMETER)
+			END_CLASS_MEMBER(CellBorderVisualizerTemplate)
 
 #undef GUI_CONTROL_TEMPLATE
 #undef GUI_TEMPLATE_PROPERTY_REFLECTION
@@ -189,7 +234,11 @@ Type Loader
 			public:
 				void Load(ITypeManager* manager)
 				{
+#define GUIREFLECTIONTEMPLATES_ADD_TYPE_INFO(NAME, BASE) ADD_TYPE_INFO(presentation::templates::NAME)
+
 					GUIREFLECTIONTEMPLATES_TYPELIST(ADD_TYPE_INFO)
+
+#undef GUIREFLECTIONTEMPLATES_ADD_TYPE_INFO
 				}
 
 				void Unload(ITypeManager* manager)

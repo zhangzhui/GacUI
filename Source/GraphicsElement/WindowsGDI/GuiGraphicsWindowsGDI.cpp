@@ -2,6 +2,7 @@
 #include "GuiGraphicsRenderersWindowsGDI.h"
 #include "GuiGraphicsLayoutProviderWindowsGDI.h"
 #include "..\..\Controls\GuiApplication.h"
+#include "..\..\GraphicsElement\GuiGraphicsDocumentElement.h"
 
 namespace vl
 {
@@ -122,13 +123,13 @@ WindowsGDIRenderTarget
 
 				Rect GetClipper()override
 				{
-					if(clippers.Count()==0)
+					if (clippers.Count() == 0)
 					{
-						return Rect(Point(0, 0), window->GetClientSize());
+						return Rect(Point(0, 0), window->Convert(window->GetClientSize()));
 					}
 					else
 					{
-						return clippers[clippers.Count()-1];
+						return clippers[clippers.Count() - 1];
 					}
 				}
 
@@ -189,14 +190,16 @@ CachedResourceAllocator
 					Ptr<WinFont>			font;
 					vint						size;
 
-					Size MeasureInternal(wchar_t character, IGuiGraphicsRenderTarget* renderTarget)
+					Size MeasureInternal(text::UnicodeCodePoint codePoint, IGuiGraphicsRenderTarget* renderTarget)
 					{
-						if(renderTarget)
+						if (renderTarget)
 						{
-							WindowsGDIRenderTarget* gdiRenderTarget=dynamic_cast<WindowsGDIRenderTarget*>(renderTarget);
-							WinDC* dc=gdiRenderTarget->GetDC();
+							WindowsGDIRenderTarget* gdiRenderTarget = dynamic_cast<WindowsGDIRenderTarget*>(renderTarget);
+							WinDC* dc = gdiRenderTarget->GetDC();
 							dc->SetFont(font);
-							SIZE size=dc->MeasureBuffer(&character, 1, -1);
+
+							vint count = text::UTF16SPFirst(codePoint.characters[0]) && text::UTF16SPSecond(codePoint.characters[1]) ? 2 : 1;
+							SIZE size = dc->MeasureBuffer(codePoint.characters, count, -1);
 							return Size(size.cx, size.cy);
 						}
 						else
@@ -205,16 +208,16 @@ CachedResourceAllocator
 						}
 					}
 
-					vint MeasureWidthInternal(wchar_t character, IGuiGraphicsRenderTarget* renderTarget)
+					vint MeasureWidthInternal(text::UnicodeCodePoint codePoint, IGuiGraphicsRenderTarget* renderTarget)
 					{
-						return MeasureInternal(character, renderTarget).x;
+						return MeasureInternal(codePoint, renderTarget).x;
 					}
 
 					vint GetRowHeightInternal(IGuiGraphicsRenderTarget* renderTarget)
 					{
 						if(renderTarget)
 						{
-							return MeasureInternal(L' ', renderTarget).y;
+							return MeasureInternal({ L' ' }, renderTarget).y;
 						}
 						else
 						{
@@ -267,9 +270,9 @@ WindowsGDIResourceManager
 					WICRect rect;
 					rect.X=0;
 					rect.Y=0;
-					rect.Width=(int)size.x;
-					rect.Height=(int)size.y;
-					wicBitmap->CopyPixels(&rect, (int)bitmap->GetLineBytes(), (int)(bitmap->GetLineBytes()*size.y), (BYTE*)bitmap->GetScanLines()[0]);
+					rect.Width=(INT)size.x;
+					rect.Height=(INT)size.y;
+					wicBitmap->CopyPixels(&rect, (UINT)bitmap->GetLineBytes(), (UINT)(bitmap->GetLineBytes()*size.y), (BYTE*)bitmap->GetScanLines()[0]);
 
 					bitmap->BuildAlphaChannel(false);
 				}
@@ -325,6 +328,7 @@ WindowsGDIResourceManager
 			protected:
 				SortedList<Ptr<WindowsGDIRenderTarget>>		renderTargets;
 				Ptr<WindowsGDILayoutProvider>				layoutProvider;
+				Ptr<WinPen>									focusRectanglePen;
 				CachedPenAllocator							pens;
 				CachedBrushAllocator						brushes;
 				CachedFontAllocator							fonts;
@@ -366,6 +370,16 @@ WindowsGDIResourceManager
 					WindowsGDIRenderTarget* renderTarget=dynamic_cast<WindowsGDIRenderTarget*>(GetWindowsGDIObjectProvider()->GetBindedRenderTarget(window));
 					GetWindowsGDIObjectProvider()->SetBindedRenderTarget(window, 0);
 					renderTargets.Remove(renderTarget);
+				}
+
+				Ptr<windows::WinPen> GetFocusRectanglePen()override
+				{
+					if (!focusRectanglePen)
+					{
+						DWORD styleArray[] = { 1,1 };
+						focusRectanglePen = new WinPen(PS_USERSTYLE, PS_ENDCAP_FLAT, PS_JOIN_BEVEL, 1, RGB(255, 255, 255), (DWORD)(sizeof(styleArray) / sizeof(*styleArray)), styleArray);
+					}
+					return focusRectanglePen;
 				}
 
 				Ptr<windows::WinPen> CreateGdiPen(Color color)override
@@ -484,11 +498,13 @@ void RendererMainGDI()
 	elements_windows_gdi::SetWindowsGDIResourceManager(&resourceManager);
 	GetCurrentController()->CallbackService()->InstallListener(&resourceManager);
 
+	elements_windows_gdi::GuiFocusRectangleElementRenderer::Register();
 	elements_windows_gdi::GuiSolidBorderElementRenderer::Register();
 	elements_windows_gdi::Gui3DBorderElementRenderer::Register();
 	elements_windows_gdi::Gui3DSplitterElementRenderer::Register();
 	elements_windows_gdi::GuiSolidBackgroundElementRenderer::Register();
 	elements_windows_gdi::GuiGradientBackgroundElementRenderer::Register();
+	elements_windows_gdi::GuiInnerShadowElementRenderer::Register();
 	elements_windows_gdi::GuiSolidLabelElementRenderer::Register();
 	elements_windows_gdi::GuiImageFrameElementRenderer::Register();
 	elements_windows_gdi::GuiPolygonElementRenderer::Register();

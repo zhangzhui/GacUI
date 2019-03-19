@@ -11,6 +11,8 @@ https://github.com/vczh-libraries
 #define VCZH_WORKFLOW_COMPILER_GENERATED_DEMOINCLUDES
 
 #include "Demo.h"
+#include "DocumentEditorBase.h"
 #include "MainWindow.h"
+#include "Demo1.h"
 
 #endif

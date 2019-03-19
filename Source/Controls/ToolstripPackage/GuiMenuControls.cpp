@@ -14,6 +14,7 @@ IGuiMenuService
 ***********************************************************************/
 
 			const wchar_t* const IGuiMenuService::Identifier = L"vl::presentation::controls::IGuiMenuService";
+			const wchar_t* const IGuiMenuDropdownProvider::Identifier = L"vl::presentation::controls::IGuiMenuDropdownProvider";
 
 			IGuiMenuService::IGuiMenuService()
 				:openingMenu(0)
@@ -102,7 +103,11 @@ GuiMenu
 
 			void GuiMenu::OnDeactivatedAltHost()
 			{
-				Hide();
+				if(hideOnDeactivateAltHost)
+				{
+					Hide();
+				}
+				GuiPopup::OnDeactivatedAltHost();
 			}
 
 			void GuiMenu::MouseClickedOnOtherWindow(GuiWindow* window)
@@ -160,6 +165,16 @@ GuiMenu
 				{
 					return GuiPopup::QueryService(identifier);
 				}
+			}
+			
+			bool GuiMenu::GetHideOnDeactivateAltHost()
+			{
+				return hideOnDeactivateAltHost;
+			}
+
+			void GuiMenu::SetHideOnDeactivateAltHost(bool value)
+			{
+				hideOnDeactivateAltHost = value;
 			}
 
 /***********************************************************************
@@ -223,10 +238,11 @@ GuiMenuButton
 
 			void GuiMenuButton::AfterControlTemplateInstalled_(bool initialize)
 			{
-				auto ct = GetControlTemplateObject();
+				auto ct = GetControlTemplateObject(true);
 				auto host = GetSubMenuHost();
 
 				ct->SetSubMenuOpening(GetSubMenuOpening());
+				ct->SetLargeImage(largeImage);
 				ct->SetImage(image);
 				ct->SetShortcutText(shortcutText);
 				ct->SetSubMenuExisting(subMenu != nullptr);
@@ -237,24 +253,34 @@ GuiMenuButton
 
 			GuiButton* GuiMenuButton::GetSubMenuHost()
 			{
-				GuiButton* button = GetControlTemplateObject()->GetSubMenuHost();
+				GuiButton* button = GetControlTemplateObject(true)->GetSubMenuHost();
 				return button ? button : this;
 			}
 
-			void GuiMenuButton::OpenSubMenuInternal()
+			bool GuiMenuButton::OpenSubMenuInternal()
 			{
-				if(!GetSubMenuOpening())
+				if (!GetSubMenuOpening())
 				{
-					if(ownerMenuService)
+					if (ownerMenuService)
 					{
-						GuiMenu* openingSiblingMenu=ownerMenuService->GetOpeningMenu();
-						if(openingSiblingMenu)
+						GuiMenu* openingSiblingMenu = ownerMenuService->GetOpeningMenu();
+						if (openingSiblingMenu)
 						{
 							openingSiblingMenu->Hide();
 						}
 					}
-					SetSubMenuOpening(true);
+
+					BeforeSubMenuOpening.Execute(GetNotifyEventArguments());
+					if (subMenu)
+					{
+						subMenu->SetClientSize(preferredMenuClientSize);
+						IGuiMenuService::Direction direction = GetSubMenuDirection();
+						subMenu->ShowPopup(GetSubMenuHost(), direction == IGuiMenuService::Horizontal);
+						AfterSubMenuOpening.Execute(GetNotifyEventArguments());
+						return true;
+					}
 				}
+				return false;
 			}
 
 			void GuiMenuButton::OnParentLineChanged()
@@ -271,30 +297,28 @@ GuiMenuButton
 				}
 			}
 
-			bool GuiMenuButton::IsAltAvailable()
-			{
-				return true;
-			}
-
 			compositions::IGuiAltActionHost* GuiMenuButton::GetActivatingAltHost()
 			{
 				if (subMenu)
 				{
 					return subMenu->QueryTypedService<IGuiAltActionHost>();
 				}
-				return 0;
+				else
+				{
+					return GuiSelectableButton::GetActivatingAltHost();
+				}
 			}
 
 			void GuiMenuButton::OnSubMenuWindowOpened(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments)
 			{
 				SubMenuOpeningChanged.Execute(GetNotifyEventArguments());
-				GetControlTemplateObject()->SetSubMenuOpening(true);
+				GetControlTemplateObject(true)->SetSubMenuOpening(true);
 			}
 
 			void GuiMenuButton::OnSubMenuWindowClosed(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments)
 			{
 				SubMenuOpeningChanged.Execute(GetNotifyEventArguments());
-				GetControlTemplateObject()->SetSubMenuOpening(false);
+				GetControlTemplateObject(true)->SetSubMenuOpening(false);
 			}
 
 			void GuiMenuButton::OnMouseEnter(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments)
@@ -312,11 +336,7 @@ GuiMenuButton
 			{
 				if(GetVisuallyEnabled())
 				{
-					if(GetSubMenu())
-					{
-						OpenSubMenuInternal();
-					}
-					else if(ownerMenuService)
+					if(!OpenSubMenuInternal() && ownerMenuService)
 					{
 						ownerMenuService->MenuItemExecuted();
 					}
@@ -328,6 +348,11 @@ GuiMenuButton
 				return ownerMenuService?ownerMenuService->GetPreferredDirection():IGuiMenuService::Horizontal;
 			}
 
+			GuiMenu* GuiMenuButton::ProvideDropdownMenu()
+			{
+				return GetSubMenu();
+			}
+
 			GuiMenuButton::GuiMenuButton(theme::ThemeName themeName)
 				:GuiSelectableButton(themeName)
 				,subMenu(0)
@@ -336,7 +361,9 @@ GuiMenuButton
 				,cascadeAction(true)
 			{
 				SetAutoSelection(false);
+				BeforeSubMenuOpening.SetAssociatedComposition(boundsComposition);
 				SubMenuOpeningChanged.SetAssociatedComposition(boundsComposition);
+				LargeImageChanged.SetAssociatedComposition(boundsComposition);
 				ImageChanged.SetAssociatedComposition(boundsComposition);
 				ShortcutTextChanged.SetAssociatedComposition(boundsComposition);
 			}
@@ -346,6 +373,21 @@ GuiMenuButton
 				if(subMenu && ownedSubMenu)
 				{
 					delete subMenu;
+				}
+			}
+
+			Ptr<GuiImageData> GuiMenuButton::GetLargeImage()
+			{
+				return largeImage;
+			}
+
+			void GuiMenuButton::SetLargeImage(Ptr<GuiImageData> value)
+			{
+				if (largeImage != value)
+				{
+					largeImage = value;
+					GetControlTemplateObject(true)->SetLargeImage(largeImage);
+					LargeImageChanged.Execute(GetNotifyEventArguments());
 				}
 			}
 
@@ -359,7 +401,7 @@ GuiMenuButton
 				if (image != value)
 				{
 					image = value;
-					GetControlTemplateObject()->SetImage(image);
+					GetControlTemplateObject(true)->SetImage(image);
 					ImageChanged.Execute(GetNotifyEventArguments());
 				}
 			}
@@ -374,7 +416,7 @@ GuiMenuButton
 				if (shortcutText != value)
 				{
 					shortcutText = value;
-					GetControlTemplateObject()->SetShortcutText(shortcutText);
+					GetControlTemplateObject(true)->SetShortcutText(shortcutText);
 					ShortcutTextChanged.Execute(GetNotifyEventArguments());
 				}
 			}
@@ -394,7 +436,7 @@ GuiMenuButton
 				if (!subMenu)
 				{
 					GuiMenu* newSubMenu = new GuiMenu(theme::ThemeName::Menu, this);
-					newSubMenu->SetControlTemplate(subMenuTemplate ? subMenuTemplate : GetControlTemplateObject()->GetSubMenuTemplate());
+					newSubMenu->SetControlTemplate(subMenuTemplate ? subMenuTemplate : GetControlTemplateObject(true)->GetSubMenuTemplate());
 					SetSubMenu(newSubMenu, true);
 				}
 				return subMenu;
@@ -416,7 +458,7 @@ GuiMenuButton
 					subMenu->WindowOpened.AttachMethod(this, &GuiMenuButton::OnSubMenuWindowOpened);
 					subMenu->WindowClosed.AttachMethod(this, &GuiMenuButton::OnSubMenuWindowClosed);
 				}
-				GetControlTemplateObject()->SetSubMenuExisting(subMenu != nullptr);
+				GetControlTemplateObject(true)->SetSubMenuExisting(subMenu != nullptr);
 			}
 
 			void GuiMenuButton::DestroySubMenu()
@@ -429,7 +471,7 @@ GuiMenuButton
 					}
 					subMenu=0;
 					ownedSubMenu=false;
-					GetControlTemplateObject()->SetSubMenuExisting(false);
+					GetControlTemplateObject(true)->SetSubMenuExisting(false);
 				}
 			}
 
@@ -452,13 +494,11 @@ GuiMenuButton
 
 			void GuiMenuButton::SetSubMenuOpening(bool value)
 			{
-				if(subMenu)
+				if (subMenu && subMenu->GetOpening() != value)
 				{
-					if(value)
+					if (value)
 					{
-						subMenu->SetClientSize(preferredMenuClientSize);
-						IGuiMenuService::Direction direction=GetSubMenuDirection();
-						subMenu->ShowPopup(GetSubMenuHost(), direction==IGuiMenuService::Horizontal);
+						OpenSubMenuInternal();
 					}
 					else
 					{
@@ -485,6 +525,18 @@ GuiMenuButton
 			void GuiMenuButton::SetCascadeAction(bool value)
 			{
 				cascadeAction=value;
+			}
+
+			IDescriptable* GuiMenuButton::QueryService(const WString& identifier)
+			{
+				if (identifier == IGuiMenuDropdownProvider::Identifier)
+				{
+					return (IGuiMenuDropdownProvider*)this;
+				}
+				else
+				{
+					return GuiSelectableButton::QueryService(identifier);
+				}
 			}
 		}
 	}

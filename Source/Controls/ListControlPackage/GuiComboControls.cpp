@@ -9,50 +9,20 @@ namespace vl
 		{
 
 /***********************************************************************
-GuiComboBoxBase::CommandExecutor
-***********************************************************************/
-
-			GuiComboBoxBase::CommandExecutor::CommandExecutor(GuiComboBoxBase* _combo)
-				:combo(_combo)
-			{
-			}
-
-			GuiComboBoxBase::CommandExecutor::~CommandExecutor()
-			{
-			}
-
-			void GuiComboBoxBase::CommandExecutor::SelectItem()
-			{
-				combo->SelectItem();
-			}
-
-/***********************************************************************
 GuiComboBoxBase
 ***********************************************************************/
 
 			void GuiComboBoxBase::BeforeControlTemplateUninstalled_()
 			{
-				GetControlTemplateObject()->SetCommands(nullptr);
 			}
 
 			void GuiComboBoxBase::AfterControlTemplateInstalled_(bool initialize)
 			{
-				GetControlTemplateObject()->SetCommands(commandExecutor.Obj());
-			}
-
-			bool GuiComboBoxBase::IsAltAvailable()
-			{
-				return false;
 			}
 
 			IGuiMenuService::Direction GuiComboBoxBase::GetSubMenuDirection()
 			{
 				return IGuiMenuService::Horizontal;
-			}
-
-			void GuiComboBoxBase::SelectItem()
-			{
-				ItemSelected.Execute(GetNotifyEventArguments());
 			}
 
 			void GuiComboBoxBase::OnBoundsChanged(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments)
@@ -65,8 +35,6 @@ GuiComboBoxBase
 			GuiComboBoxBase::GuiComboBoxBase(theme::ThemeName themeName)
 				:GuiMenuButton(themeName)
 			{
-				commandExecutor = new CommandExecutor(this);
-
 				CreateSubMenu();
 				SetCascadeAction(false);
 
@@ -81,6 +49,16 @@ GuiComboBoxBase
 GuiComboBoxListControl
 ***********************************************************************/
 
+			void GuiComboBoxListControl::UpdateDisplayFont()
+			{
+				GuiControl::UpdateDisplayFont();
+				if (itemStyleController)
+				{
+					itemStyleController->SetFont(GetDisplayFont());
+				}
+				AdoptSubMenuSize();
+			}
+
 			void GuiComboBoxListControl::BeforeControlTemplateUninstalled()
 			{
 				GuiComboBoxBase::BeforeControlTemplateUninstalled();
@@ -89,19 +67,7 @@ GuiComboBoxListControl
 			void GuiComboBoxListControl::AfterControlTemplateInstalled(bool initialize)
 			{
 				GuiComboBoxBase::AfterControlTemplateInstalled(initialize);
-				GetControlTemplateObject()->SetTextVisible(!itemStyleProperty);
-			}
-
-			bool GuiComboBoxListControl::IsAltAvailable()
-			{
-				return true;
-			}
-
-			void GuiComboBoxListControl::OnActiveAlt()
-			{
-				GuiMenuButton::OnActiveAlt();
-				GetSubMenu()->GetNativeWindow()->SetFocus();
-				containedListControl->SetFocus();
+				GetControlTemplateObject(true)->SetTextVisible(!itemStyleProperty);
 			}
 
 			void GuiComboBoxListControl::RemoveStyleController()
@@ -126,7 +92,8 @@ GuiComboBoxListControl
 							{
 								itemStyleController = style;
 								itemStyleController->SetText(GetText());
-								itemStyleController->SetFont(GetFont());
+								itemStyleController->SetFont(GetDisplayFont());
+								itemStyleController->SetContext(GetContext());
 								itemStyleController->SetVisuallyEnabled(GetVisuallyEnabled());
 								itemStyleController->SetAlignmentToParent(Margin(0, 0, 0, 0));
 								containerComposition->AddChild(itemStyleController);
@@ -138,7 +105,7 @@ GuiComboBoxListControl
 
 			void GuiComboBoxListControl::DisplaySelectedContent(vint itemIndex)
 			{
-				if(itemIndex==-1)
+				if (itemIndex == -1)
 				{
 					SetText(L"");
 				}
@@ -146,16 +113,20 @@ GuiComboBoxListControl
 				{
 					WString text = containedListControl->GetItemProvider()->GetTextValue(itemIndex);
 					SetText(text);
-					GetSubMenu()->Hide();
 				}
 
 				RemoveStyleController();
 				InstallStyleController(itemIndex);
+				if (selectedIndex != itemIndex)
+				{
+					selectedIndex = itemIndex;
+					SelectedIndexChanged.Execute(GetNotifyEventArguments());
+				}
 			}
 
 			void GuiComboBoxListControl::AdoptSubMenuSize()
 			{
-				Size expectedSize(0, GetFont().size * 20);
+				Size expectedSize(0, GetDisplayFont().size * 20);
 				Size adoptedSize = containedListControl->GetAdoptedSize(expectedSize);
 
 				Size clientSize = GetPreferredMenuClientSize();
@@ -176,11 +147,11 @@ GuiComboBoxListControl
 				}
 			}
 
-			void GuiComboBoxListControl::OnFontChanged(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments)
+			void GuiComboBoxListControl::OnContextChanged(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments)
 			{
 				if (itemStyleController)
 				{
-					itemStyleController->SetFont(GetFont());
+					itemStyleController->SetContext(GetContext());
 				}
 				AdoptSubMenuSize();
 			}
@@ -193,6 +164,13 @@ GuiComboBoxListControl
 				}
 			}
 
+			void GuiComboBoxListControl::OnAfterSubMenuOpening(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments)
+			{
+				containedListControl->SelectItemsByClick(selectedIndex, false, false, true);
+				GetSubMenu()->GetNativeWindow()->SetFocus();
+				containedListControl->SetFocus();
+			}
+
 			void GuiComboBoxListControl::OnListControlAdoptedSizeInvalidated(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments)
 			{
 				AdoptSubMenuSize();
@@ -200,17 +178,57 @@ GuiComboBoxListControl
 
 			void GuiComboBoxListControl::OnListControlBoundsChanged(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments)
 			{
+				auto flag = GetDisposedFlag();
 				GetApplication()->InvokeLambdaInMainThread(GetRelatedControlHost(), [=]()
 				{
-					AdoptSubMenuSize();
+					if (!flag->IsDisposed())
+					{
+						AdoptSubMenuSize();
+					}
 				});
 			}
 
-			void GuiComboBoxListControl::OnListControlSelectionChanged(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments)
+			void GuiComboBoxListControl::OnListControlItemMouseDown(compositions::GuiGraphicsComposition* sender, compositions::GuiItemMouseEventArgs& arguments)
 			{
-				DisplaySelectedContent(GetSelectedIndex());
-				SelectItem();
-				SelectedIndexChanged.Execute(GetNotifyEventArguments());
+				DisplaySelectedContent(containedListControl->GetSelectedItemIndex());
+				GetSubMenu()->Hide();
+			}
+
+			void GuiComboBoxListControl::OnListControlKeyDown(compositions::GuiGraphicsComposition* sender, compositions::GuiKeyEventArgs& arguments)
+			{
+				if (!arguments.autoRepeatKeyDown)
+				{
+					switch (arguments.code)
+					{
+					case VKEY::_RETURN:
+						DisplaySelectedContent(containedListControl->GetSelectedItemIndex());
+						arguments.handled = true;
+					case VKEY::_ESCAPE:
+						GetSubMenu()->Hide();
+						arguments.handled = true;
+						break;
+					default:;
+					}
+				}
+			}
+
+			void GuiComboBoxListControl::OnAttached(GuiListControl::IItemProvider* provider)
+			{
+			}
+
+			void GuiComboBoxListControl::OnItemModified(vint start, vint count, vint newCount)
+			{
+				if (count == newCount)
+				{
+					if (start <= selectedIndex && selectedIndex < start + count)
+					{
+						DisplaySelectedContent(selectedIndex);
+					}
+				}
+				else
+				{
+					DisplaySelectedContent(-1);
+				}
 			}
 
 			GuiComboBoxListControl::GuiComboBoxListControl(theme::ThemeName themeName, GuiSelectableListControl* _containedListControl)
@@ -218,12 +236,16 @@ GuiComboBoxListControl
 				, containedListControl(_containedListControl)
 			{
 				TextChanged.AttachMethod(this, &GuiComboBoxListControl::OnTextChanged);
-				FontChanged.AttachMethod(this, &GuiComboBoxListControl::OnFontChanged);
+				ContextChanged.AttachMethod(this, &GuiComboBoxListControl::OnContextChanged);
 				VisuallyEnabledChanged.AttachMethod(this, &GuiComboBoxListControl::OnVisuallyEnabledChanged);
+				AfterSubMenuOpening.AttachMethod(this, &GuiComboBoxListControl::OnAfterSubMenuOpening);
 
+				containedListControl->GetItemProvider()->AttachCallback(this);
 				containedListControl->SetMultiSelect(false);
 				containedListControl->AdoptedSizeInvalidated.AttachMethod(this, &GuiComboBoxListControl::OnListControlAdoptedSizeInvalidated);
-				containedListControl->SelectionChanged.AttachMethod(this, &GuiComboBoxListControl::OnListControlSelectionChanged);
+				containedListControl->ItemLeftButtonDown.AttachMethod(this, &GuiComboBoxListControl::OnListControlItemMouseDown);
+				containedListControl->ItemRightButtonDown.AttachMethod(this, &GuiComboBoxListControl::OnListControlItemMouseDown);
+				containedListControl->GetFocusableComposition()->GetEventReceiver()->keyDown.AttachMethod(this, &GuiComboBoxListControl::OnListControlKeyDown);
 				boundsChangedHandler = containedListControl->GetBoundsComposition()->BoundsChanged.AttachMethod(this, &GuiComboBoxListControl::OnListControlBoundsChanged);
 
 				auto itemProvider = containedListControl->GetItemProvider();
@@ -237,6 +259,7 @@ GuiComboBoxListControl
 
 			GuiComboBoxListControl::~GuiComboBoxListControl()
 			{
+				containedListControl->GetItemProvider()->DetachCallback(this);
 				containedListControl->GetBoundsComposition()->BoundsChanged.Detach(boundsChangedHandler);
 				boundsChangedHandler = nullptr;
 			}
@@ -255,31 +278,30 @@ GuiComboBoxListControl
 			{
 				RemoveStyleController();
 				itemStyleProperty = value;
-				GetControlTemplateObject()->SetTextVisible(!itemStyleProperty);
-				InstallStyleController(GetSelectedIndex());
+				GetControlTemplateObject(true)->SetTextVisible(!itemStyleProperty);
+				InstallStyleController(selectedIndex);
 				ItemTemplateChanged.Execute(GetNotifyEventArguments());
 			}
 
 			vint GuiComboBoxListControl::GetSelectedIndex()
 			{
-				if(containedListControl->GetSelectedItems().Count()==1)
-				{
-					return containedListControl->GetSelectedItems()[0];
-				}
-				else
-				{
-					return -1;
-				}
+				return selectedIndex;
 			}
 
 			void GuiComboBoxListControl::SetSelectedIndex(vint value)
 			{
-				containedListControl->SetSelected(value, true);
+				if (selectedIndex != value)
+				{
+					if (0 <= value && value < containedListControl->GetItemProvider()->Count())
+					{
+						DisplaySelectedContent(value);
+					}
+				}
+				GetSubMenu()->Hide();
 			}
 
 			description::Value GuiComboBoxListControl::GetSelectedItem()
 			{
-				auto selectedIndex = GetSelectedIndex();
 				if (selectedIndex != -1)
 				{
 					return containedListControl->GetItemProvider()->GetBindingValue(selectedIndex);

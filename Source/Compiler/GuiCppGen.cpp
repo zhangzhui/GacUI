@@ -7,81 +7,87 @@ namespace vl
 		using namespace collections;
 		using namespace stream;
 		using namespace filesystem;
+		using namespace parsing;
 		using namespace workflow;
 		using namespace workflow::cppcodegen;
 
-		Ptr<GuiResourceFolder> PrecompileAndWriteErrors(
-			Ptr<GuiResource> resource,
-			IGuiResourcePrecompileCallback* callback,
+		bool WriteErrors(
 			collections::List<GuiResourceError>& errors,
 			const filesystem::FilePath& errorPath)
 		{
+			List<WString> output;
+			GuiResourceError::SortAndLog(errors, output);
+			return File(errorPath).WriteAllLines(output, true, BomEncoder::Utf8);
+		}
+
+		Ptr<GuiResourceFolder> PrecompileResource(
+			Ptr<GuiResource> resource,
+			IGuiResourcePrecompileCallback* callback,
+			collections::List<GuiResourceError>& errors)
+		{
 			auto precompiledFolder = resource->Precompile(callback, errors);
-			if (errors.Count() > 0)
-			{
-				List<WString> output;
-				GuiResourceError::SortAndLog(errors, output);
-				if (!File(errorPath).WriteAllLines(output, true, BomEncoder::Utf8))
-				{
-					return nullptr;
-				}
-			}
 			return precompiledFolder;
 		}
 
 		Ptr<GuiInstanceCompiledWorkflow> WriteWorkflowScript(
 			Ptr<GuiResourceFolder> precompiledFolder,
+			const WString& assemblyResourcePath,
 			const filesystem::FilePath& workflowPath)
 		{
 			if (precompiledFolder)
 			{
-				auto compiled = precompiledFolder->GetValueByPath(L"Workflow/InstanceClass").Cast<GuiInstanceCompiledWorkflow>();
-				WString text;
-				if (compiled->assembly)
+				if (auto compiled = precompiledFolder->GetValueByPath(assemblyResourcePath).Cast<GuiInstanceCompiledWorkflow>())
 				{
-					auto& codes = compiled->assembly->insAfterCodegen->moduleCodes;
-					FOREACH_INDEXER(WString, code, codeIndex, codes)
+					WString text;
+					if (compiled->assembly)
 					{
-						text += L"================================(" + itow(codeIndex + 1) + L"/" + itow(codes.Count()) + L")================================\r\n";
-						text += code + L"\r\n";
-					}
-				}
-				else
-				{
-					FOREACH_INDEXER(GuiInstanceCompiledWorkflow::ModuleRecord, moduleRecord, codeIndex, compiled->modules)
-					{
-						WString code;
+						auto& codes = compiled->assembly->insAfterCodegen->moduleCodes;
+						FOREACH_INDEXER(WString, code, codeIndex, codes)
 						{
-							MemoryStream stream;
-							{
-								StreamWriter writer(stream);
-								WfPrint(moduleRecord.module, L"", writer);
-							}
-							stream.SeekFromBegin(0);
-							{
-								StreamReader reader(stream);
-								code = reader.ReadToEnd();
-							}
+							text += L"================================(" + itow(codeIndex + 1) + L"/" + itow(codes.Count()) + L")================================\r\n";
+							text += code + L"\r\n";
 						}
-						text += L"================================(" + itow(codeIndex + 1) + L"/" + itow(compiled->modules.Count()) + L")================================\r\n";
-						text += code + L"\r\n";
 					}
-				}
+					else
+					{
+						FOREACH_INDEXER(GuiInstanceCompiledWorkflow::ModuleRecord, moduleRecord, codeIndex, compiled->modules)
+						{
+							WString code = GenerateToStream([&](StreamWriter& writer)
+							{
+								WfPrint(moduleRecord.module, L"", writer);
+							});
+							text += L"================================(" + itow(codeIndex + 1) + L"/" + itow(compiled->modules.Count()) + L")================================\r\n";
+							text += code + L"\r\n";
+						}
+					}
 
-				if (File(workflowPath).WriteAllText(text))
-				{
-					return compiled;
+					if (File(workflowPath).WriteAllText(text))
+					{
+						return compiled;
+					}
 				}
 			}
 			return nullptr;
 		}
 
 		Ptr<workflow::cppcodegen::WfCppOutput> WriteCppCodesToFile(
+			Ptr<GuiResource> resource,
 			Ptr<GuiInstanceCompiledWorkflow> compiled,
 			Ptr<workflow::cppcodegen::WfCppInput> cppInput,
-			const filesystem::FilePath& cppFolder)
+			const filesystem::FilePath& cppFolder,
+			collections::List<GuiResourceError>& errors)
 		{
 			auto output = GenerateCppFiles(cppInput, compiled->metadata.Obj());
+
+			if (compiled->metadata->errors.Count() > 0)
+			{
+				FOREACH(Ptr<ParsingError>, error, compiled->metadata->errors)
+				{
+					errors.Add(GuiResourceError({ {resource} }, error->errorMessage));
+				}
+				return nullptr;
+			}
+
 			FOREACH_INDEXER(WString, fileName, index, output->cppFiles.Keys())
 			{
 				WString code = output->cppFiles.Values()[index];
@@ -115,20 +121,19 @@ namespace vl
 		bool WriteBinaryResource(
 			Ptr<GuiResource> resource,
 			bool compress,
-			bool workflow,
-			const filesystem::FilePath& filePath)
+			bool includeAssemblyInResource,
+			Nullable<filesystem::FilePath> resourceOutput,
+			Nullable<filesystem::FilePath> assemblyOutput)
 		{
 			auto precompiled = resource->GetFolder(L"Precompiled");
 			auto folder = precompiled->GetFolder(L"Workflow");
-			if (!workflow)
-			{
-				precompiled->RemoveFolder(L"Workflow");
-			}
 
-			FileStream fileStream(filePath.GetFullPath(), FileStream::WriteOnly);
-
-			if (fileStream.IsAvailable())
+			if (resourceOutput)
 			{
+				FileStream fileStream(resourceOutput.Value().GetFullPath(), FileStream::WriteOnly);
+				if (!fileStream.IsAvailable()) return false;
+
+				if (!includeAssemblyInResource) precompiled->RemoveFolder(L"Workflow");
 				if (compress)
 				{
 					LzwEncoder encoder;
@@ -139,14 +144,26 @@ namespace vl
 				{
 					resource->SavePrecompiledBinary(fileStream);
 				}
+				if (!includeAssemblyInResource) precompiled->AddFolder(L"Workflow", folder);
 			}
 
-			if (folder && !workflow)
+			if (assemblyOutput)
 			{
-				precompiled->AddFolder(L"Workflow", folder);
+				if (auto item = folder->GetItem(L"InstanceClass"))
+				{
+					if (auto compiled = item->GetContent().Cast<GuiInstanceCompiledWorkflow>())
+					{
+						if (compiled->assembly)
+						{
+							FileStream fileStream(assemblyOutput.Value().GetFullPath(), FileStream::WriteOnly);
+							if (!fileStream.IsAvailable()) return false;
+							compiled->assembly->Serialize(fileStream);
+						}
+					}
+				}
 			}
 
-			return fileStream.IsAvailable();
+			return true;
 		}
 
 		void WriteEmbeddedBinaryClass(MemoryStream& binaryStream, bool compress, const WString& className, const WString& prefix, StreamWriter& writer)
@@ -218,11 +235,8 @@ namespace vl
 			bool compress,
 			const filesystem::FilePath& filePath)
 		{
-			WString code;
-			MemoryStream stream;
+			WString code = GenerateToStream([&](StreamWriter& writer)
 			{
-				StreamWriter writer(stream);
-
 				writer.WriteLine(L"#include \"" + cppOutput->entryFileName + L".h\"");
 				writer.WriteLine(L"");
 				writer.WriteLine(L"namespace vl");
@@ -269,8 +283,7 @@ namespace vl
 					writer.WriteLine(L"\t\t\t\t\tMemoryStream resourceStream;");
 					writer.WriteLine(L"\t\t\t\t\t" + cppInput->assemblyName + L"ResourceReader::ReadToStream(resourceStream);");
 					writer.WriteLine(L"\t\t\t\t\tresourceStream.SeekFromBegin(0);");
-					writer.WriteLine(L"\t\t\t\t\tauto resource = GuiResource::LoadPrecompiledBinary(resourceStream, errors);");
-					writer.WriteLine(L"\t\t\t\t\tGetResourceManager()->SetResource(L\"" + cppInput->assemblyName + L"\", resource, GuiResourceUsage::InstanceClass);");
+					writer.WriteLine(L"\t\t\t\t\tGetResourceManager()->LoadResourceOrPending(resourceStream, GuiResourceUsage::InstanceClass);");
 					writer.WriteLine(L"\t\t\t\t}");
 					writer.WriteLine(L"");
 					writer.WriteLine(L"\t\t\t\tvoid Unload()override");
@@ -283,12 +296,7 @@ namespace vl
 				writer.WriteLine(L"\t\t}");
 				writer.WriteLine(L"\t}");
 				writer.WriteLine(L"}");
-			}
-			stream.SeekFromBegin(0);
-			{
-				StreamReader reader(stream);
-				code = reader.ReadToEnd();
-			}
+			});
 
 			File file(filePath);
 			if (file.Exists())

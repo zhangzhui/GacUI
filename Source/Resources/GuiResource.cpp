@@ -1,6 +1,6 @@
 #include "GuiDocument.h"
 #include "GuiParserManager.h"
-#include "../Controls/GuiApplication.h"
+#include "GuiResourceManager.h"
 
 namespace vl
 {
@@ -9,10 +9,7 @@ namespace vl
 		using namespace controls;
 		using namespace collections;
 		using namespace parsing;
-		using namespace parsing::tabling;
 		using namespace parsing::xml;
-		using namespace parsing::json;
-		using namespace regex;
 		using namespace stream;
 		using namespace filesystem;
 
@@ -113,6 +110,7 @@ GlobalStringKey
 		GlobalStringKey GlobalStringKey::_Ref;
 		GlobalStringKey GlobalStringKey::_Bind;
 		GlobalStringKey GlobalStringKey::_Format;
+		GlobalStringKey GlobalStringKey::_Str;
 		GlobalStringKey GlobalStringKey::_Eval;
 		GlobalStringKey GlobalStringKey::_Uri;
 		GlobalStringKey GlobalStringKey::_ControlTemplate;
@@ -130,6 +128,7 @@ GlobalStringKey
 				GlobalStringKey::_Ref = GlobalStringKey::Get(L"ref");
 				GlobalStringKey::_Bind = GlobalStringKey::Get(L"bind");
 				GlobalStringKey::_Format = GlobalStringKey::Get(L"format");
+				GlobalStringKey::_Str = GlobalStringKey::Get(L"str");
 				GlobalStringKey::_Eval = GlobalStringKey::Get(L"eval");
 				GlobalStringKey::_Uri = GlobalStringKey::Get(L"uri");
 				GlobalStringKey::_ControlTemplate = GlobalStringKey::Get(L"ControlTemplate");
@@ -534,8 +533,20 @@ GuiResourceFolder
 										errors.Add(GuiResourceError({ {this},element->codeRange.start }, L"Failed to load file \"" + fileAbsolutePath + L"\"."));
 									}
 								}
+								else if (contentAtt->value.value == L"Import")
+								{
+									auto importUri = XmlGetValue(element);
+									folder->ImportFromUri(importUri, { { this },element->codeRange.start }, errors);
+								}
+								else
+								{
+									errors.Add(GuiResourceError({ { this },element->codeRange.start }, L"Folder's content attributes can only be \"Link\"."));
+								}
 							}
-							folder->LoadResourceFolderFromXml(delayLoadings, newContainingFolder, newFolderXml, errors);
+							if (folder->GetImportUri() == L"")
+							{
+								folder->LoadResourceFolderFromXml(delayLoadings, newContainingFolder, newFolderXml, errors);
+							}
 						}
 						else
 						{
@@ -557,6 +568,10 @@ GuiResourceFolder
 							{
 								name = GetFileName(fileAbsolutePath);
 							}
+						}
+						else
+						{
+							errors.Add(GuiResourceError({ { this },element->codeRange.start }, L"File's content attributes can only be \"File\"."));
 						}
 					}
 
@@ -714,12 +729,18 @@ GuiResourceFolder
 				xmlFolder->attributes.Add(attName);
 				xmlParent->subNodes.Add(xmlFolder);
 				
-
-				if (folder->GetFileContentPath() == L"")
+				if (folder->GetImportUri() != L"")
 				{
-					folder->SaveResourceFolderToXml(xmlFolder);
+					auto attContent = MakePtr<XmlAttribute>();
+					attContent->name.value = L"content";
+					attContent->value.value = L"Import";
+					xmlFolder->attributes.Add(attContent);
+
+					auto xmlText = MakePtr<XmlText>();
+					xmlText->content.value = folder->GetImportUri();
+					xmlFolder->subNodes.Add(xmlText);
 				}
-				else
+				else if (folder->GetFileContentPath() != L"")
 				{
 					auto attContent = MakePtr<XmlAttribute>();
 					attContent->name.value = L"content";
@@ -730,11 +751,16 @@ GuiResourceFolder
 					xmlText->content.value = folder->GetFileContentPath();
 					xmlFolder->subNodes.Add(xmlText);
 				}
+				else
+				{
+					folder->SaveResourceFolderToXml(xmlFolder);
+				}
 			}
 		}
 
 		void GuiResourceFolder::CollectTypeNames(collections::List<WString>& typeNames)
 		{
+			if (importUri != L"") return;
 			FOREACH(Ptr<GuiResourceItem>, item, items.Values())
 			{
 				if (!typeNames.Contains(item->GetTypeName()))
@@ -839,11 +865,18 @@ GuiResourceFolder
 			reader << count;
 			for (vint i = 0; i < count; i++)
 			{
-				WString name;
-				reader << name;
+				WString name, importUri;
+				reader << name << importUri;
 
 				auto folder = MakePtr<GuiResourceFolder>();
-				folder->LoadResourceFolderFromBinary(delayLoadings, reader, typeNames, errors);
+				if (importUri == L"")
+				{
+					folder->LoadResourceFolderFromBinary(delayLoadings, reader, typeNames, errors);
+				}
+				else
+				{
+					folder->ImportFromUri(importUri, { { this },{0,0} }, errors);
+				}
 				AddFolder(name, folder);
 			}
 		}
@@ -900,13 +933,18 @@ GuiResourceFolder
 			FOREACH(Ptr<GuiResourceFolder>, folder, folders.Values())
 			{
 				WString name = folder->GetName();
-				writer << name;
-				folder->SaveResourceFolderToBinary(writer, typeNames);
+				WString importUri = folder->GetImportUri();
+				writer << name << importUri;
+				if (importUri == L"")
+				{
+					folder->SaveResourceFolderToBinary(writer, typeNames);
+				}
 			}
 		}
 
 		void GuiResourceFolder::PrecompileResourceFolder(GuiResourcePrecompileContext& context, IGuiResourcePrecompileCallback* callback, GuiResourceError::List& errors)
 		{
+			if (importUri != L"") return;
 			FOREACH(Ptr<GuiResourceItem>, item, items.Values())
 			{
 				auto typeResolver = GetResourceResolverManager()->GetTypeResolver(item->GetTypeName());
@@ -929,20 +967,59 @@ GuiResourceFolder
 			}
 		}
 
-		void GuiResourceFolder::InitializeResourceFolder(GuiResourceInitializeContext& context)
+		void GuiResourceFolder::InitializeResourceFolder(GuiResourceInitializeContext& context, GuiResourceError::List& errors)
 		{
+			if (importUri != L"") return;
 			FOREACH(Ptr<GuiResourceItem>, item, items.Values())
 			{
 				auto typeResolver = GetResourceResolverManager()->GetTypeResolver(item->GetTypeName());
 				if (auto initialize = typeResolver->Initialize())
 				{
-					initialize->Initialize(item, context);
+					initialize->Initialize(item, context, errors);
 				}
 			}
 
 			FOREACH(Ptr<GuiResourceFolder>, folder, folders.Values())
 			{
-				folder->InitializeResourceFolder(context);
+				folder->InitializeResourceFolder(context, errors);
+			}
+		}
+
+		void GuiResourceFolder::ImportFromUri(const WString& uri, GuiResourceTextPos position, GuiResourceError::List& errors)
+		{
+			SetImportUri(uri);
+			if (importUri.Length() == 0 || importUri[importUri.Length() - 1] != L'/')
+			{
+				errors.Add(GuiResourceError(position, L"Path of imported folder should ends with L\"/\"."));
+			}
+			else
+			{
+				WString protocol, path;
+				if (IsResourceUrl(importUri, protocol, path))
+				{
+					if (protocol == L"import-res")
+					{
+						auto factory = GetResourceResolverManager()->GetPathResolverFactory(protocol);
+						auto resolver = factory->CreateResolver(nullptr, L"");
+						if (auto sourceFolder = resolver->ResolveResource(path).Cast<GuiResourceFolder>())
+						{
+							CopyFrom(items, sourceFolder->items);
+							CopyFrom(folders, sourceFolder->folders);
+						}
+						else
+						{
+							errors.Add(GuiResourceError(position, L"Path of imported folder does not exist: \"" + importUri + L"\"."));
+						}
+					}
+					else
+					{
+						errors.Add(GuiResourceError(position, L"Path of imported folder should begin with \"import-res://\"."));
+					}
+				}
+				else
+				{
+					errors.Add(GuiResourceError(position, L"Invalid path of imported folder : \"" + importUri + L"\"."));
+				}
 			}
 		}
 
@@ -952,6 +1029,16 @@ GuiResourceFolder
 
 		GuiResourceFolder::~GuiResourceFolder()
 		{
+		}
+
+		const WString& GuiResourceFolder::GetImportUri()
+		{
+			return importUri;
+		}
+
+		void GuiResourceFolder::SetImportUri(const WString& uri)
+		{
+			importUri = uri;
 		}
 
 		const GuiResourceFolder::ItemList& GuiResourceFolder::GetItems()
@@ -1107,8 +1194,81 @@ GuiResourceFolder
 		}
 
 /***********************************************************************
+GuiResourceMetadata
+***********************************************************************/
+
+		void GuiResourceMetadata::LoadFromXml(Ptr<parsing::xml::XmlDocument> xml, GuiResourceLocation location, GuiResourceError::List& errors)
+		{
+			auto attrName = XmlGetAttribute(xml->rootElement, L"Name");
+			auto attrVersion = XmlGetAttribute(xml->rootElement, L"Version");
+			if (!attrName || !attrVersion)
+			{
+				errors.Add(GuiResourceError(location, L"[INTERNAL-ERROR] Resource metadata lacks of Name or Version attribute."));
+				return;
+			}
+			name = attrName->value.value;
+			version = attrVersion->value.value;
+			dependencies.Clear();
+
+			if (auto xmlDeps = XmlGetElement(xml->rootElement, L"Dependencies"))
+			{
+				FOREACH(Ptr<XmlElement>, xmlDep, XmlGetElements(xmlDeps, L"Resource"))
+				{
+					auto attrDep = XmlGetAttribute(xmlDep, L"Name");
+					if (!attrDep)
+					{
+						errors.Add(GuiResourceError(location, L"[INTERNAL-ERROR] Resource dependency lacks of Name attribute."));
+					}
+					dependencies.Add(attrDep->value.value);
+				}
+			}
+		}
+
+		Ptr<parsing::xml::XmlDocument> GuiResourceMetadata::SaveToXml()
+		{
+			auto root = MakePtr<XmlElement>();
+			root->name.value = L"ResourceMetadata";
+			{
+				auto attr = MakePtr<XmlAttribute>();
+				attr->name.value = L"Name";
+				attr->value.value = name;
+				root->attributes.Add(attr);
+			}
+			{
+				auto attr = MakePtr<XmlAttribute>();
+				attr->name.value = L"Version";
+				attr->value.value = version;
+				root->attributes.Add(attr);
+			}
+			{
+				auto xmlDeps = MakePtr<XmlElement>();
+				xmlDeps->name.value = L"Dependencies";
+				root->subNodes.Add(xmlDeps);
+
+				FOREACH(WString, dep, dependencies)
+				{
+					auto xmlDep = MakePtr<XmlElement>();
+					xmlDep->name.value = L"Resource";
+					xmlDeps->subNodes.Add(xmlDep);
+					{
+						auto attr = MakePtr<XmlAttribute>();
+						attr->name.value = L"Name";
+						attr->value.value = dep;
+						xmlDep->attributes.Add(attr);
+					}
+				}
+			}
+
+			auto doc = MakePtr<XmlDocument>();
+			doc->rootElement = root;
+			return doc;
+		}
+
+/***********************************************************************
 GuiResource
 ***********************************************************************/
+
+		const wchar_t* GuiResource::CurrentVersionString = L"1.0";
 
 		void GuiResource::ProcessDelayLoading(Ptr<GuiResource> resource, DelayLoadingList& delayLoadings, GuiResourceError::List& errors)
 		{
@@ -1146,10 +1306,17 @@ GuiResource
 
 		GuiResource::GuiResource()
 		{
+			metadata = MakePtr<GuiResourceMetadata>();
+			metadata->version = CurrentVersionString;
 		}
 
 		GuiResource::~GuiResource()
 		{
+		}
+
+		Ptr<GuiResourceMetadata> GuiResource::GetMetadata()
+		{
+			return metadata;
 		}
 
 		WString GuiResource::GetWorkingDirectory()
@@ -1206,6 +1373,23 @@ GuiResource
 		{
 			stream::internal::ContextFreeReader reader(stream);
 			auto resource = MakePtr<GuiResource>();
+			{
+				WString metadata;
+				reader << metadata;
+				
+				auto parser = GetParserManager()->GetParser<XmlDocument>(L"XML");
+				auto xmlMetadata = parser->Parse({ resource }, metadata, errors);
+				if (!xmlMetadata) return nullptr;
+
+				resource->metadata->LoadFromXml(xmlMetadata, { resource }, errors);
+				if (errors.Count() != 0) return nullptr;
+
+				if (resource->metadata->version != CurrentVersionString)
+				{
+					errors.Add(GuiResourceError({ resource }, L"Only resource binary of version \"" + WString(CurrentVersionString) + L"\" is accepted. Please recompile the resource before loading it."));
+					return nullptr;
+				}
+			}
 
 			List<WString> typeNames;
 			reader << typeNames;
@@ -1228,7 +1412,14 @@ GuiResource
 		void GuiResource::SavePrecompiledBinary(stream::IStream& stream)
 		{
 			stream::internal::ContextFreeWriter writer(stream);
-
+			{
+				auto xmlMetadata = metadata->SaveToXml();
+				WString xml = GenerateToStream([&](StreamWriter& writer)
+				{
+					XmlPrint(xmlMetadata, writer);
+				});
+				writer << xml;
+			}
 			List<WString> typeNames;
 			CollectTypeNames(typeNames);
 			writer << typeNames;
@@ -1286,7 +1477,7 @@ GuiResource
 			return context.targetFolder;
 		}
 
-		void GuiResource::Initialize(GuiResourceUsage usage)
+		void GuiResource::Initialize(GuiResourceUsage usage, GuiResourceError::List& errors)
 		{
 			auto precompiledFolder = GetFolder(L"Precompiled");
 			if (!precompiledFolder)
@@ -1305,7 +1496,7 @@ GuiResource
 			for (vint i = 0; i <= maxPass; i++)
 			{
 				context.passIndex = i;
-				InitializeResourceFolder(context);
+				InitializeResourceFolder(context, errors);
 			}
 		}
 
@@ -1380,47 +1571,6 @@ GuiResourcePathResolver
 		}
 
 /***********************************************************************
-GuiResourcePathFileResolver
-***********************************************************************/
-
-		class GuiResourcePathFileResolver : public Object, public IGuiResourcePathResolver
-		{
-		protected:
-			WString					workingDirectory;
-
-		public:
-			GuiResourcePathFileResolver(const WString& _workingDirectory)
-				:workingDirectory(_workingDirectory)
-			{
-			}
-
-			Ptr<DescriptableObject> ResolveResource(const WString& path)
-			{
-				WString filename=path;
-				if(filename.Length()>=2 && filename[1]!=L':')
-				{
-					filename=workingDirectory+filename;
-				}
-				Ptr<INativeImage> image=GetCurrentController()->ImageService()->CreateImageFromFile(filename);
-				return new GuiImageData(image, 0);
-			}
-
-			class Factory : public Object, public IGuiResourcePathResolverFactory
-			{
-			public:
-				WString GetProtocol()override
-				{
-					return L"file";
-				}
-
-				Ptr<IGuiResourcePathResolver> CreateResolver(Ptr<GuiResource> resource, const WString& workingDirectory)override
-				{
-					return new GuiResourcePathFileResolver(workingDirectory);
-				}
-			};
-		};
-
-/***********************************************************************
 GuiResourcePathResResolver
 ***********************************************************************/
 
@@ -1437,11 +1587,11 @@ GuiResourcePathResResolver
 
 			Ptr<DescriptableObject> ResolveResource(const WString& path)
 			{
-				if(resource)
+				if (resource)
 				{
-					if(path.Length()>0)
+					if (path.Length() > 0)
 					{
-						switch(path[path.Length()-1])
+						switch (path[path.Length() - 1])
 						{
 						case L'\\':case L'/':
 							return resource->GetFolderByPath(path);
@@ -1450,7 +1600,7 @@ GuiResourcePathResResolver
 						}
 					}
 				}
-				return 0;
+				return nullptr;
 			}
 
 			class Factory : public Object, public IGuiResourcePathResolverFactory
@@ -1464,6 +1614,59 @@ GuiResourcePathResResolver
 				Ptr<IGuiResourcePathResolver> CreateResolver(Ptr<GuiResource> resource, const WString& workingDirectory)override
 				{
 					return new GuiResourcePathResResolver(resource);
+				}
+			};
+		};
+
+/***********************************************************************
+GuiImportResourcePathResResolver
+***********************************************************************/
+
+		class GuiImportResourcePathResResolver : public Object, public IGuiResourcePathResolver
+		{
+		public:
+			GuiImportResourcePathResResolver()
+			{
+			}
+
+			Ptr<DescriptableObject> ResolveResource(const WString& path)
+			{
+				const wchar_t* buffer = path.Buffer();
+				const wchar_t* d1 = wcschr(buffer, L'\\');
+				const wchar_t* d2 = wcschr(buffer, L'/');
+				const wchar_t* d =
+					d1 == nullptr&&d2 == nullptr ? nullptr :
+					d1 == nullptr ? d2 :
+					d2 == nullptr ? d1 :
+					d1 < d2 ? d1 : d2;
+
+				if (!d) return nullptr;
+				WString resourceName(buffer, d - buffer);
+				WString resourcePath(path.Right(path.Length() - resourceName.Length() - 1));
+				if (auto resource = GetResourceManager()->GetResource(resourceName))
+				{
+					switch (path[path.Length() - 1])
+					{
+					case L'\\':case L'/':
+						return resource->GetFolderByPath(resourcePath);
+					default:
+						return resource->GetValueByPath(resourcePath);
+					}
+				}
+				return nullptr;
+			}
+
+			class Factory : public Object, public IGuiResourcePathResolverFactory
+			{
+			public:
+				WString GetProtocol()override
+				{
+					return L"import-res";
+				}
+
+				Ptr<IGuiResourcePathResolver> CreateResolver(Ptr<GuiResource> resource, const WString& workingDirectory)override
+				{
+					return new GuiImportResourcePathResResolver;
 				}
 			};
 		};
@@ -1502,8 +1705,8 @@ IGuiResourceResolverManager
 				globalStringKeyManager->InitializeConstants();
 
 				resourceResolverManager = this;
-				SetPathResolverFactory(new GuiResourcePathFileResolver::Factory);
 				SetPathResolverFactory(new GuiResourcePathResResolver::Factory);
+				SetPathResolverFactory(new GuiImportResourcePathResResolver::Factory);
 			}
 
 			void Unload()override
@@ -1618,91 +1821,12 @@ IGuiResourceResolverManager
 Helpers
 ***********************************************************************/
 
-		vint CopyStream(stream::IStream& inputStream, stream::IStream& outputStream)
-		{
-			vint totalSize = 0;
-			while (true)
-			{
-				char buffer[1024];
-				vint copied = inputStream.Read(buffer, (vint)sizeof(buffer));
-				if (copied == 0)
-				{
-					break;
-				}
-				totalSize += outputStream.Write(buffer, copied);
-			}
-			return totalSize;
-		}
-
-		const vint CompressionFragmentSize = 1048576;
-
-		void CompressStream(stream::IStream& inputStream, stream::IStream& outputStream)
-		{
-			Array<char> buffer(CompressionFragmentSize);
-			while (true)
-			{
-				vint size = inputStream.Read(&buffer[0], buffer.Count());
-				if (size == 0) break;
-
-				MemoryStream compressedStream;
-				{
-					LzwEncoder encoder;
-					EncoderStream encoderStream(compressedStream, encoder);
-					encoderStream.Write(&buffer[0], size);
-				}
-
-				compressedStream.SeekFromBegin(0);
-				{
-					{
-						vint32_t bufferSize = (vint32_t)size;
-						outputStream.Write(&bufferSize, (vint)sizeof(bufferSize));
-					}
-					{
-						vint32_t compressedSize = (vint32_t)compressedStream.Size();
-						outputStream.Write(&compressedSize, (vint)sizeof(compressedSize));
-					}
-					CopyStream(compressedStream, outputStream);
-				}
-			}
-		}
-
-		void DecompressStream(stream::IStream& inputStream, stream::IStream& outputStream)
-		{
-			vint totalSize = 0;
-			vint totalWritten = 0;
-			while (true)
-			{
-				vint32_t bufferSize = 0;
-				if (inputStream.Read(&bufferSize, (vint)sizeof(bufferSize)) != sizeof(bufferSize))
-				{
-					break;
-				}
-
-				vint32_t compressedSize = 0;
-				CHECK_ERROR(inputStream.Read(&compressedSize, (vint)sizeof(compressedSize)) == sizeof(compressedSize), L"vl::presentation::DecompressStream(MemoryStream&, MemoryStream&)#Incomplete input");
-
-				Array<char> buffer(compressedSize);
-				CHECK_ERROR(inputStream.Read(&buffer[0], compressedSize) == compressedSize, L"vl::presentation::DecompressStream(MemoryStream&, MemoryStream&)#Incomplete input");
-
-				MemoryWrapperStream compressedStream(&buffer[0], compressedSize);
-				LzwDecoder decoder;
-				DecoderStream decoderStream(compressedStream, decoder);
-				totalWritten += CopyStream(decoderStream, outputStream);
-				totalSize += bufferSize;
-			}
-			CHECK_ERROR(outputStream.Size() == totalSize, L"vl::presentation::DecompressStream(MemoryStream&, MemoryStream&)#Incomplete input");
-		}
-
 		void DecompressStream(const char** buffer, bool decompress, vint rows, vint block, vint remain, stream::IStream& outputStream)
 		{
 			if (decompress)
 			{
 				MemoryStream compressedStream;
-				for (vint i = 0; i < rows; i++)
-				{
-					vint size = i == rows - 1 ? remain : block;
-					compressedStream.Write((void*)buffer[i], size);
-				}
+				DecompressStream(buffer, false, rows, block, remain, compressedStream);
 				compressedStream.SeekFromBegin(0);
 				DecompressStream(compressedStream, outputStream);
 			}

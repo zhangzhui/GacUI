@@ -1,6 +1,8 @@
 #include "GuiTreeViewControls.h"
 #include "GuiListControlItemArrangers.h"
+#include "../GuiButtonControls.h"
 #include "../Templates/GuiThemeStyleFactory.h"
+#include "../../GraphicsComposition/GuiGraphicsTableComposition.h"
 
 namespace vl
 {
@@ -20,29 +22,28 @@ namespace vl
 NodeItemProvider
 ***********************************************************************/
 
-				INodeProvider* NodeItemProvider::GetNodeByOffset(INodeProvider* provider, vint offset)
+				Ptr<INodeProvider> NodeItemProvider::GetNodeByOffset(Ptr<INodeProvider> provider, vint offset)
 				{
-					if(offset==0) return provider;
-					INodeProvider* result=0;
-					if(provider->GetExpanding() && offset>0)
+					if (offset == 0) return provider;
+					Ptr<INodeProvider> result;
+					if (provider->GetExpanding() && offset > 0)
 					{
-						offset-=1;
-						vint count=provider->GetChildCount();
-						for(vint i=0;(!result && i<count);i++)
+						offset -= 1;
+						vint count = provider->GetChildCount();
+						for (vint i = 0; (!result && i < count); i++)
 						{
-							INodeProvider* child=provider->GetChild(i);
-							vint visibleCount=child->CalculateTotalVisibleNodes();
-							if(offset<visibleCount)
+							auto child = provider->GetChild(i);
+							vint visibleCount = child->CalculateTotalVisibleNodes();
+							if (offset < visibleCount)
 							{
-								result=GetNodeByOffset(child, offset);
+								result = GetNodeByOffset(child, offset);
 							}
 							else
 							{
-								offset-=visibleCount;
+								offset -= visibleCount;
 							}
 						}
 					}
-					ReleaseNode(provider);
 					return result;
 				}
 
@@ -53,14 +54,13 @@ NodeItemProvider
 				void NodeItemProvider::OnBeforeItemModified(INodeProvider* parentNode, vint start, vint count, vint newCount)
 				{
 					vint offset = 0;
-					vint base=CalculateNodeVisibilityIndexInternal(parentNode);
-					if(base!=-2 && parentNode->GetExpanding())
+					vint base = CalculateNodeVisibilityIndexInternal(parentNode);
+					if (base != -2 && parentNode->GetExpanding())
 					{
-						for(vint i=0;i<count;i++)
+						for (vint i = 0; i < count; i++)
 						{
-							INodeProvider* child=parentNode->GetChild(start+i);
-							offset+=child->CalculateTotalVisibleNodes();
-							child->Release();
+							auto child = parentNode->GetChild(start + i);
+							offset += child->CalculateTotalVisibleNodes();
 						}
 					}
 					offsetBeforeChildModifieds.Set(parentNode, offset);
@@ -78,41 +78,38 @@ NodeItemProvider
 						}
 					}
 
-					vint base=CalculateNodeVisibilityIndexInternal(parentNode);
-					if(base!=-2 && parentNode->GetExpanding())
+					vint base = CalculateNodeVisibilityIndexInternal(parentNode);
+					if (base != -2 && parentNode->GetExpanding())
 					{
-						vint offset=0;
-						vint firstChildStart=-1;
-						for(vint i=0;i<newCount;i++)
+						vint offset = 0;
+						vint firstChildStart = -1;
+						for (vint i = 0; i < newCount; i++)
 						{
-							INodeProvider* child=parentNode->GetChild(start+i);
-							if(i==0)
+							auto child = parentNode->GetChild(start + i);
+							if (i == 0)
 							{
-								firstChildStart=CalculateNodeVisibilityIndexInternal(child);
+								firstChildStart = CalculateNodeVisibilityIndexInternal(child.Obj());
 							}
-							offset+=child->CalculateTotalVisibleNodes();
-							child->Release();
+							offset += child->CalculateTotalVisibleNodes();
 						}
 
-						if(firstChildStart==-1)
+						if (firstChildStart == -1)
 						{
-							vint childCount=parentNode->GetChildCount();
-							if(childCount==0)
+							vint childCount = parentNode->GetChildCount();
+							if (childCount == 0)
 							{
-								firstChildStart=base+1;
+								firstChildStart = base + 1;
 							}
-							else if(start<childCount)
+							else if (start < childCount)
 							{
-								INodeProvider* child=parentNode->GetChild(start);
-								firstChildStart=CalculateNodeVisibilityIndexInternal(child);
-								child->Release();
+								auto child = parentNode->GetChild(start);
+								firstChildStart = CalculateNodeVisibilityIndexInternal(child.Obj());
 							}
 							else
 							{
-								INodeProvider* child=parentNode->GetChild(start-1);
-								firstChildStart=CalculateNodeVisibilityIndexInternal(child);
-								firstChildStart+=child->CalculateTotalVisibleNodes();
-								child->Release();
+								auto child = parentNode->GetChild(start - 1);
+								firstChildStart = CalculateNodeVisibilityIndexInternal(child.Obj());
+								firstChildStart += child->CalculateTotalVisibleNodes();
 							}
 						}
 						InvokeOnItemModified(firstChildStart, offsetBeforeChildModified, offset);
@@ -121,64 +118,62 @@ NodeItemProvider
 
 				void NodeItemProvider::OnItemExpanded(INodeProvider* node)
 				{
-					vint base=CalculateNodeVisibilityIndexInternal(node);
-					if(base!=-2)
+					vint base = CalculateNodeVisibilityIndexInternal(node);
+					if (base != -2)
 					{
-						vint visibility=node->CalculateTotalVisibleNodes();
-						InvokeOnItemModified(base+1, 0, visibility-1);
+						vint visibility = node->CalculateTotalVisibleNodes();
+						InvokeOnItemModified(base + 1, 0, visibility - 1);
 					}
 				}
 
 				void NodeItemProvider::OnItemCollapsed(INodeProvider* node)
 				{
-					vint base=CalculateNodeVisibilityIndexInternal(node);
-					if(base!=-2)
+					vint base = CalculateNodeVisibilityIndexInternal(node);
+					if (base != -2)
 					{
-						vint visibility=0;
-						vint count=node->GetChildCount();
-						for(vint i=0;i<count;i++)
+						vint visibility = 0;
+						vint count = node->GetChildCount();
+						for (vint i = 0; i < count; i++)
 						{
-							INodeProvider* child=node->GetChild(i);
-							visibility+=child->CalculateTotalVisibleNodes();
-							child->Release();
+							auto child = node->GetChild(i);
+							visibility += child->CalculateTotalVisibleNodes();
 						}
-						InvokeOnItemModified(base+1, visibility, 0);
+						InvokeOnItemModified(base + 1, visibility, 0);
 					}
 				}
 
 				vint NodeItemProvider::CalculateNodeVisibilityIndexInternal(INodeProvider* node)
 				{
-					INodeProvider* parent=node->GetParent();
-					if(parent==0)
+					auto parent = node->GetParent();
+					if (!parent)
 					{
 						return -1;
 					}
-					if(!parent->GetExpanding())
+					if (!parent->GetExpanding())
 					{
 						return -2;
 					}
 
-					vint index=CalculateNodeVisibilityIndexInternal(parent);
-					if(index==-2)
+					vint index = CalculateNodeVisibilityIndexInternal(parent.Obj());
+					if (index == -2)
 					{
 						return -2;
 					}
 
-					vint count=parent->GetChildCount();
-					for(vint i=0;i<count;i++)
+					vint count = parent->GetChildCount();
+					for (vint i = 0; i < count; i++)
 					{
-						INodeProvider* child=parent->GetChild(i);
-						bool findResult=child==node;
-						if(findResult)
+						auto child = parent->GetChild(i);
+						bool findResult = child == node;
+						if (findResult)
 						{
 							index++;
 						}
 						else
 						{
-							index+=child->CalculateTotalVisibleNodes();
+							index += child->CalculateTotalVisibleNodes();
 						}
-						child->Release();
-						if(findResult)
+						if (findResult)
 						{
 							return index;
 						}
@@ -188,11 +183,11 @@ NodeItemProvider
 
 				vint NodeItemProvider::CalculateNodeVisibilityIndex(INodeProvider* node)
 				{
-					vint result=CalculateNodeVisibilityIndexInternal(node);
-					return result<0?-1:result;
+					vint result = CalculateNodeVisibilityIndexInternal(node);
+					return result < 0 ? -1 : result;
 				}
 
-				INodeProvider* NodeItemProvider::RequestNode(vint index)
+				Ptr<INodeProvider> NodeItemProvider::RequestNode(vint index)
 				{
 					if(root->CanGetNodeByVisibleIndex())
 					{
@@ -201,14 +196,6 @@ NodeItemProvider
 					else
 					{
 						return GetNodeByOffset(root->GetRootNode(), index+1);
-					}
-				}
-
-				void NodeItemProvider::ReleaseNode(INodeProvider* node)
-				{
-					if(node)
-					{
-						node->Release();
 					}
 				}
 
@@ -237,9 +224,7 @@ NodeItemProvider
 				{
 					if (auto node = RequestNode(itemIndex))
 					{
-						WString result = root->GetTextValue(node);
-						ReleaseNode(node);
-						return result;
+						return root->GetTextValue(node.Obj());
 					}
 					return L"";
 				}
@@ -248,9 +233,7 @@ NodeItemProvider
 				{
 					if (auto node = RequestNode(itemIndex))
 					{
-						Value result = root->GetBindingValue(node);
-						ReleaseNode(node);
-						return result;
+						return root->GetBindingValue(node.Obj());
 					}
 					return Value();
 				}
@@ -273,16 +256,15 @@ MemoryNodeProvider::NodeCollection
 
 				void MemoryNodeProvider::NodeCollection::OnBeforeChildModified(vint start, vint count, vint newCount)
 				{
-					ownerProvider->offsetBeforeChildModified=0;
-					if(ownerProvider->expanding)
+					if (ownerProvider->expanding)
 					{
-						for(vint i=0;i<count;i++)
+						for (vint i = 0; i < count; i++)
 						{
-							ownerProvider->offsetBeforeChildModified+=items[start+i]->totalVisibleNodeCount;
+							offsetBeforeChildModified += items[start + i]->totalVisibleNodeCount;
 						}
 					}
-					INodeProviderCallback* proxy=ownerProvider->GetCallbackProxyInternal();
-					if(proxy)
+					INodeProviderCallback* proxy = ownerProvider->GetCallbackProxyInternal();
+					if (proxy)
 					{
 						proxy->OnBeforeItemModified(ownerProvider, start, count, newCount);
 					}
@@ -290,18 +272,19 @@ MemoryNodeProvider::NodeCollection
 
 				void MemoryNodeProvider::NodeCollection::OnAfterChildModified(vint start, vint count, vint newCount)
 				{
-					ownerProvider->childCount+=(newCount-count);
-					if(ownerProvider->expanding)
+					ownerProvider->childCount += (newCount - count);
+					if (ownerProvider->expanding)
 					{
-						vint offset=0;
-						for(vint i=0;i<newCount;i++)
+						vint offset = 0;
+						for (vint i = 0; i < newCount; i++)
 						{
-							offset+=items[start+i]->totalVisibleNodeCount;
+							offset += items[start + i]->totalVisibleNodeCount;
 						}
-						ownerProvider->OnChildTotalVisibleNodesChanged(offset-ownerProvider->offsetBeforeChildModified);
+						ownerProvider->OnChildTotalVisibleNodesChanged(offset - offsetBeforeChildModified);
 					}
-					INodeProviderCallback* proxy=ownerProvider->GetCallbackProxyInternal();
-					if(proxy)
+					offsetBeforeChildModified = 0;
+					INodeProviderCallback* proxy = ownerProvider->GetCallbackProxyInternal();
+					if (proxy)
 					{
 						proxy->OnAfterItemModified(ownerProvider, start, count, newCount);
 					}
@@ -451,12 +434,12 @@ MemoryNodeProvider
 					return childCount;
 				}
 
-				INodeProvider* MemoryNodeProvider::GetParent()
+				Ptr<INodeProvider> MemoryNodeProvider::GetParent()
 				{
 					return parent;
 				}
 
-				INodeProvider* MemoryNodeProvider::GetChild(vint index)
+				Ptr<INodeProvider> MemoryNodeProvider::GetChild(vint index)
 				{
 					if(0<=index && index<childCount)
 					{
@@ -464,16 +447,8 @@ MemoryNodeProvider
 					}
 					else
 					{
-						return 0;
+						return nullptr;
 					}
-				}
-
-				void MemoryNodeProvider::Increase()
-				{
-				}
-
-				void MemoryNodeProvider::Release()
-				{
 				}
 
 /***********************************************************************
@@ -529,9 +504,9 @@ NodeRootProviderBase
 					return false;
 				}
 
-				INodeProvider* NodeRootProviderBase::GetNodeByVisibleIndex(vint index)
+				Ptr<INodeProvider> NodeRootProviderBase::GetNodeByVisibleIndex(vint index)
 				{
-					return 0;
+					return nullptr;
 				}
 
 				bool NodeRootProviderBase::AttachCallback(INodeProviderCallback* value)
@@ -586,7 +561,7 @@ MemoryNodeRootProvider
 				{
 				}
 
-				INodeProvider* MemoryNodeRootProvider::GetRootNode()
+				Ptr<INodeProvider> MemoryNodeRootProvider::GetRootNode()
 				{
 					return this;
 				}
@@ -639,28 +614,26 @@ GuiVirtualTreeListControl
 
 			void GuiVirtualTreeListControl::OnItemMouseEvent(compositions::GuiNodeMouseEvent& nodeEvent, compositions::GuiGraphicsComposition* sender, compositions::GuiItemMouseEventArgs& arguments)
 			{
-				tree::INodeProvider* node=GetNodeItemView()->RequestNode(arguments.itemIndex);
-				if(node)
+				auto node = GetNodeItemView()->RequestNode(arguments.itemIndex);
+				if (node)
 				{
 					GuiNodeMouseEventArgs redirectArguments;
-					(GuiMouseEventArgs&)redirectArguments=arguments;
-					redirectArguments.node=node;
+					(GuiMouseEventArgs&)redirectArguments = arguments;
+					redirectArguments.node = node.Obj();
 					nodeEvent.Execute(redirectArguments);
-					(GuiMouseEventArgs&)arguments=redirectArguments;
-					GetNodeItemView()->ReleaseNode(node);
+					(GuiMouseEventArgs&)arguments = redirectArguments;
 				}
 			}
 
 			void GuiVirtualTreeListControl::OnItemNotifyEvent(compositions::GuiNodeNotifyEvent& nodeEvent, compositions::GuiGraphicsComposition* sender, compositions::GuiItemEventArgs& arguments)
 			{
-				if(auto node = GetNodeItemView()->RequestNode(arguments.itemIndex))
+				if (auto node = GetNodeItemView()->RequestNode(arguments.itemIndex))
 				{
 					GuiNodeEventArgs redirectArguments;
-					(GuiEventArgs&)redirectArguments=arguments;
-					redirectArguments.node=node;
+					(GuiEventArgs&)redirectArguments = arguments;
+					redirectArguments.node = node.Obj();
 					nodeEvent.Execute(redirectArguments);
-					(GuiEventArgs&)arguments=redirectArguments;
-					GetNodeItemView()->ReleaseNode(node);
+					(GuiEventArgs&)arguments = redirectArguments;
 				}
 			}
 
@@ -904,13 +877,13 @@ GuiVirtualTreeView
 				GuiVirtualTreeListControl::OnStyleInstalled(itemIndex, style);
 				if (auto treeItemStyle = dynamic_cast<templates::GuiTreeItemTemplate*>(style))
 				{
-					treeItemStyle->SetTextColor(GetControlTemplateObject()->GetTextColor());
+					treeItemStyle->SetTextColor(GetControlTemplateObject(true)->GetTextColor());
 
 					if (treeViewItemView)
 					{
 						if (auto node = nodeItemView->RequestNode(itemIndex))
 						{
-							treeItemStyle->SetImage(treeViewItemView->GetNodeImage(node));
+							treeItemStyle->SetImage(treeViewItemView->GetNodeImage(node.Obj()));
 							treeItemStyle->SetExpanding(node->GetExpanding());
 							treeItemStyle->SetExpandable(node->GetChildCount() > 0);
 							{
@@ -923,7 +896,6 @@ GuiVirtualTreeView
 								}
 								treeItemStyle->SetLevel(level);
 							}
-							nodeItemView->ReleaseNode(node);
 						}
 					}
 				}
@@ -970,11 +942,10 @@ GuiTreeView
 				{
 					if (auto node = nodeItemView->RequestNode(index))
 					{
-						if (auto memoryNode = dynamic_cast<tree::MemoryNodeProvider*>(node))
+						if (auto memoryNode = node.Cast<tree::MemoryNodeProvider>())
 						{
 							result = memoryNode->GetData().Cast<tree::TreeViewItem>();
 						}
-						nodeItemView->ReleaseNode(node);
 					}
 				}
 				return result;
@@ -1013,11 +984,12 @@ DefaultTreeItemTemplate
 						expandingButton = new GuiSelectableButton(theme::ThemeName::TreeItemExpander);
 						if (auto treeView = dynamic_cast<GuiVirtualTreeView*>(listControl))
 						{
-							if (auto expanderStyle = treeView->GetControlTemplateObject()->GetExpandingDecoratorTemplate())
+							if (auto expanderStyle = treeView->GetControlTemplateObject(true)->GetExpandingDecoratorTemplate())
 							{
 								expandingButton->SetControlTemplate(expanderStyle);
 							}
 						}
+						expandingButton->SetAutoFocus(false);
 						expandingButton->SetAutoSelection(false);
 						expandingButton->GetBoundsComposition()->SetAlignmentToParent(Margin(0, 0, 0, 0));
 						expandingButton->GetBoundsComposition()->GetEventReceiver()->leftButtonDoubleClick.AttachMethod(this, &DefaultTreeItemTemplate::OnExpandingButtonDoubleClick);
@@ -1125,7 +1097,6 @@ DefaultTreeItemTemplate
 									{
 										bool expanding = node->GetExpanding();
 										node->SetExpanding(!expanding);
-										view->ReleaseNode(node);
 									}
 								}
 							}

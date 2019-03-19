@@ -78,7 +78,7 @@ WorkflowGenerateBindingVisitor
 				else
 				{
 					errors.Add(GuiResourceError({ resolvingResult.resource }, setter->attPosition,
-						L"[INTERNAL ERROR] Precompile: The appropriate IGuiInstanceBinder of binding \"-" +
+						L"[INTERNAL-ERROR] Precompile: The appropriate IGuiInstanceBinder of binding \"-" +
 						setter->binding.ToString() +
 						L"\" cannot be found."));
 				}
@@ -100,7 +100,7 @@ WorkflowGenerateBindingVisitor
 				if (!eventInfo)
 				{
 					errors.Add(GuiResourceError({ resolvingResult.resource }, handler->attPosition,
-						L"[INTERNAL ERROR] Precompile: Event \"" +
+						L"[INTERNAL-ERROR] Precompile: Event \"" +
 						propertyName.ToString() +
 						L"\" cannot be found in type \"" +
 						reprTypeInfo.typeName.ToString() +
@@ -122,7 +122,7 @@ WorkflowGenerateBindingVisitor
 						else
 						{
 							errors.Add(GuiResourceError({ resolvingResult.resource }, handler->attPosition,
-								L"[INTERNAL ERROR] The appropriate IGuiInstanceEventBinder of binding \"-" +
+								L"[INTERNAL-ERROR] The appropriate IGuiInstanceEventBinder of binding \"-" +
 								handler->binding.ToString() +
 								L"\" cannot be found."));
 						}
@@ -196,6 +196,20 @@ WorkflowGenerateBindingVisitor
 		{
 			WorkflowGenerateBindingVisitor visitor(precompileContext, resolvingResult, statements, errors);
 			resolvingResult.context->instance->Accept(&visitor);
+
+			FOREACH(Ptr<GuiInstanceLocalized>, localized, resolvingResult.context->localizeds)
+			{
+				auto code = L"bind(" + localized->className.ToString() + L"::Get(presentation::controls::GuiApplication::GetApplication().Locale))";
+				if (auto bindExpr = Workflow_ParseExpression(precompileContext, { resolvingResult.resource }, code, localized->tagPosition, errors))
+				{
+					auto instancePropertyInfo = resolvingResult.rootTypeInfo.typeInfo->GetTypeDescriptor()->GetPropertyByName(localized->name.ToString(), true);
+					if (auto statement = Workflow_InstallBindProperty(precompileContext, resolvingResult, resolvingResult.context->instance->instanceName, instancePropertyInfo, bindExpr))
+					{
+						Workflow_RecordScriptPosition(precompileContext, localized->tagPosition, statement);
+						statements->statements.Add(statement);
+					}
+				}
+			}
 		}
 	}
 }

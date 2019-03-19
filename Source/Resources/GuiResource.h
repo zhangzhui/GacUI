@@ -20,8 +20,6 @@ namespace vl
 
 	namespace presentation
 	{
-		using namespace reflection;
-
 		class GuiResourceItem;
 		class GuiResourceFolder;
 		class GuiResource;
@@ -66,6 +64,7 @@ Global String Key
 			static GlobalStringKey					_Ref;
 			static GlobalStringKey					_Bind;
 			static GlobalStringKey					_Format;
+			static GlobalStringKey					_Str;
 			static GlobalStringKey					_Eval;
 			static GlobalStringKey					_Uri;
 			static GlobalStringKey					_ControlTemplate;
@@ -107,7 +106,6 @@ Resource Image
 			/// <summary>Create an image data with a specified image and a frame index.</summary>
 			/// <param name="_image">The specified image.</param>
 			/// <param name="_frameIndex">The specified frame index.</param>
-			/// <param name="_filePath">The file path of the image. This parameter is only for metadata, it will not affect the content of the image.</param>
 			GuiImageData(Ptr<INativeImage> _image, vint _frameIndex);
 			~GuiImageData();
 
@@ -175,7 +173,8 @@ Resource Structure
 			/// <returns>The file absolute path of this resource node .</returns>
 			const WString&							GetFileAbsolutePath();
 			/// <summary>Set the file content path of this resource node.</summary>
-			/// <param name="value">The file content path of this resource node .</param>
+			/// <param name="content">The file content path of this resource node .</param>
+			/// <param name="absolute">The file absolute path of this resource node .</param>
 			void									SetFileContentPath(const WString& content, const WString& absolute);
 		};
 
@@ -291,6 +290,7 @@ Resource Structure
 
 			typedef collections::List<DelayLoading>								DelayLoadingList;
 
+			WString									importUri;
 			ItemMap									items;
 			FolderMap								folders;
 
@@ -300,11 +300,19 @@ Resource Structure
 			void									LoadResourceFolderFromBinary(DelayLoadingList& delayLoadings, stream::internal::ContextFreeReader& reader, collections::List<WString>& typeNames, GuiResourceError::List& errors);
 			void									SaveResourceFolderToBinary(stream::internal::ContextFreeWriter& writer, collections::List<WString>& typeNames);
 			void									PrecompileResourceFolder(GuiResourcePrecompileContext& context, IGuiResourcePrecompileCallback* callback, GuiResourceError::List& errors);
-			void									InitializeResourceFolder(GuiResourceInitializeContext& context);
+			void									InitializeResourceFolder(GuiResourceInitializeContext& context, GuiResourceError::List& errors);
+			void									ImportFromUri(const WString& uri, GuiResourceTextPos position, GuiResourceError::List& errors);
 		public:
 			/// <summary>Create a resource folder.</summary>
 			GuiResourceFolder();
 			~GuiResourceFolder();
+
+			///<summary>Get the import uri for this folder.</summary>
+			///<returns>The import uri for this folder. Returns an empty string for non-import folders</returns>
+			const WString&							GetImportUri();
+			///<summary>Set the import uri for this folder.</summary>
+			///<param name="uri">The import uri for this folder. Set an empty string for non-import folders</param>
+			void									SetImportUri(const WString& uri);
 
 			/// <summary>Get all sub items.</summary>
 			/// <returns>All sub items.</returns>
@@ -369,18 +377,37 @@ Resource
 			DataOnly,
 			InstanceClass,
 		};
+
+		/// <summary>Resource metadata.</summary>
+		class GuiResourceMetadata : public Object
+		{
+		public:
+			WString									name;
+			WString									version;
+			collections::List<WString>				dependencies;
+
+			void									LoadFromXml(Ptr<parsing::xml::XmlDocument> xml, GuiResourceLocation location, GuiResourceError::List& errors);
+			Ptr<parsing::xml::XmlDocument>			SaveToXml();
+		};
 		
 		/// <summary>Resource. A resource is a root resource folder that does not have a name.</summary>
 		class GuiResource : public GuiResourceFolder, public Description<GuiResource>
 		{
 		protected:
 			WString									workingDirectory;
+			Ptr<GuiResourceMetadata>				metadata;
 
 			static void								ProcessDelayLoading(Ptr<GuiResource> resource, DelayLoadingList& delayLoadings, GuiResourceError::List& errors);
 		public:
+			static const wchar_t*					CurrentVersionString;
+
 			/// <summary>Create a resource.</summary>
 			GuiResource();
 			~GuiResource();
+
+			/// <summary>Get the metadata of the resource.</summary>
+			/// <returns>The metadata.</returns>
+			Ptr<GuiResourceMetadata>				GetMetadata();
 
 			/// <summary>Get the directory where the resource is load.</summary>
 			/// <returns>The directory.</returns>
@@ -389,7 +416,8 @@ Resource
 			/// <summary>Load a resource from an xml file. If the xml file refers other files, they will be loaded as well.</summary>
 			/// <returns>The loaded resource.</returns>
 			/// <param name="xml">The xml document.</param>
-			/// <param name="workingDirectory">The working directory for loading image files.</param>
+			/// <param name="filePath">The file path of the resource.</param>
+			/// <param name="workingDirectory">The working directory for loading external resources.</param>
 			/// <param name="errors">All collected errors during loading a resource.</param>
 			static Ptr<GuiResource>					LoadFromXml(Ptr<parsing::xml::XmlDocument> xml, const WString& filePath, const WString& workingDirectory, GuiResourceError::List& errors);
 
@@ -426,7 +454,8 @@ Resource
 
 			/// <summary>Initialize a precompiled resource.</summary>
 			/// <param name="usage">In which role an application is initializing this resource.</param>
-			void									Initialize(GuiResourceUsage usage);
+			/// <param name="errors">All collected errors during initializing a resource.</param>
+			void									Initialize(GuiResourceUsage usage, GuiResourceError::List& errors);
 			
 			/// <summary>Get a contained document model using a path like "Packages\Application\Name". If the path does not exists or the type does not match, an exception will be thrown.</summary>
 			/// <returns>The containd resource object.</returns>
@@ -562,18 +591,15 @@ Resource Type Resolver
 		///		Represents a precompiler for resources of a specified type.
 		///		Current resources that needs precompiling:
 		///		Workflow:
-		///			Pass  0: Collect workflow scripts
-		///			Pass  1: Compile ViewModel scripts
-		///			Pass  2: Compile Shared scripts
+		///			Pass  0: Collect workflow scripts / Compile localized strings / Generate ClassNameRecord
+		///			Pass  1: Compile workflow scripts
 		///		Instance:
-		///			Pass  3: Collect instance types
-		///			Pass  4: Validate instance dependency
-		///			Pass  5: Generate TemporaryClass scripts, ClassNameRecord
-		///			Pass  6: Compile TemporaryClass scripts
-		///			Pass  7: Generate InstanceCtor scripts
-		///			Pass  8: Compile InstanceCtor scripts
-		///			Pass  9: Unload InstanceCtor, Delete TemporaryClass, Generate InstanceClass scripts
-		///			Pass 10: Compile InstanceClass scripts
+		///			Pass  2: Collect instance types													/ Compile animation types
+		///			Pass  3: Compile
+		///			Pass  4: Generate instance types with event handler functions to TemporaryClass	/ Compile animation types
+		///			Pass  5: Compile
+		///			Pass  6: Generate instance types with everything to InstanceCtor				/ Compile animation types
+		///			Pass  7: Compile
 		/// </summary>
 		class IGuiResourceTypeResolver_Precompile : public virtual IDescriptable, public Description<IGuiResourceTypeResolver_Precompile>
 		{
@@ -648,7 +674,8 @@ Resource Type Resolver
 			/// <summary>Initialize the resource item.</summary>
 			/// <param name="resource">The resource to initializer.</param>
 			/// <param name="context">The context for initializing.</param>
-			virtual void										Initialize(Ptr<GuiResourceItem> resource, GuiResourceInitializeContext& context) = 0;
+			/// <param name="errors">All collected errors during initializing a resource.</param>
+			virtual void										Initialize(Ptr<GuiResourceItem> resource, GuiResourceInitializeContext& context, GuiResourceError::List& errors) = 0;
 		};
 
 		/// <summary>Represents a symbol type for loading a resource without a preload type.</summary>
@@ -657,17 +684,20 @@ Resource Type Resolver
 		public:
 			/// <summary>Serialize a resource to an xml element. This function is called if this type resolver does not have a preload type.</summary>
 			/// <returns>The serialized xml element.</returns>
-			/// <param name="resource">The resource.</param>
+			/// <param name="resource">The resource item containing the resource.</param>
+			/// <param name="content">The object to serialize.</param>
 			virtual Ptr<parsing::xml::XmlElement>				Serialize(Ptr<GuiResourceItem> resource, Ptr<DescriptableObject> content) = 0;
 
 			/// <summary>Load a resource for a type inside an xml element.</summary>
 			/// <returns>The resource.</returns>
+			/// <param name="resource">The resource item containing the resource.</param>
 			/// <param name="element">The xml element.</param>
 			/// <param name="errors">All collected errors during loading a resource.</param>
 			virtual Ptr<DescriptableObject>						ResolveResource(Ptr<GuiResourceItem> resource, Ptr<parsing::xml::XmlElement> element, GuiResourceError::List& errors) = 0;
 
 			/// <summary>Load a resource for a type from a file.</summary>
 			/// <returns>The resource.</returns>
+			/// <param name="resource">The resource item containing the resource.</param>
 			/// <param name="path">The file path.</param>
 			/// <param name="errors">All collected errors during loading a resource.</param>
 			virtual Ptr<DescriptableObject>						ResolveResource(Ptr<GuiResourceItem> resource, const WString& path, GuiResourceError::List& errors) = 0;
@@ -678,12 +708,14 @@ Resource Type Resolver
 		{
 		public:
 			/// <summary>Serialize a precompiled resource to a stream.</summary>
-			/// <param name="resource">The resource.</param>
+			/// <param name="resource">The resource item containing the resource.</param>
+			/// <param name="content">The content to serialize.</param>
 			/// <param name="stream">The stream.</param>
 			virtual void										SerializePrecompiled(Ptr<GuiResourceItem> resource, Ptr<DescriptableObject> content, stream::IStream& stream) = 0;
 
 			/// <summary>Load a precompiled resource from a stream.</summary>
 			/// <returns>The resource.</returns>
+			/// <param name="resource">The resource item containing the resource.</param>
 			/// <param name="stream">The stream.</param>
 			/// <param name="errors">All collected errors during loading a resource.</param>
 			virtual Ptr<DescriptableObject>						ResolveResourcePrecompiled(Ptr<GuiResourceItem> resource, stream::IStream& stream, GuiResourceError::List& errors) = 0;
@@ -702,12 +734,13 @@ Resource Type Resolver
 
 			/// <summary>Serialize a resource to a resource in preload type.</summary>
 			/// <returns>The serialized resource.</returns>
-			/// <param name="resource">The resource.</param>
+			/// <param name="resource">The resource item containing the resource.</param>
+			/// <param name="content">The object to serialize.</param>
 			virtual Ptr<DescriptableObject>						Serialize(Ptr<GuiResourceItem> resource, Ptr<DescriptableObject> content) = 0;
 
 			/// <summary>Load a resource for a type from a resource loaded by the preload type resolver.</summary>
 			/// <returns>The resource.</returns>
-			/// <param name="resource">The resource.</param>
+			/// <param name="resource">The resource item containing the resource.</param>
 			/// <param name="resolver">The path resolver. This is only for delay load resource.</param>
 			/// <param name="errors">All collected errors during loading a resource.</param>
 			virtual Ptr<DescriptableObject>						ResolveResource(Ptr<GuiResourceItem> resource, Ptr<GuiResourcePathResolver> resolver, GuiResourceError::List& errors) = 0;
@@ -754,9 +787,6 @@ Resource Resolver Manager
 		};
 		
 		extern IGuiResourceResolverManager*						GetResourceResolverManager();
-		extern vint												CopyStream(stream::IStream& inputStream, stream::IStream& outputStream);
-		extern void												CompressStream(stream::IStream& inputStream, stream::IStream& outputStream);
-		extern void												DecompressStream(stream::IStream& inputStream, stream::IStream& outputStream);
 		extern void												DecompressStream(const char** buffer, bool compress, vint rows, vint block, vint remain, stream::IStream& outputStream);
 	}
 }

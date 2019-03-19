@@ -10,9 +10,8 @@ Interfaces:
 #define VCZH_PRESENTATION_CONTROLS_GUICOMBOCONTROLS
 
 #include "../GuiWindowControls.h"
-#include "GuiTextListControls.h"
-#include "GuiListViewControls.h"
-#include "GuiTreeViewControls.h"
+#include "GuiListControls.h"
+#include "../ToolstripPackage/GuiMenuControls.h"
 
 namespace vl
 {
@@ -30,33 +29,14 @@ ComboBox Base
 			{
 				GUI_SPECIFY_CONTROL_TEMPLATE_TYPE(ComboBoxTemplate, GuiMenuButton)
 			protected:
-
-				class CommandExecutor : public Object, public virtual IComboBoxCommandExecutor
-				{
-				protected:
-					GuiComboBoxBase*						combo;
-
-				public:
-					CommandExecutor(GuiComboBoxBase* _combo);
-					~CommandExecutor();
-
-					void									SelectItem()override;
-				};
-
-				Ptr<CommandExecutor>						commandExecutor;
 				
-				bool										IsAltAvailable()override;
 				IGuiMenuService::Direction					GetSubMenuDirection()override;
-				virtual void								SelectItem();
 				void										OnBoundsChanged(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
 			public:
-				/// <summary>Create a control with a specified style controller.</summary>
+				/// <summary>Create a control with a specified default theme.</summary>
 				/// <param name="themeName">The theme name for retriving a default control template.</param>
 				GuiComboBoxBase(theme::ThemeName themeName);
 				~GuiComboBoxBase();
-
-				/// <summary>Item selected event.</summary>
-				compositions::GuiNotifyEvent				ItemSelected;
 			};
 
 /***********************************************************************
@@ -64,33 +44,44 @@ ComboBox with GuiListControl
 ***********************************************************************/
 
 			/// <summary>Combo box list control. This control is a combo box with a list control in its popup.</summary>
-			class GuiComboBoxListControl : public GuiComboBoxBase, public Description<GuiComboBoxListControl>
+			class GuiComboBoxListControl
+				: public GuiComboBoxBase
+				, private GuiListControl::IItemProviderCallback
+				, public Description<GuiComboBoxListControl>
 			{
 			public:
 				using ItemStyleProperty = TemplateProperty<templates::GuiTemplate>;
 
 			protected:
 				GuiSelectableListControl*					containedListControl = nullptr;
+				vint										selectedIndex = -1;
 				ItemStyleProperty							itemStyleProperty;
 				templates::GuiTemplate*						itemStyleController = nullptr;
 				Ptr<compositions::IGuiGraphicsEventHandler>	boundsChangedHandler;
 
+				void										UpdateDisplayFont()override;
 				void										BeforeControlTemplateUninstalled()override;
 				void										AfterControlTemplateInstalled(bool initialize)override;
-				bool										IsAltAvailable()override;
-				void										OnActiveAlt()override;
 				void										RemoveStyleController();
 				void										InstallStyleController(vint itemIndex);
 				virtual void								DisplaySelectedContent(vint itemIndex);
 				void										AdoptSubMenuSize();
 				void										OnTextChanged(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
-				void										OnFontChanged(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
+				void										OnContextChanged(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
 				void										OnVisuallyEnabledChanged(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
+				void										OnAfterSubMenuOpening(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
 				void										OnListControlAdoptedSizeInvalidated(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
 				void										OnListControlBoundsChanged(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
-				void										OnListControlSelectionChanged(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
+				void										OnListControlItemMouseDown(compositions::GuiGraphicsComposition* sender, compositions::GuiItemMouseEventArgs& arguments);
+				void										OnListControlKeyDown(compositions::GuiGraphicsComposition* sender, compositions::GuiKeyEventArgs& arguments);
+
+			private:
+				// ===================== GuiListControl::IItemProviderCallback =====================
+
+				void										OnAttached(GuiListControl::IItemProvider* provider)override;
+				void										OnItemModified(vint start, vint count, vint newCount)override;
 			public:
-				/// <summary>Create a control with a specified style controller and a list control that will be put in the popup control to show all items.</summary>
+				/// <summary>Create a control with a specified default theme and a list control that will be put in the popup control to show all items.</summary>
 				/// <param name="themeName">The theme name for retriving a default control template.</param>
 				/// <param name="_containedListControl">The list controller.</param>
 				GuiComboBoxListControl(theme::ThemeName themeName, GuiSelectableListControl* _containedListControl);

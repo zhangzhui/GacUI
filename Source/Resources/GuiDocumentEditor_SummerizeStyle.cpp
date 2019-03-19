@@ -6,13 +6,14 @@ namespace vl
 	{
 		using namespace collections;
 
+		namespace document_operation_visitors
+		{
+
 /***********************************************************************
 Calculate if all text in the specified range has some common styles
 ***********************************************************************/
 
-		namespace document_operation_visitors
-		{
-			class SummerizeStyleVisitor : public Object, public DocumentRun::IVisitor
+			class SummarizeStyleVisitor : public Object, public DocumentRun::IVisitor
 			{
 			public:
 				RunRangeMap&							runRanges;
@@ -22,7 +23,7 @@ Calculate if all text in the specified range has some common styles
 				Ptr<DocumentStyleProperties>			style;
 				List<DocumentModel::ResolvedStyle>		resolvedStyles;
 
-				SummerizeStyleVisitor(RunRangeMap& _runRanges, DocumentModel* _model, vint _start, vint _end)
+				SummarizeStyleVisitor(RunRangeMap& _runRanges, DocumentModel* _model, vint _start, vint _end)
 					:runRanges(_runRanges)
 					, model(_model)
 					, start(_start)
@@ -182,16 +183,111 @@ Calculate if all text in the specified range has some common styles
 					VisitContainer(run);
 				}
 			};
+
+/***********************************************************************
+Calculate if all text in the specified range has a common style name
+***********************************************************************/
+
+			class SummarizeStyleNameVisitor : public Object, public DocumentRun::IVisitor
+			{
+			public:
+				RunRangeMap&							runRanges;
+				DocumentModel*							model;
+				vint									start;
+				vint									end;
+				Nullable<WString>						currentStyleName;
+				Nullable<WString>						styleName;
+				bool									assignedStyleName = false;
+
+				SummarizeStyleNameVisitor(RunRangeMap& _runRanges, DocumentModel* _model, vint _start, vint _end)
+					:runRanges(_runRanges)
+					, model(_model)
+					, start(_start)
+					, end(_end)
+				{
+				}
+
+				void VisitContentRun(DocumentContentRun* run)
+				{
+					if (!assignedStyleName)
+					{
+						styleName = currentStyleName;
+						assignedStyleName = true;
+					}
+					else if (styleName && (!currentStyleName || styleName.Value() != currentStyleName.Value()))
+					{
+						styleName = Nullable<WString>();
+					}
+				}
+
+				void VisitContainer(DocumentContainerRun* run)
+				{
+					for (vint i = run->runs.Count() - 1; i >= 0; i--)
+					{
+						Ptr<DocumentRun> subRun = run->runs[i];
+						RunRange range = runRanges[subRun.Obj()];
+						if (range.start<end && start<range.end)
+						{
+							subRun->Accept(this);
+						}
+					}
+				}
+
+				void Visit(DocumentTextRun* run)override
+				{
+					VisitContentRun(run);
+				}
+
+				void Visit(DocumentStylePropertiesRun* run)override
+				{
+					VisitContainer(run);
+				}
+
+				void Visit(DocumentStyleApplicationRun* run)override
+				{
+					auto oldStyleName = currentStyleName;
+					currentStyleName = run->styleName;
+					VisitContainer(run);
+					currentStyleName = oldStyleName;
+				}
+
+				void Visit(DocumentHyperlinkRun* run)override
+				{
+					VisitContainer(run);
+				}
+
+				void Visit(DocumentImageRun* run)override
+				{
+					VisitContentRun(run);
+				}
+
+				void Visit(DocumentEmbeddedObjectRun* run)override
+				{
+					VisitContentRun(run);
+				}
+
+				void Visit(DocumentParagraphRun* run)override
+				{
+					VisitContainer(run);
+				}
+			};
 		}
 		using namespace document_operation_visitors;
 
 		namespace document_editor
 		{
-			Ptr<DocumentStyleProperties> SummerizeStyle(DocumentParagraphRun* run, RunRangeMap& runRanges, DocumentModel* model, vint start, vint end)
+			Ptr<DocumentStyleProperties> SummarizeStyle(DocumentParagraphRun* run, RunRangeMap& runRanges, DocumentModel* model, vint start, vint end)
 			{
-				SummerizeStyleVisitor visitor(runRanges, model, start, end);
+				SummarizeStyleVisitor visitor(runRanges, model, start, end);
 				run->Accept(&visitor);
 				return visitor.style;
+			}
+
+			Nullable<WString> SummarizeStyleName(DocumentParagraphRun* run, RunRangeMap& runRanges, DocumentModel* model, vint start, vint end)
+			{
+				SummarizeStyleNameVisitor visitor(runRanges, model, start, end);
+				run->Accept(&visitor);
+				return visitor.styleName;
 			}
 
 			template<typename T>

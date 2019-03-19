@@ -22,8 +22,6 @@ namespace vl
 {
 	namespace presentation
 	{
-		using namespace reflection;
-
 		namespace types
 		{
 			struct ResolvingResult;
@@ -210,6 +208,7 @@ Instance Loader Manager
 Helper Functions
 ***********************************************************************/
 
+		extern void									SplitTypeName(const WString& input, collections::List<WString>& fragments);
 		extern void									SplitBySemicolon(const WString& input, collections::List<WString>& fragments);
 	}
 }

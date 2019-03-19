@@ -30,21 +30,21 @@ GuiApplication
 				}
 			}
 
-			void GuiApplication::LeftButtonDown(Point position)
+			void GuiApplication::LeftButtonDown(NativePoint position)
 			{
 				OnMouseDown(position);
 			}
 
-			void GuiApplication::LeftButtonUp(Point position)
+			void GuiApplication::LeftButtonUp(NativePoint position)
 			{
 			}
 
-			void GuiApplication::RightButtonDown(Point position)
+			void GuiApplication::RightButtonDown(NativePoint position)
 			{
 				OnMouseDown(position);
 			}
 
-			void GuiApplication::RightButtonUp(Point position)
+			void GuiApplication::RightButtonUp(NativePoint position)
 			{
 			}
 
@@ -59,12 +59,7 @@ GuiApplication
 			}
 
 			GuiApplication::GuiApplication()
-				:mainWindow(0)
-				,sharedTooltipOwnerWindow(0)
-				,sharedTooltipOwner(0)
-				,sharedTooltipControl(0)
-				,sharedTooltipHovering(false)
-				,sharedTooltipClosing(false)
+				:locale(Locale::UserDefault())
 			{
 				GetCurrentController()->CallbackService()->InstallListener(this);
 			}
@@ -118,7 +113,7 @@ GuiApplication
 				}
 			}
 
-			void GuiApplication::OnMouseDown(Point location)
+			void GuiApplication::OnMouseDown(NativePoint location)
 			{
 				GuiWindow* window=GetWindow(location);
 				for(vint i=0;i<windows.Count();i++)
@@ -144,6 +139,20 @@ GuiApplication
 				}
 			}
 
+			Locale GuiApplication::GetLocale()
+			{
+				return locale;
+			}
+
+			void GuiApplication::SetLocale(Locale value)
+			{
+				if (locale != value)
+				{
+					locale = value;
+					LocaleChanged();
+				}
+			}
+
 			void GuiApplication::Run(GuiWindow* _mainWindow)
 			{
 				if (!mainWindow)
@@ -164,7 +173,7 @@ GuiApplication
 				return windows;
 			}
 
-			GuiWindow* GuiApplication::GetWindow(Point location)
+			GuiWindow* GuiApplication::GetWindow(NativePoint location)
 			{
 				INativeWindow* nativeWindow = GetCurrentController()->WindowService()->GetWindow(location);
 				if (nativeWindow)
@@ -195,7 +204,7 @@ GuiApplication
 					sharedTooltipControl = new GuiTooltip(theme::ThemeName::Tooltip);
 					if (ownerWindow)
 					{
-						if (auto tooltipStyle = ownerWindow->GetControlTemplateObject()->GetTooltipTemplate())
+						if (auto tooltipStyle = ownerWindow->GetControlTemplateObject(true)->GetTooltipTemplate())
 						{
 							sharedTooltipControl->SetControlTemplate(tooltipStyle);
 						}
@@ -255,9 +264,9 @@ GuiApplication
 				return L"";
 			}
 
-			bool GuiApplication::IsInMainThread()
+			bool GuiApplication::IsInMainThread(GuiControlHost* controlHost)
 			{
-				return GetCurrentController()->AsyncService()->IsInMainThread();
+				return GetCurrentController()->AsyncService()->IsInMainThread(GetThreadContextNativeWindow(controlHost));
 			}
 
 			void GuiApplication::InvokeAsync(const Func<void()>& proc)
@@ -272,6 +281,7 @@ GuiApplication
 
 			bool GuiApplication::InvokeInMainThreadAndWait(GuiControlHost* controlHost, const Func<void()>& proc, vint milliseconds)
 			{
+				CHECK_ERROR(!IsInMainThread(controlHost), L"GuiApplication::InvokeInMainThreadAndWait(GuiControlHost*, const Func<void()>&, vint)#This function cannot be called in UI thread.");
 				return GetCurrentController()->AsyncService()->InvokeInMainThreadAndWait(GetThreadContextNativeWindow(controlHost), proc, milliseconds);
 			}
 
@@ -287,7 +297,7 @@ GuiApplication
 
 			void GuiApplication::RunGuiTask(GuiControlHost* controlHost, const Func<void()>& proc)
 			{
-				if(IsInMainThread())
+				if(IsInMainThread(controlHost))
 				{
 					return proc();
 				}
@@ -504,8 +514,8 @@ GuiApplicationMain
 					GuiMain();
 					IAsyncScheduler::UnregisterDefaultScheduler();
 					IAsyncScheduler::UnregisterSchedulerForCurrentThread();
-					application = nullptr;
 				}
+				application = nullptr;
 
 				DestroyPluginManager();
 				theme::FinalizeTheme();

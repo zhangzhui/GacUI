@@ -7,10 +7,10 @@ DEVELOPER: Zihan Chen(vczh)
 /***********************************************************************
 .\BASIC.CPP
 ***********************************************************************/
+#include <time.h>
 #if defined VCZH_MSVC
 #include <Windows.h>
 #elif defined VCZH_GCC
-#include <time.h>
 #include <sys/time.h>
 #endif
 
@@ -392,395 +392,6 @@ Console
 
 
 /***********************************************************************
-.\STRING.CPP
-***********************************************************************/
-#if defined VCZH_MSVC
-#elif defined VCZH_GCC
-#include <ctype.h>
-#include <wctype.h>
-#define _strtoi64 strtoll
-#define _strtoui64 strtoull
-#define _wcstoi64 wcstoll
-#define _wcstoui64 wcstoull
-#endif
-
-namespace vl
-{
-#if defined VCZH_GCC
-	void _itoa_s(vint32_t value, char* buffer, size_t size, vint radix)
-	{
-		sprintf(buffer, "%d", value);
-	}
-
-	void _itow_s(vint32_t value, wchar_t* buffer, size_t size, vint radix)
-	{
-		swprintf(buffer, size - 1, L"%d", value);
-	}
-
-	void _i64toa_s(vint64_t value, char* buffer, size_t size, vint radix)
-	{
-		sprintf(buffer, "%ld", value);
-	}
-
-	void _i64tow_s(vint64_t value, wchar_t* buffer, size_t size, vint radix)
-	{
-		swprintf(buffer, size - 1, L"%ld", value);
-	}
-
-	void _uitoa_s(vuint32_t value, char* buffer, size_t size, vint radix)
-	{
-		sprintf(buffer, "%u", value);
-	}
-
-	void _uitow_s(vuint32_t value, wchar_t* buffer, size_t size, vint radix)
-	{
-		swprintf(buffer, size - 1, L"%u", value);
-	}
-
-	void _ui64toa_s(vuint64_t value, char* buffer, size_t size, vint radix)
-	{
-		sprintf(buffer, "%lu", value);
-	}
-
-	void _ui64tow_s(vuint64_t value, wchar_t* buffer, size_t size, vint radix)
-	{
-		swprintf(buffer, size - 1, L"%lu", value);
-	}
-
-	void _gcvt_s(char* buffer, size_t size, double value, vint numberOfDigits)
-	{
-		sprintf(buffer, "%f", value);
-		char* point = strchr(buffer, '.');
-		if(!point) return;
-		char* zero = buffer + strlen(buffer);
-		while(zero[-1] == '0')
-		{
-			*--zero = '\0';
-		}
-		if(zero[-1] == '.') *--zero = '\0';
-	}
-
-	void _strlwr_s(char* buffer, size_t size)
-	{
-		while(*buffer)
-		{
-			*buffer=(char)tolower(*buffer);
-			buffer++;
-		}
-	}
-
-	void _strupr_s(char* buffer, size_t size)
-	{
-		while(*buffer)
-		{
-			*buffer=(char)toupper(*buffer);
-			buffer++;
-		}
-	}
-
-	void _wcslwr_s(wchar_t* buffer, size_t size)
-	{
-		while(*buffer)
-		{
-			*buffer=(char)towlower(*buffer);
-			buffer++;
-		}
-	}
-
-	void _wcsupr_s(wchar_t* buffer, size_t size)
-	{
-		while(*buffer)
-		{
-			*buffer=(char)towupper(*buffer);
-			buffer++;
-		}
-	}
-#endif
-
-	vint atoi_test(const AString& string, bool& success)
-	{
-		char* endptr = 0;
-		vint result = strtol(string.Buffer(), &endptr, 10);
-		success = endptr == string.Buffer() + string.Length() && itoa(result) == string;
-		return result;
-	}
-
-	vint wtoi_test(const WString& string, bool& success)
-	{
-		wchar_t* endptr = 0;
-		vint result = wcstol(string.Buffer(), &endptr, 10);
-		success = endptr == string.Buffer() + string.Length() && itow(result) == string;
-		return result;
-	}
-
-	vint64_t atoi64_test(const AString& string, bool& success)
-	{
-		char* endptr = 0;
-		vint64_t result = _strtoi64(string.Buffer(), &endptr, 10);
-		success = endptr == string.Buffer() + string.Length() && i64toa(result) == string;
-		return result;
-	}
-
-	vint64_t wtoi64_test(const WString& string, bool& success)
-	{
-		wchar_t* endptr = 0;
-		vint64_t result = _wcstoi64(string.Buffer(), &endptr, 10);
-		success = endptr == string.Buffer() + string.Length() && i64tow(result) == string;
-		return result;
-	}
-
-	vuint atou_test(const AString& string, bool& success)
-	{
-		char* endptr = 0;
-		vuint result = strtoul(string.Buffer(), &endptr, 10);
-		success = endptr == string.Buffer() + string.Length() && utoa(result) == string;
-		return result;
-	}
-
-	vuint wtou_test(const WString& string, bool& success)
-	{
-		wchar_t* endptr = 0;
-		vuint result = wcstoul(string.Buffer(), &endptr, 10);
-		success = endptr == string.Buffer() + string.Length() && utow(result) == string;
-		return result;
-	}
-
-	vuint64_t atou64_test(const AString& string, bool& success)
-	{
-		char* endptr = 0;
-		vuint64_t result = _strtoui64(string.Buffer(), &endptr, 10);
-		success = endptr == string.Buffer() + string.Length() && u64toa(result) == string;
-		return result;
-	}
-
-	vuint64_t wtou64_test(const WString& string, bool& success)
-	{
-		wchar_t* endptr = 0;
-		vuint64_t result = _wcstoui64(string.Buffer(), &endptr, 10);
-		success = endptr == string.Buffer() + string.Length() && u64tow(result) == string;
-		return result;
-	}
-
-	double atof_test(const AString& string, bool& success)
-	{
-		char* endptr = 0;
-		double result = strtod(string.Buffer(), &endptr);
-		success = endptr == string.Buffer() + string.Length();
-		return result;
-	}
-
-	double wtof_test(const WString& string, bool& success)
-	{
-		wchar_t* endptr = 0;
-		double result = wcstod(string.Buffer(), &endptr);
-		success = endptr == string.Buffer() + string.Length();
-		return result;
-	}
-
-	vint atoi(const AString& string)
-	{
-		bool success = false;
-		return atoi_test(string, success);
-	}
-
-	vint wtoi(const WString& string)
-	{
-		bool success = false;
-		return wtoi_test(string, success);
-	}
-
-	vint64_t atoi64(const AString& string)
-	{
-		bool success = false;
-		return atoi64_test(string, success);
-	}
-
-	vint64_t wtoi64(const WString& string)
-	{
-		bool success = false;
-		return wtoi64_test(string, success);
-	}
-
-	vuint atou(const AString& string)
-	{
-		bool success = false;
-		return atou_test(string, success);
-	}
-
-	vuint wtou(const WString& string)
-	{
-		bool success = false;
-		return wtou_test(string, success);
-	}
-
-	vuint64_t atou64(const AString& string)
-	{
-		bool success = false;
-		return atou64_test(string, success);
-	}
-
-	vuint64_t wtou64(const WString& string)
-	{
-		bool success = false;
-		return wtou64_test(string, success);
-	}
-
-	double atof(const AString& string)
-	{
-		bool success = false;
-		return atof_test(string, success);
-	}
-
-	double wtof(const WString& string)
-	{
-		bool success = false;
-		return wtof_test(string, success);
-	}
-
-	AString itoa(vint number)
-	{
-		char buffer[100];
-		ITOA_S(number, buffer, sizeof(buffer) / sizeof(*buffer), 10);
-		return buffer;
-	}
-
-	WString itow(vint number)
-	{
-		wchar_t buffer[100];
-		ITOW_S(number, buffer, sizeof(buffer) / sizeof(*buffer), 10);
-		return buffer;
-	}
-
-	AString i64toa(vint64_t number)
-	{
-		char buffer[100];
-		I64TOA_S(number, buffer, sizeof(buffer) / sizeof(*buffer), 10);
-		return buffer;
-	}
-
-	WString i64tow(vint64_t number)
-	{
-		wchar_t buffer[100];
-		I64TOW_S(number, buffer, sizeof(buffer) / sizeof(*buffer), 10);
-		return buffer;
-	}
-
-	AString utoa(vuint number)
-	{
-		char buffer[100];
-		UITOA_S(number, buffer, sizeof(buffer) / sizeof(*buffer), 10);
-		return buffer;
-	}
-
-	WString utow(vuint number)
-	{
-		wchar_t buffer[100];
-		UITOW_S(number, buffer, sizeof(buffer) / sizeof(*buffer), 10);
-		return buffer;
-	}
-
-	AString u64toa(vuint64_t number)
-	{
-		char buffer[100];
-		UI64TOA_S(number, buffer, sizeof(buffer) / sizeof(*buffer), 10);
-		return buffer;
-	}
-
-	WString u64tow(vuint64_t number)
-	{
-		wchar_t buffer[100];
-		UI64TOW_S(number, buffer, sizeof(buffer) / sizeof(*buffer), 10);
-		return buffer;
-	}
-
-	AString ftoa(double number)
-	{
-		char buffer[320];
-		_gcvt_s(buffer, 320, number, 30);
-		vint len = (vint)strlen(buffer);
-		if (buffer[len - 1] == '.')
-		{
-			buffer[len - 1] = '\0';
-		}
-		return buffer;
-	}
-
-	WString ftow(double number)
-	{
-		return atow(ftoa(number));
-	}
-
-	vint _wtoa(const wchar_t* w, char* a, vint chars)
-	{
-#if defined VCZH_MSVC
-		return WideCharToMultiByte(CP_THREAD_ACP, 0, w, -1, a, (int)(a ? chars : 0), 0, 0);
-#elif defined VCZH_GCC
-		return wcstombs(a, w, chars-1)+1;
-#endif
-	}
-
-	AString wtoa(const WString& string)
-	{
-		vint len = _wtoa(string.Buffer(), 0, 0);
-		char* buffer = new char[len];
-		memset(buffer, 0, len*sizeof(*buffer));
-		_wtoa(string.Buffer(), buffer, (int)len);
-		AString s = buffer;
-		delete[] buffer;
-		return s;
-	}
-
-	vint _atow(const char* a, wchar_t* w, vint chars)
-	{
-#if defined VCZH_MSVC
-		return MultiByteToWideChar(CP_THREAD_ACP, 0, a, -1, w, (int)(w ? chars : 0));
-#elif defined VCZH_GCC
-		return mbstowcs(w, a, chars-1)+1;
-#endif
-	}
-
-	WString atow(const AString& string)
-	{
-		vint len = _atow(string.Buffer(), 0, 0);
-		wchar_t* buffer = new wchar_t[len];
-		memset(buffer, 0, len*sizeof(*buffer));
-		_atow(string.Buffer(), buffer, (int)len);
-		WString s = buffer;
-		delete[] buffer;
-		return s;
-	}
-
-	AString alower(const AString& string)
-	{
-		AString result = string.Buffer();
-		_strlwr_s((char*)result.Buffer(), result.Length() + 1);
-		return result;
-	}
-
-	WString wlower(const WString& string)
-	{
-		WString result = string.Buffer();
-		_wcslwr_s((wchar_t*)result.Buffer(), result.Length() + 1);
-		return result;
-	}
-
-	AString aupper(const AString& string)
-	{
-		AString result = string.Buffer();
-		_strupr_s((char*)result.Buffer(), result.Length() + 1);
-		return result;
-	}
-
-	WString wupper(const WString& string)
-	{
-		WString result = string.Buffer();
-		_wcsupr_s((wchar_t*)result.Buffer(), result.Length() + 1);
-		return result;
-	}
-}
-
-
-/***********************************************************************
 .\EXCEPTION.CPP
 ***********************************************************************/
 
@@ -842,661 +453,6 @@ ParsingException
 		return position;
 	}
 }
-
-/***********************************************************************
-.\LOCALE.CPP
-***********************************************************************/
-#if defined VCZH_MSVC
-#elif defined VCZH_GCC
-#endif
-
-namespace vl
-{
-	using namespace collections;
-
-#if defined VCZH_MSVC
-
-	extern SYSTEMTIME DateTimeToSystemTime(const DateTime& dateTime);
-
-	BOOL CALLBACK Locale_EnumLocalesProcEx(
-		_In_  LPWSTR lpLocaleString,
-		_In_  DWORD dwFlags,
-		_In_  LPARAM lParam
-		)
-	{
-		((List<Locale>*)lParam)->Add(Locale(lpLocaleString));
-		return TRUE;
-	}
-
-	BOOL CALLBACK Locale_EnumDateFormatsProcExEx(
-		_In_  LPWSTR lpDateFormatString,
-		_In_  CALID CalendarID,
-		_In_  LPARAM lParam
-	)
-	{
-		((List<WString>*)lParam)->Add(lpDateFormatString);
-		return TRUE;
-	}
-
-	BOOL CALLBACK EnumTimeFormatsProcEx(
-		_In_  LPWSTR lpTimeFormatString,
-		_In_  LPARAM lParam
-	)
-	{
-		((List<WString>*)lParam)->Add(lpTimeFormatString);
-		return TRUE;
-	}
-
-	WString Transform(const WString& localeName, const WString& input, DWORD flag)
-	{
-		int length=LCMapStringEx(localeName.Buffer(), flag, input.Buffer(), (int)input.Length()+1, NULL, 0, NULL, NULL, NULL);
-		Array<wchar_t> buffer(length);
-		LCMapStringEx(localeName.Buffer(), flag, input.Buffer(), (int)input.Length()+1, &buffer[0], (int)buffer.Count(), NULL, NULL, NULL);
-		return &buffer[0];
-	}
-
-	DWORD TranslateNormalization(Locale::Normalization normalization)
-	{
-		DWORD result=0;
-		if(normalization&Locale::IgnoreCase) result|=NORM_IGNORECASE;
-		if(normalization&Locale::IgnoreCaseLinguistic) result|=NORM_IGNORECASE | NORM_LINGUISTIC_CASING;
-		if(normalization&Locale::IgnoreKanaType) result|=NORM_IGNOREKANATYPE;
-		if(normalization&Locale::IgnoreNonSpace) result|=NORM_IGNORENONSPACE;
-		if(normalization&Locale::IgnoreSymbol) result|=NORM_IGNORESYMBOLS;
-		if(normalization&Locale::IgnoreWidth) result|=NORM_IGNOREWIDTH;
-		if(normalization&Locale::DigitsAsNumbers) result|=SORT_DIGITSASNUMBERS;
-		if(normalization&Locale::StringSoft) result|=SORT_STRINGSORT;
-		return result;
-	}
-
-#endif
-
-/***********************************************************************
-Locale
-***********************************************************************/
-
-	Locale::Locale(const WString& _localeName)
-		:localeName(_localeName)
-	{
-	}
-
-	Locale::~Locale()
-	{
-	}
-
-	Locale Locale::Invariant()
-	{
-#if defined VCZH_MSVC
-		return Locale(LOCALE_NAME_INVARIANT);
-#elif defined VCZH_GCC
-		return Locale(L"");
-#endif
-	}
-
-	Locale Locale::SystemDefault()
-	{
-#if defined VCZH_MSVC
-		wchar_t buffer[LOCALE_NAME_MAX_LENGTH+1]={0};
-		GetSystemDefaultLocaleName(buffer, LOCALE_NAME_MAX_LENGTH);
-		return Locale(buffer);
-#elif defined VCZH_GCC
-		return Locale(L"en-US");
-#endif
-	}
-
-	Locale Locale::UserDefault()
-	{
-#if defined VCZH_MSVC
-		wchar_t buffer[LOCALE_NAME_MAX_LENGTH+1]={0};
-		GetUserDefaultLocaleName(buffer, LOCALE_NAME_MAX_LENGTH);
-		return Locale(buffer);
-#elif defined VCZH_GCC
-		return Locale(L"en-US");
-#endif
-	}
-
-	void Locale::Enumerate(collections::List<Locale>& locales)
-	{
-#if defined VCZH_MSVC
-		EnumSystemLocalesEx(&Locale_EnumLocalesProcEx, LOCALE_ALL, (LPARAM)&locales, NULL);
-#elif defined VCZH_GCC
-		locales.Add(Locale(L"en-US"));
-#endif
-	}
-
-	const WString& Locale::GetName()const
-	{
-		return localeName;
-	}
-
-	void Locale::GetShortDateFormats(collections::List<WString>& formats)const
-	{
-#if defined VCZH_MSVC
-		EnumDateFormatsExEx(&Locale_EnumDateFormatsProcExEx, localeName.Buffer(), DATE_SHORTDATE, (LPARAM)&formats);
-#elif defined VCZH_GCC
-		formats.Add(L"MM/dd/yyyy");
-		formats.Add(L"yyyy-MM-dd");
-#endif
-	}
-
-	void Locale::GetLongDateFormats(collections::List<WString>& formats)const
-	{
-#if defined VCZH_MSVC
-		EnumDateFormatsExEx(&Locale_EnumDateFormatsProcExEx, localeName.Buffer(), DATE_LONGDATE, (LPARAM)&formats);
-#elif defined VCZH_GCC
-		formats.Add(L"dddd, dd MMMM yyyy");
-#endif
-	}
-
-	void Locale::GetYearMonthDateFormats(collections::List<WString>& formats)const
-	{
-#if defined VCZH_MSVC
-		EnumDateFormatsExEx(&Locale_EnumDateFormatsProcExEx, localeName.Buffer(), DATE_YEARMONTH, (LPARAM)&formats);
-#elif defined VCZH_GCC
-		formats.Add(L"yyyy MMMM");
-#endif
-	}
-
-	void Locale::GetLongTimeFormats(collections::List<WString>& formats)const
-	{
-#if defined VCZH_MSVC
-		EnumTimeFormatsEx(&EnumTimeFormatsProcEx, localeName.Buffer(), 0, (LPARAM)&formats);
-#elif defined VCZH_GCC
-		formats.Add(L"HH:mm:ss");
-#endif
-	}
-
-	void Locale::GetShortTimeFormats(collections::List<WString>& formats)const
-	{
-#if defined VCZH_MSVC
-		EnumTimeFormatsEx(&EnumTimeFormatsProcEx, localeName.Buffer(), TIME_NOSECONDS, (LPARAM)&formats);
-#elif defined VCZH_GCC
-		formats.Add(L"HH:mm");
-		formats.Add(L"hh:mm tt");
-#endif
-	}
-
-	WString Locale::FormatDate(const WString& format, DateTime date)const
-	{
-#if defined VCZH_MSVC
-		SYSTEMTIME st=DateTimeToSystemTime(date);
-		int length=GetDateFormatEx(localeName.Buffer(), 0, &st, format.Buffer(), NULL, 0, NULL);
-		if(length==0) return L"";
-		Array<wchar_t> buffer(length);
-		GetDateFormatEx(localeName.Buffer(), 0, &st, format.Buffer(), &buffer[0], (int)buffer.Count(), NULL);
-		return &buffer[0];
-#elif defined VCZH_GCC
-		/*
-		auto df = L"yyyy,MM,MMM,MMMM,dd,ddd,dddd";
-		auto ds = L"2000,01,Jan,January,02,Sun,Sunday";
-		auto tf = L"hh,HH,mm,ss,tt";
-		auto ts = L"01,13,02,03,PM";
-		*/
-		WString result;
-		const wchar_t* reading = format.Buffer();
-
-		while (*reading)
-		{
-			if (wcsncmp(reading, L"yyyy", 4) == 0)
-			{
-				WString fragment = itow(date.year);
-				while (fragment.Length() < 4) fragment = L"0" + fragment;
-				result += fragment;
-				reading += 4;
-			}
-			else if (wcsncmp(reading, L"MMMM", 4) == 0)
-			{
-				result += GetLongMonthName(date.month);
-				reading += 4;
-			}
-			else if (wcsncmp(reading, L"MMM", 3) == 0)
-			{
-				result += GetShortMonthName(date.month);
-				reading += 3;
-			}
-			else if (wcsncmp(reading, L"MM", 2) == 0)
-			{
-				WString fragment = itow(date.month);
-				while (fragment.Length() < 2) fragment = L"0" + fragment;
-				result += fragment;
-				reading += 2;
-			}
-			else if (wcsncmp(reading, L"dddd", 4) == 0)
-			{
-				result += GetLongDayOfWeekName(date.dayOfWeek);
-				reading += 4;
-			}
-			else if (wcsncmp(reading, L"ddd", 3) == 0)
-			{
-				result += GetShortDayOfWeekName(date.dayOfWeek);
-				reading += 3;
-			}
-			else if (wcsncmp(reading, L"dd", 2) == 0)
-			{
-				WString fragment = itow(date.day);
-				while (fragment.Length() < 2) fragment = L"0" + fragment;
-				result += fragment;
-				reading += 2;
-			}
-			else if (wcsncmp(reading, L"hh", 2) == 0)
-			{
-				WString fragment = itow(date.hour > 12 ? date.hour - 12 : date.hour);
-				while (fragment.Length() < 2) fragment = L"0" + fragment;
-				result += fragment;
-				reading += 2;
-			}
-			else if (wcsncmp(reading, L"HH", 2) == 0)
-			{
-				WString fragment = itow(date.hour);
-				while (fragment.Length() < 2) fragment = L"0" + fragment;
-				result += fragment;
-				reading += 2;
-			}
-			else if (wcsncmp(reading, L"mm", 2) == 0)
-			{
-				WString fragment = itow(date.minute);
-				while (fragment.Length() < 2) fragment = L"0" + fragment;
-				result += fragment;
-				reading += 2;
-			}
-			else if (wcsncmp(reading, L"ss", 2) == 0)
-			{
-				WString fragment = itow(date.second);
-				while (fragment.Length() < 2) fragment = L"0" + fragment;
-				result += fragment;
-				reading += 2;
-			}
-			else if (wcsncmp(reading, L"tt", 2) == 0)
-			{
-				result += date.hour > 12 ? L"PM" : L"AM";
-				reading += 2;
-			}
-			else
-			{
-				result += *reading;
-				reading++;
-			}
-		}
-		return result;
-#endif
-	}
-
-	WString Locale::FormatTime(const WString& format, DateTime time)const
-	{
-#if defined VCZH_MSVC
-		SYSTEMTIME st=DateTimeToSystemTime(time);
-		int length=GetTimeFormatEx(localeName.Buffer(), 0, &st, format.Buffer(), NULL, 0);
-		if(length==0) return L"";
-		Array<wchar_t> buffer(length);
-		GetTimeFormatEx(localeName.Buffer(), 0, &st, format.Buffer(),&buffer[0], (int)buffer.Count());
-		return &buffer[0];
-#elif defined VCZH_GCC
-		return FormatDate(format, time);
-#endif
-	}
-
-#ifdef VCZH_MSVC
-	WString Locale::FormatNumber(const WString& number)const
-	{
-		int length=GetNumberFormatEx(localeName.Buffer(), 0, number.Buffer(), NULL, NULL, 0);
-		if(length==0) return L"";
-		Array<wchar_t> buffer(length);
-		GetNumberFormatEx(localeName.Buffer(), 0, number.Buffer(), NULL, &buffer[0], (int)buffer.Count());
-		return &buffer[0];
-	}
-
-	WString Locale::FormatCurrency(const WString& currency)const
-	{
-		int length=GetCurrencyFormatEx(localeName.Buffer(), 0, currency.Buffer(), NULL, NULL, 0);
-		if(length==0) return L"";
-		Array<wchar_t> buffer(length);
-		GetCurrencyFormatEx(localeName.Buffer(), 0, currency.Buffer(), NULL, &buffer[0], (int)buffer.Count());
-		return &buffer[0];
-	}
-#endif
-
-	WString Locale::GetShortDayOfWeekName(vint dayOfWeek)const
-	{
-#if defined VCZH_MSVC
-		return FormatDate(L"ddd", DateTime::FromDateTime(2000, 1, 2+dayOfWeek));
-#elif defined VCZH_GCC
-		switch(dayOfWeek)
-		{
-		case 0: return L"Sun";
-		case 1: return L"Mon";
-		case 2:	return L"Tue";
-		case 3:	return L"Wed";
-		case 4:	return L"Thu";
-		case 5:	return L"Fri";
-		case 6:	return L"Sat";
-		}
-		return L"";
-#endif
-	}
-
-	WString Locale::GetLongDayOfWeekName(vint dayOfWeek)const
-	{
-#if defined VCZH_MSVC
-		return FormatDate(L"dddd", DateTime::FromDateTime(2000, 1, 2+dayOfWeek));
-#elif defined VCZH_GCC
-		switch(dayOfWeek)
-		{
-		case 0: return L"Sunday";
-		case 1: return L"Monday";
-		case 2:	return L"Tuesday";
-		case 3:	return L"Wednesday";
-		case 4:	return L"Thursday";
-		case 5:	return L"Friday";
-		case 6:	return L"Saturday";
-		}
-		return L"";
-#endif
-	}
-
-	WString Locale::GetShortMonthName(vint month)const
-	{
-#if defined VCZH_MSVC
-		return FormatDate(L"MMM", DateTime::FromDateTime(2000, month, 1));
-#elif defined VCZH_GCC
-		switch(month)
-		{
-		case 1: return L"Jan";
-		case 2: return L"Feb";
-		case 3: return L"Mar";
-		case 4: return L"Apr";
-		case 5: return L"May";
-		case 6: return L"Jun";
-		case 7: return L"Jul";
-		case 8: return L"Aug";
-		case 9: return L"Sep";
-		case 10: return L"Oct";
-		case 11: return L"Nov";
-		case 12: return L"Dec";
-		}
-		return L"";
-#endif
-	}
-
-	WString Locale::GetLongMonthName(vint month)const
-	{
-#if defined VCZH_MSVC
-		return FormatDate(L"MMMM", DateTime::FromDateTime(2000, month, 1));
-#elif defined VCZH_GCC
-		switch(month)
-		{
-		case 1: return L"January";
-		case 2: return L"February";
-		case 3: return L"March";
-		case 4: return L"April";
-		case 5: return L"May";
-		case 6: return L"June";
-		case 7: return L"July";
-		case 8: return L"August";
-		case 9: return L"September";
-		case 10: return L"October";
-		case 11: return L"November";
-		case 12: return L"December";
-		}
-		return L"";
-#endif
-	}
-
-#ifdef VCZH_MSVC
-	WString Locale::ToFullWidth(const WString& str)const
-	{
-		return Transform(localeName, str, LCMAP_FULLWIDTH);
-	}
-
-	WString Locale::ToHalfWidth(const WString& str)const
-	{
-		return Transform(localeName, str, LCMAP_HALFWIDTH);
-	}
-
-	WString Locale::ToHiragana(const WString& str)const
-	{
-		return Transform(localeName, str, LCMAP_HIRAGANA);
-	}
-
-	WString Locale::ToKatagana(const WString& str)const
-	{
-		return Transform(localeName, str, LCMAP_KATAKANA);
-	}
-#endif
-
-	WString Locale::ToLower(const WString& str)const
-	{
-#if defined VCZH_MSVC
-		return Transform(localeName, str, LCMAP_LOWERCASE);
-#elif defined VCZH_GCC
-		return wlower(str);
-#endif
-	}
-
-	WString Locale::ToUpper(const WString& str)const
-	{
-#if defined VCZH_MSVC
-		return Transform(localeName, str, LCMAP_UPPERCASE);
-#elif defined VCZH_GCC
-		return wupper(str);
-#endif
-	}
-
-	WString Locale::ToLinguisticLower(const WString& str)const
-	{
-#if defined VCZH_MSVC
-		return Transform(localeName, str, LCMAP_LOWERCASE | LCMAP_LINGUISTIC_CASING);
-#elif defined VCZH_GCC
-		return wlower(str);
-#endif
-	}
-
-	WString Locale::ToLinguisticUpper(const WString& str)const
-	{
-#if defined VCZH_MSVC
-		return Transform(localeName, str, LCMAP_UPPERCASE | LCMAP_LINGUISTIC_CASING);
-#elif defined VCZH_GCC
-		return wupper(str);
-#endif
-	}
-
-#ifdef VCZH_MSVC
-	WString Locale::ToSimplifiedChinese(const WString& str)const
-	{
-		return Transform(localeName, str, LCMAP_SIMPLIFIED_CHINESE);
-	}
-
-	WString Locale::ToTraditionalChinese(const WString& str)const
-	{
-		return Transform(localeName, str, LCMAP_TRADITIONAL_CHINESE);
-	}
-
-	WString Locale::ToTileCase(const WString& str)const
-	{
-		return Transform(localeName, str, LCMAP_TITLECASE);
-	}
-#endif
-
-	vint Locale::Compare(const WString& s1, const WString& s2, Normalization normalization)const
-	{
-#if defined VCZH_MSVC
-		switch(CompareStringEx(localeName.Buffer(), TranslateNormalization(normalization), s1.Buffer(), (int)s1.Length(), s2.Buffer(), (int)s2.Length(), NULL, NULL, NULL))
-		{
-		case CSTR_LESS_THAN: return -1;
-		case CSTR_GREATER_THAN: return 1;
-		default: return 0;
-		}
-#elif defined VCZH_GCC
-		switch(normalization)
-		{
-			case Normalization::None:
-				return wcscmp(s1.Buffer(), s2.Buffer());
-			case Normalization::IgnoreCase:
-				return wcscasecmp(s1.Buffer(), s2.Buffer());
-		}
-#endif
-	}
-
-	vint Locale::CompareOrdinal(const WString& s1, const WString& s2)const
-	{
-#if defined VCZH_MSVC
-		switch(CompareStringOrdinal(s1.Buffer(), (int)s1.Length(), s2.Buffer(), (int)s2.Length(), FALSE))
-		{
-		case CSTR_LESS_THAN: return -1;
-		case CSTR_GREATER_THAN: return 1;
-		default: return 0;
-		}
-#elif defined VCZH_GCC
-		return wcscmp(s1.Buffer(), s2.Buffer());
-#endif
-	}
-
-	vint Locale::CompareOrdinalIgnoreCase(const WString& s1, const WString& s2)const
-	{
-#if defined VCZH_MSVC
-		switch(CompareStringOrdinal(s1.Buffer(), (int)s1.Length(), s2.Buffer(), (int)s2.Length(), TRUE))
-		{
-		case CSTR_LESS_THAN: return -1;
-		case CSTR_GREATER_THAN: return 1;
-		default: return 0;
-		}
-#elif defined VCZH_GCC
-		return wcscasecmp(s1.Buffer(), s2.Buffer());
-#endif
-	}
-
-	collections::Pair<vint, vint> Locale::FindFirst(const WString& text, const WString& find, Normalization normalization)const
-	{
-#if defined VCZH_MSVC
-		int length=0;
-		int result=FindNLSStringEx(localeName.Buffer(), FIND_FROMSTART | TranslateNormalization(normalization), text.Buffer(), (int)text.Length(), find.Buffer(), (int)find.Length(), &length, NULL, NULL, NULL);
-		return result==-1?Pair<vint, vint>(-1, 0):Pair<vint, vint>(result, length);
-#elif defined VCZH_GCC
-		if(text.Length() < find.Length() || find.Length() == 0)
-		{
-			return Pair<vint, vint>(-1, 0);
-		}
-		const wchar_t* result = 0;
-		switch(normalization)
-		{
-			case Normalization::None:
-				{
-					const wchar_t* reading = text.Buffer();
-					while(*reading)
-					{
-						if (wcsncmp(reading, find.Buffer(), find.Length())==0)
-						{
-							result = reading;
-							break;
-						}
-						reading++;
-					}
-				}
-				break;
-			case Normalization::IgnoreCase:
-				{
-					const wchar_t* reading = text.Buffer();
-					while(*reading)
-					{
-						if (wcsncasecmp(reading, find.Buffer(), find.Length())==0)
-						{
-							result = reading;
-							break;
-						}
-						reading++;
-					}
-				}
-				break;
-		}
-		return result == nullptr ? Pair<vint, vint>(-1, 0) : Pair<vint, vint>(result - text.Buffer(), find.Length());
-#endif
-	}
-
-	collections::Pair<vint, vint> Locale::FindLast(const WString& text, const WString& find, Normalization normalization)const
-	{
-#if defined VCZH_MSVC
-		int length=0;
-		int result=FindNLSStringEx(localeName.Buffer(), FIND_FROMEND | TranslateNormalization(normalization), text.Buffer(), (int)text.Length(), find.Buffer(), (int)find.Length(), &length, NULL, NULL, NULL);
-		return result==-1?Pair<vint, vint>(-1, 0):Pair<vint, vint>(result, length);
-#elif defined VCZH_GCC
-		if(text.Length() < find.Length() || find.Length() == 0)
-		{
-			return Pair<vint, vint>(-1, 0);
-		}
-		const wchar_t* result = 0;
-		switch(normalization)
-		{
-			case Normalization::None:
-				{
-					const wchar_t* reading = text.Buffer();
-					while(*reading)
-					{
-						if (wcsncmp(reading, find.Buffer(), find.Length())==0)
-						{
-							result = reading;
-						}
-						reading++;
-					}
-				}
-				break;
-			case Normalization::IgnoreCase:
-				{
-					const wchar_t* reading = text.Buffer();
-					while(*reading)
-					{
-						if (wcsncasecmp(reading, find.Buffer(), find.Length())==0)
-						{
-							result = reading;
-						}
-						reading++;
-					}
-				}
-				break;
-		}
-		return result == nullptr ? Pair<vint, vint>(-1, 0) : Pair<vint, vint>(result - text.Buffer(), find.Length());
-#endif
-	}
-
-	bool Locale::StartsWith(const WString& text, const WString& find, Normalization normalization)const
-	{
-#if defined VCZH_MSVC
-		int result=FindNLSStringEx(localeName.Buffer(), FIND_STARTSWITH | TranslateNormalization(normalization), text.Buffer(), (int)text.Length(), find.Buffer(), (int)find.Length(), NULL, NULL, NULL, NULL);
-		return result!=-1;
-#elif defined VCZH_GCC
-		if(text.Length() < find.Length() || find.Length() == 0)
-		{
-			return false;
-		}
-		switch(normalization)
-		{
-			case Normalization::None:
-				return wcsncmp(text.Buffer(), find.Buffer(), find.Length()) == 0;
-			case Normalization::IgnoreCase:
-				return wcsncasecmp(text.Buffer(), find.Buffer(), find.Length()) == 0;
-		}
-#endif
-	}
-
-	bool Locale::EndsWith(const WString& text, const WString& find, Normalization normalization)const
-	{
-#if defined VCZH_MSVC
-		int result=FindNLSStringEx(localeName.Buffer(), FIND_ENDSWITH | TranslateNormalization(normalization), text.Buffer(), (int)text.Length(), find.Buffer(), (int)find.Length(), NULL, NULL, NULL, NULL);
-		return result!=-1;
-#elif defined VCZH_GCC
-		if(text.Length() < find.Length() || find.Length() == 0)
-		{
-			return false;
-		}
-		switch(normalization)
-		{
-			case Normalization::None:
-				return wcsncmp(text.Buffer() + text.Length() - find.Length(), find.Buffer(), find.Length()) == 0;
-			case Normalization::IgnoreCase:
-				return wcsncasecmp(text.Buffer() + text.Length() - find.Length(), find.Buffer(), find.Length()) == 0;
-		}
-#endif
-	}
-}
-
 
 /***********************************************************************
 .\FILESYSTEM.CPP
@@ -2321,2242 +1277,6 @@ Folder
 
 
 /***********************************************************************
-.\STREAM\ACCESSOR.CPP
-***********************************************************************/
-
-namespace vl
-{
-	namespace stream
-	{
-		using namespace collections;
-
-/***********************************************************************
-TextReader
-***********************************************************************/
-
-		WString TextReader::ReadString(vint length)
-		{
-			wchar_t* buffer=new wchar_t[length+1];
-			vint i=0;
-			for(;i<length;i++)
-			{
-				if((buffer[i]=ReadChar())==L'\0')
-				{
-					break;
-				}
-			}
-			buffer[i]=L'\0';
-			WString result(buffer);
-			delete[] buffer;
-			return result;
-		}
-
-		WString TextReader::ReadLine()
-		{
-			WString result;
-			auto buffer = new wchar_t[65537];
-			buffer[0]=L'\0';
-			vint i=0;
-			while(true)
-			{
-				wchar_t c=ReadChar();
-				if(c==L'\n' || c==L'\0')
-				{
-					buffer[i]=L'\0';
-					result+=buffer;
-					buffer[0]=L'\0';
-					i=0;
-					break;
-				}
-				else
-				{
-					if(i==65536)
-					{
-						buffer[i]=L'\0';
-						result+=buffer;
-						buffer[0]=L'\0';
-						i=0;
-					}
-					buffer[i++]=c;
-				}
-			}
-			result+=buffer;
-			delete[] buffer;
-			if(result.Length()>0 && result[result.Length()-1]==L'\r')
-			{
-				return result.Left(result.Length()-1);
-			}
-			else
-			{
-				return result;
-			}
-		}
-
-		WString TextReader::ReadToEnd()
-		{
-			WString result;
-			auto buffer = new wchar_t[65537];
-			buffer[0]=L'\0';
-			vint i=0;
-			while(true)
-			{
-				wchar_t c=ReadChar();
-				if(c==L'\0')
-				{
-					buffer[i]=L'\0';
-					result+=buffer;
-					buffer[0]=L'\0';
-					i=0;
-					break;
-				}
-				else
-				{
-					if(i==65536)
-					{
-						buffer[i]=L'\0';
-						result+=buffer;
-						buffer[0]=L'\0';
-						i=0;
-					}
-					buffer[i++]=c;
-				}
-			}
-			result+=buffer;
-			delete[] buffer;
-			return result;
-		}
-
-/***********************************************************************
-TextWriter
-***********************************************************************/
-
-		void TextWriter::WriteString(const wchar_t* string, vint charCount)
-		{
-			while(*string)
-			{
-				WriteChar(*string++);
-			}
-		}
-
-		void TextWriter::WriteString(const wchar_t* string)
-		{
-			WriteString(string, (vint)wcslen(string));
-		}
-
-		void TextWriter::WriteString(const WString& string)
-		{
-			if(string.Length())
-			{
-				WriteString(string.Buffer(), string.Length());
-			}
-		}
-
-		void TextWriter::WriteLine(const wchar_t* string, vint charCount)
-		{
-			WriteString(string, charCount);
-			WriteString(L"\r\n", 2);
-		}
-
-		void TextWriter::WriteLine(const wchar_t* string)
-		{
-			WriteString(string);
-			WriteString(L"\r\n", 2);
-		}
-
-		void TextWriter::WriteLine(const WString& string)
-		{
-			WriteString(string);
-			WriteString(L"\r\n", 2);
-		}
-
-		namespace monospace_tabling
-		{
-			void WriteBorderLine(TextWriter& writer, Array<vint>& columnWidths, vint columns)
-			{
-				writer.WriteChar(L'+');
-				for(vint i=0;i<columns;i++)
-				{
-					vint c=columnWidths[i];
-					for(vint j=0;j<c;j++)
-					{
-						writer.WriteChar(L'-');
-					}
-					writer.WriteChar(L'+');
-				}
-				writer.WriteLine(L"");
-			}
-
-			void WriteContentLine(TextWriter& writer, Array<vint>& columnWidths, vint rowHeight, vint columns, Array<WString>& tableByRow, vint startRow)
-			{
-				vint cellStart=startRow*columns;
-				for(vint r=0;r<rowHeight;r++)
-				{
-					writer.WriteChar(L'|');
-					for(vint c=0;c<columns;c++)
-					{
-						const wchar_t* cell=tableByRow[cellStart+c].Buffer();
-						for(vint i=0;i<r;i++)
-						{
-							if(cell) cell=::wcsstr(cell, L"\r\n");
-							if(cell) cell+=2;
-						}
-
-						writer.WriteChar(L' ');
-						vint length=0;
-						if(cell)
-						{
-							const wchar_t* end=::wcsstr(cell, L"\r\n");
-							length=end?end-cell:(vint)wcslen(cell);
-							writer.WriteString(cell, length);
-						}
-
-						for(vint i=columnWidths[c]-2;i>=length;i--)
-						{
-							writer.WriteChar(L' ');
-						}
-						writer.WriteChar(L'|');
-					}
-					writer.WriteLine(L"");
-				}
-			}
-		}
-		using namespace monospace_tabling;
-
-		void TextWriter::WriteMonospacedEnglishTable(collections::Array<WString>& tableByRow, vint rows, vint columns)
-		{
-			Array<vint> rowHeights(rows);
-			Array<vint> columnWidths(columns);
-			for(vint i=0;i<rows;i++) rowHeights[i]=0;
-			for(vint j=0;j<columns;j++) columnWidths[j]=0;
-
-			for(vint i=0;i<rows;i++)
-			{
-				for(vint j=0;j<columns;j++)
-				{
-					WString text=tableByRow[i*columns+j];
-					const wchar_t* reading=text.Buffer();
-					vint width=0;
-					vint height=0;
-
-					while(reading)
-					{
-						height++;
-						const wchar_t* crlf=::wcsstr(reading, L"\r\n");
-						if(crlf)
-						{
-							vint length=crlf-reading+2;
-							if(width<length) width=length;
-							reading=crlf+2;
-						}
-						else
-						{
-							vint length=(vint)wcslen(reading)+2;
-							if(width<length) width=length;
-							reading=0;
-						}
-					}
-
-					if(rowHeights[i]<height) rowHeights[i]=height;
-					if(columnWidths[j]<width) columnWidths[j]=width;
-				}
-			}
-
-			WriteBorderLine(*this, columnWidths, columns);
-			for(vint i=0;i<rows;i++)
-			{
-				WriteContentLine(*this, columnWidths, rowHeights[i], columns, tableByRow, i);
-				WriteBorderLine(*this, columnWidths, columns);
-			}
-		}
-
-/***********************************************************************
-StringReader
-***********************************************************************/
-
-		void StringReader::PrepareIfLastCallIsReadLine()
-		{
-			if(lastCallIsReadLine)
-			{
-				lastCallIsReadLine=false;
-				if(current<string.Length() && string[current]==L'\r') current++;
-				if(current<string.Length() && string[current]==L'\n') current++;
-			}
-		}
-
-		StringReader::StringReader(const WString& _string)
-			:string(_string)
-			,current(0)
-			,lastCallIsReadLine(false)
-		{
-		}
-
-		bool StringReader::IsEnd()
-		{
-			return current==string.Length();
-		}
-
-		wchar_t StringReader::ReadChar()
-		{
-			PrepareIfLastCallIsReadLine();
-			if(IsEnd())
-			{
-				return L'\0';
-			}
-			else
-			{
-				return string[current++];
-			}
-		}
-
-		WString StringReader::ReadString(vint length)
-		{
-			PrepareIfLastCallIsReadLine();
-			if(IsEnd())
-			{
-				return L"";
-			}
-			else
-			{
-				vint remain=string.Length()-current;
-				if(length>remain) length=remain;
-				WString result=string.Sub(current, length);
-				current+=length;
-				return result;
-			}
-		}
-
-		WString StringReader::ReadLine()
-		{
-			PrepareIfLastCallIsReadLine();
-			if(IsEnd())
-			{
-				return L"";
-			}
-			else
-			{
-				vint lineEnd=current;
-				while(lineEnd<string.Length())
-				{
-					wchar_t c=string[lineEnd];
-					if(c==L'\r' || c==L'\n') break;
-					lineEnd++;
-				}
-				WString result=string.Sub(current, lineEnd-current);
-				current=lineEnd;
-				lastCallIsReadLine=true;
-				return result;
-			}
-		}
-
-		WString StringReader::ReadToEnd()
-		{
-			return ReadString(string.Length()-current);
-		}
-
-/***********************************************************************
-StreamReader
-***********************************************************************/
-
-		StreamReader::StreamReader(IStream& _stream)
-			:stream(&_stream)
-		{
-		}
-
-		bool StreamReader::IsEnd()
-		{
-			return stream==0;
-		}
-
-		wchar_t StreamReader::ReadChar()
-		{
-			if(stream)
-			{
-				wchar_t buffer=0;
-				if(stream->Read(&buffer, sizeof(buffer))==0)
-				{
-					stream=0;
-					return 0;
-				}
-				else
-				{
-					return buffer;
-				}
-			}
-			else
-			{
-				return L'\0';
-			}
-		}
-
-/***********************************************************************
-StreamWriter
-***********************************************************************/
-
-		StreamWriter::StreamWriter(IStream& _stream)
-			:stream(&_stream)
-		{
-		}
-
-		void StreamWriter::WriteChar(wchar_t c)
-		{
-			stream->Write(&c, sizeof(c));
-		}
-
-		void StreamWriter::WriteString(const wchar_t* string, vint charCount)
-		{
-			stream->Write((void*)string, charCount*sizeof(*string));
-		}
-
-/***********************************************************************
-EncoderStream
-***********************************************************************/
-
-		EncoderStream::EncoderStream(IStream& _stream, IEncoder& _encoder)
-			:stream(&_stream)
-			,encoder(&_encoder)
-			,position(0)
-		{
-			encoder->Setup(stream);
-		}
-
-		EncoderStream::~EncoderStream()
-		{
-			Close();
-		}
-
-		bool EncoderStream::CanRead()const
-		{
-			return false;
-		}
-
-		bool EncoderStream::CanWrite()const
-		{
-			return IsAvailable();
-		}
-
-		bool EncoderStream::CanSeek()const
-		{
-			return false;
-		}
-
-		bool EncoderStream::CanPeek()const
-		{
-			return false;
-		}
-
-		bool EncoderStream::IsLimited()const
-		{
-			return stream!=0 && stream->IsLimited();
-		}
-
-		bool EncoderStream::IsAvailable()const
-		{
-			return stream!=0 && stream->IsAvailable();
-		}
-
-		void EncoderStream::Close()
-		{
-			encoder->Close();
-			stream=0;
-		}
-
-		pos_t EncoderStream::Position()const
-		{
-			return IsAvailable()?position:-1;
-		}
-
-		pos_t EncoderStream::Size()const
-		{
-			return -1;
-		}
-
-		void EncoderStream::Seek(pos_t _size)
-		{
-			CHECK_FAIL(L"EncoderStream::Seek(pos_t)#Operation not supported.");
-		}
-
-		void EncoderStream::SeekFromBegin(pos_t _size)
-		{
-			CHECK_FAIL(L"EncoderStream::SeekFromBegin(pos_t)#Operation not supported.");
-		}
-
-		void EncoderStream::SeekFromEnd(pos_t _size)
-		{
-			CHECK_FAIL(L"EncoderStream::SeekFromEnd(pos_t)#Operation not supported.");
-		}
-
-		vint EncoderStream::Read(void* _buffer, vint _size)
-		{
-			CHECK_FAIL(L"EncoderStream::Read(void*, vint)#Operation not supported.");
-		}
-
-		vint EncoderStream::Write(void* _buffer, vint _size)
-		{
-			vint result=encoder->Write(_buffer, _size);
-			if(result>=0)
-			{
-				position+=result;
-			}
-			return result;
-		}
-
-		vint EncoderStream::Peek(void* _buffer, vint _size)
-		{
-			CHECK_FAIL(L"EncoderStream::Peek(void*, vint)#Operation not supported.");
-		}
-
-/***********************************************************************
-DecoderStream
-***********************************************************************/
-
-		DecoderStream::DecoderStream(IStream& _stream, IDecoder& _decoder)
-			:stream(&_stream)
-			,decoder(&_decoder)
-			,position(0)
-		{
-			decoder->Setup(stream);
-		}
-
-		DecoderStream::~DecoderStream()
-		{
-			Close();
-		}
-
-		bool DecoderStream::CanRead()const
-		{
-			return IsAvailable();
-		}
-
-		bool DecoderStream::CanWrite()const
-		{
-			return false;
-		}
-
-		bool DecoderStream::CanSeek()const
-		{
-			return false;
-		}
-
-		bool DecoderStream::CanPeek()const
-		{
-			return false;
-		}
-
-		bool DecoderStream::IsLimited()const
-		{
-			return stream!=0 && stream->IsLimited();
-		}
-
-		bool DecoderStream::IsAvailable()const
-		{
-			return stream!=0 && stream->IsAvailable();
-		}
-
-		void DecoderStream::Close()
-		{
-			decoder->Close();
-			stream=0;
-		}
-
-		pos_t DecoderStream::Position()const
-		{
-			return IsAvailable()?position:-1;
-		}
-
-		pos_t DecoderStream::Size()const
-		{
-			return -1;
-		}
-
-		void DecoderStream::Seek(pos_t _size)
-		{
-			CHECK_FAIL(L"DecoderStream::Seek(pos_t)#Operation not supported.");
-		}
-
-		void DecoderStream::SeekFromBegin(pos_t _size)
-		{
-			CHECK_FAIL(L"DecoderStream::SeekFromBegin(pos_t)#Operation not supported.");
-		}
-
-		void DecoderStream::SeekFromEnd(pos_t _size)
-		{
-			CHECK_FAIL(L"DecoderStream::SeekFromEnd(pos_t)#Operation not supported.");
-		}
-
-		vint DecoderStream::Read(void* _buffer, vint _size)
-		{
-			vint result=decoder->Read(_buffer, _size);
-			if(result>=0)
-			{
-				position+=result;
-			}
-			return result;
-		}
-
-		vint DecoderStream::Write(void* _buffer, vint _size)
-		{
-			CHECK_FAIL(L"DecoderStream::Write(void*, vint)#Operation not supported.");
-		}
-
-		vint DecoderStream::Peek(void* _buffer, vint _size)
-		{
-			CHECK_FAIL(L"DecoderStream::Peek(void*, vint)#Operation not supported.");
-		}
-	}
-}
-
-
-/***********************************************************************
-.\STREAM\CHARFORMAT.CPP
-***********************************************************************/
-#if defined VCZH_MSVC
-#include <windows.h>
-#elif defined VCZH_GCC
-#endif
-
-namespace vl
-{
-	namespace stream
-	{
-
-/***********************************************************************
-CharEncoder
-***********************************************************************/
-
-		CharEncoder::CharEncoder()
-			:stream(0)
-			,cacheSize(0)
-		{
-		}
-
-		void CharEncoder::Setup(IStream* _stream)
-		{
-			stream=_stream;
-		}
-
-		void CharEncoder::Close()
-		{
-		}
-
-		vint CharEncoder::Write(void* _buffer, vint _size)
-		{
-			const vint all=cacheSize+_size;
-			const vint chars=all/sizeof(wchar_t);
-			const vint bytes=chars*sizeof(wchar_t);
-			wchar_t* unicode=0;
-			bool needToFree=false;
-			vint result=0;
-
-			if(chars)
-			{
-				if(cacheSize>0)
-				{
-					unicode=new wchar_t[chars];
-					memcpy(unicode, cacheBuffer, cacheSize);
-					memcpy(((vuint8_t*)unicode)+cacheSize, _buffer, bytes-cacheSize);
-					needToFree=true;
-				}
-				else
-				{
-					unicode=(wchar_t*)_buffer;
-				}
-				result=WriteString(unicode, chars)*sizeof(wchar_t)-cacheSize;
-				cacheSize=0;
-			}
-
-			if(needToFree)
-			{
-				delete[] unicode;
-			}
-			if(all-bytes>0)
-			{
-				cacheSize=all-bytes;
-				memcpy(cacheBuffer, (vuint8_t*)_buffer+_size-cacheSize, cacheSize);
-				result+=cacheSize;
-			}
-			return result;
-		}
-
-/***********************************************************************
-CharDecoder
-***********************************************************************/
-
-		CharDecoder::CharDecoder()
-			:stream(0)
-			,cacheSize(0)
-		{
-		}
-
-		void CharDecoder::Setup(IStream* _stream)
-		{
-			stream=_stream;
-		}
-
-		void CharDecoder::Close()
-		{
-		}
-
-		vint CharDecoder::Read(void* _buffer, vint _size)
-		{
-			vuint8_t* unicode=(vuint8_t*)_buffer;
-			vint result=0;
-			{
-				vint index=0;
-				while(cacheSize>0 && _size>0)
-				{
-					*unicode++=cacheBuffer[index]++;
-					cacheSize--;
-					_size--;
-					result++;
-				}
-			}
-
-			const vint chars=_size/sizeof(wchar_t);
-			vint bytes=ReadString((wchar_t*)unicode, chars)*sizeof(wchar_t);
-			result+=bytes;
-			_size-=bytes;
-			unicode+=bytes;
-
-			if(_size>0)
-			{
-				wchar_t c;
-				if(ReadString(&c, 1)==1)
-				{
-					cacheSize=sizeof(wchar_t)-_size;
-					memcpy(unicode, &c, _size);
-					memcpy(cacheBuffer, (vuint8_t*)&c+_size, cacheSize);
-					result+=_size;
-				}
-			}
-			return result;
-		}
-
-/***********************************************************************
-Mbcs
-***********************************************************************/
-
-		vint MbcsEncoder::WriteString(wchar_t* _buffer, vint chars)
-		{
-#if defined VCZH_MSVC
-			vint length=WideCharToMultiByte(CP_THREAD_ACP, 0, _buffer, (int)chars, NULL, NULL, NULL, NULL);
-			char* mbcs=new char[length];
-			WideCharToMultiByte(CP_THREAD_ACP, 0, _buffer, (int)chars, mbcs, (int)length, NULL, NULL);
-			vint result=stream->Write(mbcs, length);
-			delete[] mbcs;
-#elif defined VCZH_GCC
-			WString w(_buffer, chars);
-			AString a=wtoa(w);
-			vint length=a.Length();
-			vint result=stream->Write((void*)a.Buffer(), length);
-#endif
-			if(result==length)
-			{
-				return chars;
-			}
-			else
-			{
-				Close();
-				return 0;
-			}
-		}
-
-		vint MbcsDecoder::ReadString(wchar_t* _buffer, vint chars)
-		{
-			char* source=new char[chars*2];
-			char* reading=source;
-			vint readed=0;
-			while(readed<chars)
-			{
-				if(stream->Read(reading, 1)!=1)
-				{
-					break;
-				}
-#if defined VCZH_MSVC
-				if(IsDBCSLeadByte(*reading))
-#elif defined VCZH_GCC
-				if((vint8_t)*reading<0)
-#endif
-				{
-					if(stream->Read(reading+1, 1)!=1)
-					{
-						break;
-					}
-					reading+=2;
-				}
-				else
-				{
-					reading++;
-				}
-				readed++;
-			}
-#if defined VCZH_MSVC
-			MultiByteToWideChar(CP_THREAD_ACP, 0, source, (int)(reading-source), _buffer, (int)chars);
-#elif defined VCZH_GCC
-			AString a(source, (vint)(reading-source));
-			WString w=atow(a);
-			memcpy(_buffer, w.Buffer(), readed*sizeof(wchar_t));
-#endif
-			delete[] source;
-			return readed;
-		}
-
-/***********************************************************************
-Utf-16
-***********************************************************************/
-
-		vint Utf16Encoder::WriteString(wchar_t* _buffer, vint chars)
-		{
-#if defined VCZH_MSVC
-			return stream->Write(_buffer, chars*sizeof(wchar_t))/sizeof(wchar_t);
-#elif defined VCZH_GCC
-			vint writed = 0;
-			vuint16_t utf16 = 0;
-			vuint8_t* utf16buf = (vuint8_t*)&utf16;
-			while (writed < chars)
-			{
-				wchar_t w = *_buffer++;
-				if (w < 0x10000)
-				{
-					utf16 = (vuint16_t)w;
-					if (stream->Write(&utf16buf[0], 1) != 1) break;
-					if (stream->Write(&utf16buf[1], 1) != 1) break;
-				}
-				else if (w < 0x110000)
-				{
-					wchar_t inc = w - 0x10000;
-
-					utf16 = (vuint16_t)(inc / 0x400) + 0xD800;
-					if (stream->Write(&utf16buf[0], 1) != 1) break;
-					if (stream->Write(&utf16buf[1], 1) != 1) break;
-
-					utf16 = (vuint16_t)(inc % 0x400) + 0xDC00;
-					if (stream->Write(&utf16buf[0], 1) != 1) break;
-					if (stream->Write(&utf16buf[1], 1) != 1) break;
-				}
-				else
-				{
-					break;
-				}
-				writed++;
-			}
-			if(writed!=chars)
-			{
-				Close();
-			}
-			return writed;
-#endif
-		}
-
-		vint Utf16Decoder::ReadString(wchar_t* _buffer, vint chars)
-		{
-#if defined VCZH_MSVC
-			return stream->Read(_buffer, chars*sizeof(wchar_t))/sizeof(wchar_t);
-#elif defined VCZH_GCC
-			wchar_t* writing = _buffer;
-			while (writing - _buffer < chars)
-			{
-				vuint16_t utf16_1 = 0;
-				vuint16_t utf16_2 = 0;
-
-				if (stream->Read(&utf16_1, 2) != 2) break;
-				if (utf16_1 < 0xD800 || utf16_1 > 0xDFFF)
-				{
-					*writing++ = (wchar_t)utf16_1;
-				}
-				else if (utf16_1 < 0xDC00)
-				{
-					if (stream->Read(&utf16_2, 2) != 2) break;
-					if (0xDC00 <= utf16_2 && utf16_2 <= 0xDFFF)
-					{
-						*writing++ = (wchar_t)(utf16_1 - 0xD800) * 0x400 + (wchar_t)(utf16_2 - 0xDC00) + 0x10000;
-					}
-					else
-					{
-						break;
-					}
-				}
-				else
-				{
-					break;
-				}
-			}
-			return writing - _buffer;
-#endif
-		}
-
-/***********************************************************************
-Utf-16-be
-***********************************************************************/
-
-		vint Utf16BEEncoder::WriteString(wchar_t* _buffer, vint chars)
-		{
-#if defined VCZH_MSVC
-			vint writed=0;
-			while(writed<chars)
-			{
-				if(stream->Write(((unsigned char*)_buffer)+1, 1)!=1)
-				{
-					break;
-				}
-				if(stream->Write(_buffer, 1)!=1)
-				{
-					break;
-				}
-				_buffer++;
-				writed++;
-			}
-			if(writed!=chars)
-			{
-				Close();
-			}
-			return writed;
-#elif defined VCZH_GCC
-			vint writed = 0;
-			vuint16_t utf16 = 0;
-			vuint8_t* utf16buf = (vuint8_t*)&utf16;
-			while (writed < chars)
-			{
-				wchar_t w = *_buffer++;
-				if (w < 0x10000)
-				{
-					utf16 = (vuint16_t)w;
-					if (stream->Write(&utf16buf[1], 1) != 1) break;
-					if (stream->Write(&utf16buf[0], 1) != 1) break;
-				}
-				else if (w < 0x110000)
-				{
-					wchar_t inc = w - 0x10000;
-
-					utf16 = (vuint16_t)(inc / 0x400) + 0xD800;
-					if (stream->Write(&utf16buf[1], 1) != 1) break;
-					if (stream->Write(&utf16buf[0], 1) != 1) break;
-
-					utf16 = (vuint16_t)(inc % 0x400) + 0xDC00;
-					if (stream->Write(&utf16buf[1], 1) != 1) break;
-					if (stream->Write(&utf16buf[0], 1) != 1) break;
-				}
-				else
-				{
-					break;
-				}
-				writed++;
-			}
-			if(writed!=chars)
-			{
-				Close();
-			}
-			return writed;
-#endif
-		}
-
-		vint Utf16BEDecoder::ReadString(wchar_t* _buffer, vint chars)
-		{
-#if defined VCZH_MSVC
-			chars=stream->Read(_buffer, chars*sizeof(wchar_t))/sizeof(wchar_t);
-			unsigned char* unicode=(unsigned char*)_buffer;
-			for(vint i=0;i<chars;i++)
-			{
-				unsigned char t=unicode[0];
-				unicode[0]=unicode[1];
-				unicode[1]=t;
-				unicode++;
-			}
-			return chars;
-#elif defined VCZH_GCC
-			wchar_t* writing = _buffer;
-			while (writing - _buffer < chars)
-			{
-				vuint16_t utf16_1 = 0;
-				vuint16_t utf16_2 = 0;
-				vuint8_t* utf16buf = 0;
-				vuint8_t utf16buf_temp = 0;
-
-				if (stream->Read(&utf16_1, 2) != 2) break;
-
-				utf16buf = (vuint8_t*)&utf16_1;
-				utf16buf_temp = utf16buf[0];
-				utf16buf[0] = utf16buf[1];
-				utf16buf[1] = utf16buf_temp;
-
-				if (utf16_1 < 0xD800 || utf16_1 > 0xDFFF)
-				{
-					*writing++ = (wchar_t)utf16_1;
-				}
-				else if (utf16_1 < 0xDC00)
-				{
-					if (stream->Read(&utf16_2, 2) != 2) break;
-
-					utf16buf = (vuint8_t*)&utf16_2;
-					utf16buf_temp = utf16buf[0];
-					utf16buf[0] = utf16buf[1];
-					utf16buf[1] = utf16buf_temp;
-
-					if (0xDC00 <= utf16_2 && utf16_2 <= 0xDFFF)
-					{
-						*writing++ = (wchar_t)(utf16_1 - 0xD800) * 0x400 + (wchar_t)(utf16_2 - 0xDC00) + 0x10000;
-					}
-					else
-					{
-						break;
-					}
-				}
-				else
-				{
-					break;
-				}
-			}
-			return writing - _buffer;
-#endif
-		}
-
-/***********************************************************************
-Utf8
-***********************************************************************/
-
-		vint Utf8Encoder::WriteString(wchar_t* _buffer, vint chars)
-		{
-#if defined VCZH_MSVC
-			vint length=WideCharToMultiByte(CP_UTF8, 0, _buffer, (int)chars, NULL, NULL, NULL, NULL);
-			char* mbcs=new char[length];
-			WideCharToMultiByte(CP_UTF8, 0, _buffer, (int)chars, mbcs, (int)length, NULL, NULL);
-			vint result=stream->Write(mbcs, length);
-			delete[] mbcs;
-			if(result==length)
-			{
-				return chars;
-			}
-			else
-			{
-				Close();
-				return 0;
-			}
-#elif defined VCZH_GCC
-			vint writed = 0;
-			while (writed < chars)
-			{
-				wchar_t w = *_buffer++;
-				vuint8_t utf8[4];
-				if (w < 0x80)
-				{
-					utf8[0] = (vuint8_t)w;
-					if (stream->Write(utf8, 1) != 1) break;
-				}
-				else if (w < 0x800)
-				{
-					utf8[0] = 0xC0 + ((w & 0x7C0) >> 6);
-					utf8[1] = 0x80 + (w & 0x3F);
-					if (stream->Write(utf8, 2) != 2) break;
-				}
-				else if (w < 0x10000)
-				{
-					utf8[0] = 0xE0 + ((w & 0xF000) >> 12);
-					utf8[1] = 0x80 + ((w & 0xFC0) >> 6);
-					utf8[2] = 0x80 + (w & 0x3F);
-					if (stream->Write(utf8, 3) != 3) break;
-				}
-				else if (w < 0x110000) // only accept UTF-16 range
-				{
-					utf8[0] = 0xF0 + ((w & 0x1C0000) >> 18);
-					utf8[1] = 0x80 + ((w & 0x3F000) >> 12);
-					utf8[2] = 0x80 + ((w & 0xFC0) >> 6);
-					utf8[3] = 0x80 + (w & 0x3F);
-					if (stream->Write(utf8, 4) != 4) break;
-				}
-				else
-				{
-					break;
-				}
-				writed++;
-			}
-			if(writed!=chars)
-			{
-				Close();
-			}
-			return writed;
-#endif
-		}
-
-		Utf8Decoder::Utf8Decoder()
-#if defined VCZH_MSVC
-			:cache(0)
-			,cacheAvailable(false)
-#endif
-		{
-		}
-
-		vint Utf8Decoder::ReadString(wchar_t* _buffer, vint chars)
-		{
-			vuint8_t source[4];
-#if defined VCZH_MSVC
-			wchar_t target[2];
-#endif
-			wchar_t* writing=_buffer;
-			vint readed=0;
-			vint sourceCount=0;
-
-			while(readed<chars)
-			{
-#if defined VCZH_MSVC
-				if(cacheAvailable)
-				{
-					*writing++=cache;
-					cache=0;
-					cacheAvailable=false;
-				}
-				else
-				{
-#endif
-					if(stream->Read(source, 1)!=1)
-					{
-						break;
-					}
-					if((*source & 0xF0) == 0xF0)
-					{
-						if(stream->Read(source+1, 3)!=3)
-						{
-							break;
-						}
-						sourceCount=4;
-					}
-					else if((*source & 0xE0) == 0xE0)
-					{
-						if(stream->Read(source+1, 2)!=2)
-						{
-							break;
-						}
-						sourceCount=3;
-					}
-					else if((*source & 0xC0) == 0xC0)
-					{
-						if(stream->Read(source+1, 1)!=1)
-						{
-							break;
-						}
-						sourceCount=2;
-					}
-					else
-					{
-						sourceCount=1;
-					}
-#if defined VCZH_MSVC	
-					int targetCount=MultiByteToWideChar(CP_UTF8, 0, (char*)source, (int)sourceCount, target, 2);
-					if(targetCount==1)
-					{
-						*writing++=target[0];
-					}
-					else if(targetCount==2)
-					{
-						*writing++=target[0];
-						cache=target[1];
-						cacheAvailable=true;
-					}
-					else
-					{
-						break;
-					}
-				}
-#elif defined VCZH_GCC
-					if (sourceCount == 1)
-					{
-						*writing++ = (wchar_t)source[0];
-					}
-					else if (sourceCount == 2)
-					{
-						*writing++ = (((wchar_t)source[0] & 0x1F) << 6) + ((wchar_t)source[1] & 0x3F);
-					}
-					else if (sourceCount == 3)
-					{
-						*writing++ = (((wchar_t)source[0] & 0xF) << 12) + (((wchar_t)source[1] & 0x3F) << 6) + ((wchar_t)source[2] & 0x3F);
-					}
-					else if (sourceCount == 4)
-					{
-						*writing++ = (((wchar_t)source[0] & 0x7) << 18) + (((wchar_t)source[1] & 0x3F) << 12) + (((wchar_t)source[2] & 0x3F) << 6) + ((wchar_t)source[3] & 0x3F);
-					}
-					else
-					{
-						break;
-					}
-#endif
-				readed++;
-			}
-			return readed;
-		}
-
-/***********************************************************************
-BomEncoder
-***********************************************************************/
-
-		BomEncoder::BomEncoder(Encoding _encoding)
-			:encoding(_encoding)
-			,encoder(0)
-		{
-			switch(encoding)
-			{
-			case Mbcs:
-				encoder=new MbcsEncoder;
-				break;
-			case Utf8:
-				encoder=new Utf8Encoder;
-				break;
-			case Utf16:
-				encoder=new Utf16Encoder;
-				break;
-			case Utf16BE:
-				encoder=new Utf16BEEncoder;
-				break;
-			}
-		}
-
-		BomEncoder::~BomEncoder()
-		{
-			Close();
-		}
-
-		void BomEncoder::Setup(IStream* _stream)
-		{
-			switch(encoding)
-			{
-			case Mbcs:
-				break;
-			case Utf8:
-				_stream->Write((void*)"\xEF\xBB\xBF", 3);
-				break;
-			case Utf16:
-				_stream->Write((void*)"\xFF\xFE", 2);
-				break;
-			case Utf16BE:
-				_stream->Write((void*)"\xFE\xFF", 2);
-				break;
-			}
-			encoder->Setup(_stream);
-		}
-
-		void BomEncoder::Close()
-		{
-			if(encoder)
-			{
-				encoder->Close();
-				delete encoder;
-				encoder=0;
-			}
-		}
-
-		vint BomEncoder::Write(void* _buffer, vint _size)
-		{
-			return encoder->Write(_buffer, _size);
-		}
-
-/***********************************************************************
-BomDecoder
-***********************************************************************/
-
-		BomDecoder::BomStream::BomStream(IStream* _stream, char* _bom, vint _bomLength)
-			:stream(_stream)
-			,bomPosition(0)
-			,bomLength(_bomLength)
-		{
-			memcpy(bom, _bom, bomLength);
-		}
-
-		bool BomDecoder::BomStream::CanRead()const
-		{
-			return IsAvailable();
-		}
-
-		bool BomDecoder::BomStream::CanWrite()const
-		{
-			return false;
-		}
-
-		bool BomDecoder::BomStream::CanSeek()const
-		{
-			return false;
-		}
-
-		bool BomDecoder::BomStream::CanPeek()const
-		{
-			return false;
-		}
-
-		bool BomDecoder::BomStream::IsLimited()const
-		{
-			return stream!=0 && stream->IsLimited();
-		}
-
-		bool BomDecoder::BomStream::IsAvailable()const
-		{
-			return stream!=0 && stream->IsAvailable();
-		}
-
-		void BomDecoder::BomStream::Close()
-		{
-			stream=0;
-		}
-
-		pos_t BomDecoder::BomStream::Position()const
-		{
-			return IsAvailable()?bomPosition+stream->Position():-1;
-		}
-
-		pos_t BomDecoder::BomStream::Size()const
-		{
-			return -1;
-		}
-
-		void BomDecoder::BomStream::Seek(pos_t _size)
-		{
-			CHECK_FAIL(L"BomDecoder::BomStream::Seek(pos_t)#Operation not supported.");
-		}
-
-		void BomDecoder::BomStream::SeekFromBegin(pos_t _size)
-		{
-			CHECK_FAIL(L"BomDecoder::BomStream::SeekFromBegin(pos_t)#Operation not supported.");
-		}
-
-		void BomDecoder::BomStream::SeekFromEnd(pos_t _size)
-		{
-			CHECK_FAIL(L"BomDecoder::BomStream::SeekFromEnd(pos_t)#Operation not supported.");
-		}
-
-		vint BomDecoder::BomStream::Read(void* _buffer, vint _size)
-		{
-			vint result=0;
-			unsigned char* buffer=(unsigned char*)_buffer;
-			if(bomPosition<bomLength)
-			{
-				vint remain=bomLength-bomPosition;
-				result=remain<_size?remain:_size;
-				memcpy(buffer, bom+bomPosition, result);
-				buffer+=result;
-				bomPosition+=result;
-				_size-=result;
-			}
-			if(_size)
-			{
-				result+=stream->Read(buffer, _size);
-			}
-			return result;
-		}
-
-		vint BomDecoder::BomStream::Write(void* _buffer, vint _size)
-		{
-			CHECK_FAIL(L"BomDecoder::BomStream::Write(void*, vint)#Operation not supported.");
-		}
-
-		vint BomDecoder::BomStream::Peek(void* _buffer, vint _size)
-		{
-			CHECK_FAIL(L"BomDecoder::BomStream::Peek(void*, vint)#Operation not supported.");
-		}
-
-		BomDecoder::BomDecoder()
-			:decoder(0)
-		{
-		}
-
-		BomDecoder::~BomDecoder()
-		{
-			Close();
-		}
-
-		void BomDecoder::Setup(IStream* _stream)
-		{
-			char bom[3]={0};
-			vint length=_stream->Read(bom, sizeof(bom));
-			if(strncmp(bom, "\xEF\xBB\xBF", 3)==0)
-			{
-				decoder=new Utf8Decoder;
-				stream=new BomStream(_stream, bom+3, 0);
-			}
-			else if(strncmp(bom, "\xFF\xFE", 2)==0)
-			{
-				decoder=new Utf16Decoder;
-				stream=new BomStream(_stream, bom+2, 1);
-			}
-			else if(strncmp(bom, "\xFE\xFF", 2)==0)
-			{
-				decoder=new Utf16BEDecoder;
-				stream=new BomStream(_stream, bom+2, 1);
-			}
-			else
-			{
-				decoder=new MbcsDecoder;
-				stream=new BomStream(_stream, bom, 3);
-			}
-			decoder->Setup(stream);
-		}
-
-		void BomDecoder::Close()
-		{
-			if(decoder)
-			{
-				decoder->Close();
-				delete decoder;
-				decoder=0;
-				stream->Close();
-				delete stream;
-				stream=0;
-			}
-		}
-
-		vint BomDecoder::Read(void* _buffer, vint _size)
-		{
-			return decoder->Read(_buffer, _size);
-		}
-
-/***********************************************************************
-CharEncoder
-***********************************************************************/
-
-		bool CanBeMbcs(unsigned char* buffer, vint size)
-		{
-			for(vint i=0;i<size;i++)
-			{
-				if(buffer[i]==0) return false;
-			}
-			return true;
-		}
-
-		bool CanBeUtf8(unsigned char* buffer, vint size)
-		{
-			for(vint i=0;i<size;i++)
-			{
-				unsigned char c=(unsigned char)buffer[i];
-				if(c==0)
-				{
-					return false;
-				}
-				else
-				{
-					vint count10xxxxxx=0;
-					if((c&0x80)==0x00) /* 0x0xxxxxxx */ count10xxxxxx=0;
-					else if((c&0xE0)==0xC0) /* 0x110xxxxx */ count10xxxxxx=1;
-					else if((c&0xF0)==0xE0) /* 0x1110xxxx */ count10xxxxxx=2;
-					else if((c&0xF8)==0xF0) /* 0x11110xxx */ count10xxxxxx=3;
-					else if((c&0xFC)==0xF8) /* 0x111110xx */ count10xxxxxx=4;
-					else if((c&0xFE)==0xFC) /* 0x1111110x */ count10xxxxxx=5;
-
-					if(size<=i+count10xxxxxx)
-					{
-						return false;
-					}
-					else
-					{
-						for(vint j=0;j<count10xxxxxx;j++)
-						{
-							c=(unsigned char)buffer[i+j+1];
-							if((c&0xC0)!=0x80) /* 0x10xxxxxx */ return false;
-						}
-					}
-					i+=count10xxxxxx;
-				}
-			}
-			return true;
-		}
-
-		bool CanBeUtf16(unsigned char* buffer, vint size, bool& hitSurrogatePairs)
-		{
-			hitSurrogatePairs = false;
-			if (size % 2 != 0) return false;
-			bool needTrail = false;
-			for (vint i = 0; i < size; i += 2)
-			{
-				vuint16_t c = buffer[i] + (buffer[i + 1] << 8);
-				if (c == 0) return false;
-				vint type = 0;
-				if (0xD800 <= c && c <= 0xDBFF) type = 1;
-				else if (0xDC00 <= c && c <= 0xDFFF) type = 2;
-				if (needTrail)
-				{
-					if (type == 2)
-					{
-						needTrail = false;
-					}
-					else
-					{
-						return false;
-					}
-				}
-				else
-				{
-					if (type == 1)
-					{
-						needTrail = true;
-						hitSurrogatePairs = true;
-					}
-					else if (type != 0)
-					{
-						return false;
-					}
-				}
-			}
-			return !needTrail;
-		}
-
-		bool CanBeUtf16BE(unsigned char* buffer, vint size, bool& hitSurrogatePairs)
-		{
-			hitSurrogatePairs = false;
-			if (size % 2 != 0) return false;
-			bool needTrail = false;
-			for (vint i = 0; i < size; i += 2)
-			{
-				vuint16_t c = buffer[i + 1] + (buffer[i] << 8);
-				if (c == 0) return false;
-				vint type = 0;
-				if (0xD800 <= c && c <= 0xDBFF) type = 1;
-				else if (0xDC00 <= c && c <= 0xDFFF) type = 2;
-				if (needTrail)
-				{
-					if (type == 2)
-					{
-						needTrail = false;
-					}
-					else
-					{
-						return false;
-					}
-				}
-				else
-				{
-					if (type == 1)
-					{
-						needTrail = true;
-						hitSurrogatePairs = true;
-					}
-					else if (type != 0)
-					{
-						return false;
-					}
-				}
-			}
-			return !needTrail;
-		}
-
-#if defined VCZH_MSVC
-		template<vint Count>
-		bool GetEncodingResult(int(&tests)[Count], bool(&results)[Count], int test)
-		{
-			for (vint i = 0; i < Count; i++)
-			{
-				if (tests[i] & test)
-				{
-					if (results[i]) return true;
-				}
-			}
-			return false;
-		}
-#endif
-
-		void TestEncoding(unsigned char* buffer, vint size, BomEncoder::Encoding& encoding, bool& containsBom)
-		{
-			if (size >= 3 && strncmp((char*)buffer, "\xEF\xBB\xBF", 3) == 0)
-			{
-				encoding = BomEncoder::Utf8;
-				containsBom = true;
-			}
-			else if (size >= 2 && strncmp((char*)buffer, "\xFF\xFE", 2) == 0)
-			{
-				encoding = BomEncoder::Utf16;
-				containsBom = true;
-			}
-			else if (size >= 2 && strncmp((char*)buffer, "\xFE\xFF", 2) == 0)
-			{
-				encoding = BomEncoder::Utf16BE;
-				containsBom = true;
-			}
-			else
-			{
-				encoding = BomEncoder::Mbcs;
-				containsBom = false;
-
-				bool utf16HitSurrogatePairs = false;
-				bool utf16BEHitSurrogatePairs = false;
-				bool roughMbcs = CanBeMbcs(buffer, size);
-				bool roughUtf8 = CanBeUtf8(buffer, size);
-				bool roughUtf16 = CanBeUtf16(buffer, size, utf16HitSurrogatePairs);
-				bool roughUtf16BE = CanBeUtf16BE(buffer, size, utf16BEHitSurrogatePairs);
-
-				vint roughCount = (roughMbcs ? 1 : 0) + (roughUtf8 ? 1 : 0) + (roughUtf16 ? 1 : 0) + (roughUtf16BE ? 1 : 0);
-				if (roughCount == 1)
-				{
-					if (roughUtf8) encoding = BomEncoder::Utf8;
-					else if (roughUtf16) encoding = BomEncoder::Utf16;
-					else if (roughUtf16BE) encoding = BomEncoder::Utf16BE;
-				}
-				else if (roughCount > 1)
-				{
-#if defined VCZH_MSVC
-					int tests[] =
-					{
-						IS_TEXT_UNICODE_REVERSE_ASCII16,
-						IS_TEXT_UNICODE_REVERSE_STATISTICS,
-						IS_TEXT_UNICODE_REVERSE_CONTROLS,
-
-						IS_TEXT_UNICODE_ASCII16,
-						IS_TEXT_UNICODE_STATISTICS,
-						IS_TEXT_UNICODE_CONTROLS,
-
-						IS_TEXT_UNICODE_ILLEGAL_CHARS,
-						IS_TEXT_UNICODE_ODD_LENGTH,
-						IS_TEXT_UNICODE_NULL_BYTES,
-					};
-
-					const vint TestCount = sizeof(tests) / sizeof(*tests);
-					bool results[TestCount];
-					for (vint i = 0; i < TestCount; i++)
-					{
-						int test = tests[i];
-						results[i] = IsTextUnicode(buffer, (int)size, &test) != 0;
-					}
-
-					if (size % 2 == 0
-						&& !GetEncodingResult(tests, results, IS_TEXT_UNICODE_REVERSE_ASCII16)
-						&& !GetEncodingResult(tests, results, IS_TEXT_UNICODE_REVERSE_STATISTICS)
-						&& !GetEncodingResult(tests, results, IS_TEXT_UNICODE_REVERSE_CONTROLS)
-						)
-					{
-						for (vint i = 0; i < size; i += 2)
-						{
-							unsigned char c = buffer[i];
-							buffer[i] = buffer[i + 1];
-							buffer[i + 1] = c;
-						}
-						// 3 = (count of reverse group) = (count of unicode group)
-						for (vint i = 0; i < 3; i++)
-						{
-							int test = tests[i + 3];
-							results[i] = IsTextUnicode(buffer, (int)size, &test) != 0;
-						}
-						for (vint i = 0; i < size; i += 2)
-						{
-							unsigned char c = buffer[i];
-							buffer[i] = buffer[i + 1];
-							buffer[i + 1] = c;
-						}
-					}
-
-					if (GetEncodingResult(tests, results, IS_TEXT_UNICODE_NOT_UNICODE_MASK))
-					{
-						if (GetEncodingResult(tests, results, IS_TEXT_UNICODE_NOT_ASCII_MASK))
-						{
-							encoding = BomEncoder::Utf8;
-						}
-						else if (roughUtf8 || !roughMbcs)
-						{
-							encoding = BomEncoder::Utf8;
-						}
-					}
-					else if (GetEncodingResult(tests, results, IS_TEXT_UNICODE_ASCII16))
-					{
-						encoding = BomEncoder::Utf16;
-					}
-					else if (GetEncodingResult(tests, results, IS_TEXT_UNICODE_REVERSE_ASCII16))
-					{
-						encoding = BomEncoder::Utf16BE;
-					}
-					else if (GetEncodingResult(tests, results, IS_TEXT_UNICODE_CONTROLS))
-					{
-						encoding = BomEncoder::Utf16;
-					}
-					else if (GetEncodingResult(tests, results, IS_TEXT_UNICODE_REVERSE_CONTROLS))
-					{
-						encoding = BomEncoder::Utf16BE;
-					}
-					else
-					{
-						if (!roughUtf8)
-						{
-							if (GetEncodingResult(tests, results, IS_TEXT_UNICODE_STATISTICS))
-							{
-								encoding = BomEncoder::Utf16;
-							}
-							else if (GetEncodingResult(tests, results, IS_TEXT_UNICODE_STATISTICS))
-							{
-								encoding = BomEncoder::Utf16BE;
-							}
-						}
-						else if (GetEncodingResult(tests, results, IS_TEXT_UNICODE_NOT_UNICODE_MASK))
-						{
-							encoding = BomEncoder::Utf8;
-						}
-						else if (roughUtf8 || !roughMbcs)
-						{
-							encoding = BomEncoder::Utf8;
-						}
-					}
-#elif defined VCZH_GCC
-					if (roughUtf16 && roughUtf16BE && !roughUtf8)
-					{
-						if (utf16BEHitSurrogatePairs && !utf16HitSurrogatePairs)
-						{
-							encoding = BomEncoder::Utf16BE;
-						}
-						else
-						{
-							encoding = BomEncoder::Utf16;
-						}
-					}
-					else
-					{
-						encoding = BomEncoder::Utf8;
-					}
-#endif
-				}
-			}
-		}
-	}
-}
-
-
-/***********************************************************************
-.\STREAM\FILESTREAM.CPP
-***********************************************************************/
-#if defined VCZH_GCC
-#endif
-
-namespace vl
-{
-	namespace stream
-	{
-
-#if defined VCZH_GCC
-		void _fseeki64(FILE* file, pos_t offset, int origin)
-		{
-			fseek(file, (long)offset, origin);
-		}
-#endif
-
-/***********************************************************************
-FileStream
-***********************************************************************/
-
-		FileStream::FileStream(const WString& fileName, AccessRight _accessRight)
-			:accessRight(_accessRight)
-		{
-			const wchar_t* mode=L"rb";
-			switch(accessRight)
-			{
-			case ReadOnly:
-				mode=L"rb";
-				break;
-			case WriteOnly:
-				mode=L"wb";
-				break;
-			case ReadWrite:
-				mode=L"w+b";
-				break;
-			}
-
-#if defined VCZH_MSVC
-			if(_wfopen_s(&file, fileName.Buffer(), mode)!=0)
-			{
-				file=0;
-			}
-#elif defined VCZH_GCC
-			AString fileNameA = wtoa(fileName);
-			AString modeA = wtoa(mode);
-			file = fopen(fileNameA.Buffer(), modeA.Buffer());			
-#endif
-		}
-
-		FileStream::~FileStream()
-		{
-			Close();
-		}
-
-		bool FileStream::CanRead()const
-		{
-			return file!=0 && (accessRight==ReadOnly || accessRight==ReadWrite);
-		}
-
-		bool FileStream::CanWrite()const
-		{
-			return file!=0 && (accessRight==WriteOnly || accessRight==ReadWrite);
-		}
-
-		bool FileStream::CanSeek()const
-		{
-			return file!=0;
-		}
-
-		bool FileStream::CanPeek()const
-		{
-			return file!=0 && (accessRight==ReadOnly || accessRight==ReadWrite);
-		}
-
-		bool FileStream::IsLimited()const
-		{
-			return file!=0 && accessRight==ReadOnly;
-		}
-
-		bool FileStream::IsAvailable()const
-		{
-			return file!=0;
-		}
-
-		void FileStream::Close()
-		{
-			if(file!=0)
-			{
-				fclose(file);
-				file=0;
-			}
-		}
-
-		pos_t FileStream::Position()const
-		{
-			if(file!=0)
-			{
-#if defined VCZH_MSVC
-				fpos_t position=0;
-				if(fgetpos(file, &position)==0)
-				{
-					return position;
-				}
-#elif defined VCZH_GCC
-				return (pos_t)ftell(file);
-#endif
-			}
-			return -1;
-		}
-
-		pos_t FileStream::Size()const
-		{
-			if(file!=0)
-			{
-#if defined VCZH_MSVC
-				fpos_t position=0;
-				if(fgetpos(file, &position)==0)
-				{
-					if(fseek(file, 0, SEEK_END)==0)
-					{
-						pos_t size=Position();
-						if(fsetpos(file, &position)==0)
-						{
-							return size;
-						}
-					}
-				}
-#elif defined VCZH_GCC
-				long position = ftell(file);
-				fseek(file, 0, SEEK_END);
-				long size=ftell(file);
-				fseek(file, position, SEEK_SET);
-				return (pos_t)size;
-#endif
-			}
-			return -1;
-		}
-
-		void FileStream::Seek(pos_t _size)
-		{
-			if(Position()+_size>Size())
-			{
-				_fseeki64(file, 0, SEEK_END);
-			}
-			else if(Position()+_size<0)
-			{
-				_fseeki64(file, 0, SEEK_SET);
-			}
-			else
-			{
-				_fseeki64(file, _size, SEEK_CUR);
-			}
-		}
-
-		void FileStream::SeekFromBegin(pos_t _size)
-		{
-			if(_size>Size())
-			{
-				_fseeki64(file, 0, SEEK_END);
-			}
-			else if(_size<0)
-			{
-				_fseeki64(file, 0, SEEK_SET);
-			}
-			else
-			{
-				_fseeki64(file, _size, SEEK_SET);
-			}
-		}
-
-		void FileStream::SeekFromEnd(pos_t _size)
-		{
-			if(_size<0)
-			{
-				_fseeki64(file, 0, SEEK_END);
-			}
-			else if(_size>Size())
-			{
-				_fseeki64(file, 0, SEEK_SET);
-			}
-			else
-			{
-				_fseeki64(file, -_size, SEEK_END);
-			}
-		}
-
-		vint FileStream::Read(void* _buffer, vint _size)
-		{
-			CHECK_ERROR(file!=0, L"FileStream::Read(pos_t)#Stream is closed, cannot perform this operation.");
-			CHECK_ERROR(_size>=0, L"FileStream::Read(void*, vint)#Argument size cannot be negative.");
-			return fread(_buffer, 1, _size, file);
-		}
-
-		vint FileStream::Write(void* _buffer, vint _size)
-		{
-			CHECK_ERROR(file!=0, L"FileStream::Write(pos_t)#Stream is closed, cannot perform this operation.");
-			CHECK_ERROR(_size>=0, L"FileStream::Write(void*, vint)#Argument size cannot be negative.");
-			return fwrite(_buffer, 1, _size, file);
-		}
-
-		vint FileStream::Peek(void* _buffer, vint _size)
-		{
-			CHECK_ERROR(file!=0, L"FileStream::Peek(pos_t)#Stream is closed, cannot perform this operation.");
-			CHECK_ERROR(_size>=0, L"FileStream::Peek(void*, vint)#Argument size cannot be negative.");
-#if defined VCZH_MSVC
-			fpos_t position=0;
-			if(fgetpos(file, &position)==0)
-			{
-				size_t count=fread(_buffer, 1, _size, file);
-				if(fsetpos(file, &position)==0)
-				{
-					return count;
-				}
-			}
-			return -1;
-#elif defined VCZH_GCC
-			long position=ftell(file);
-			size_t count=fread(_buffer, 1, _size, file);
-			fseek(file, position, SEEK_SET);
-			return count;
-#endif
-		}
-	}
-}
-
-
-/***********************************************************************
-.\STREAM\MEMORYSTREAM.CPP
-***********************************************************************/
-
-namespace vl
-{
-	namespace stream
-	{
-/***********************************************************************
-MemoryStream
-***********************************************************************/
-
-		void MemoryStream::PrepareSpace(vint totalSpace)
-		{
-			if(totalSpace>capacity)
-			{
-				totalSpace=(totalSpace/block+1)*block;
-				char* newBuffer=new char[totalSpace];
-				if(buffer)
-				{
-					memcpy(newBuffer, buffer, size);
-					delete[] buffer;
-				}
-				buffer=newBuffer;
-				capacity=totalSpace;
-			}
-		}
-
-		MemoryStream::MemoryStream(vint _block)
-			:block(_block)
-			,buffer(0)
-			,size(0)
-			,position(0)
-			,capacity(0)
-		{
-			if(block<=0)
-			{
-				block=65536;
-			}
-		}
-
-		MemoryStream::~MemoryStream()
-		{
-			Close();
-		}
-
-		bool MemoryStream::CanRead()const
-		{
-			return block!=0;
-		}
-
-		bool MemoryStream::CanWrite()const
-		{
-			return block!=0;
-		}
-
-		bool MemoryStream::CanSeek()const
-		{
-			return block!=0;
-		}
-
-		bool MemoryStream::CanPeek()const
-		{
-			return block!=0;
-		}
-
-		bool MemoryStream::IsLimited()const
-		{
-			return false;
-		}
-
-		bool MemoryStream::IsAvailable()const
-		{
-			return block!=0;
-		}
-
-		void MemoryStream::Close()
-		{
-			if(buffer)
-			{
-				delete[] buffer;
-			}
-			block=0;
-			buffer=0;
-			size=-1;
-			position=-1;
-			capacity=0;
-		}
-
-		pos_t MemoryStream::Position()const
-		{
-			return position;
-		}
-
-		pos_t MemoryStream::Size()const
-		{
-			return size;
-		}
-
-		void MemoryStream::Seek(pos_t _size)
-		{
-			SeekFromBegin(position+_size);
-		}
-
-		void MemoryStream::SeekFromBegin(pos_t _size)
-		{
-			CHECK_ERROR(block!=0, L"MemoryStream::SeekFromBegin(pos_t)#Stream is closed, cannot perform this operation.");
-			vint expected=(vint)_size;
-			if(expected<0)
-			{
-				position=0;
-			}
-			else if(expected>=size)
-			{
-				position=size;
-			}
-			else
-			{
-				position=expected;
-			}
-		}
-
-		void MemoryStream::SeekFromEnd(pos_t _size)
-		{
-			SeekFromBegin(size-_size);
-		}
-
-		vint MemoryStream::Read(void* _buffer, vint _size)
-		{
-			CHECK_ERROR(block!=0, L"MemoryStream::Read(pos_t)#Stream is closed, cannot perform this operation.");
-			CHECK_ERROR(_size>=0, L"MemoryStream::Read(void*, vint)#Argument size cannot be negative.");
-			vint max=size-position;
-			if(_size>max)
-			{
-				_size=max;
-			}
-			memmove(_buffer, buffer+position, _size);
-			position+=_size;
-			return _size;
-		}
-
-		vint MemoryStream::Write(void* _buffer, vint _size)
-		{
-			CHECK_ERROR(block!=0, L"MemoryStream::Write(pos_t)#Stream is closed, cannot perform this operation.");
-			CHECK_ERROR(_size>=0, L"MemoryStream::Write(void*, vint)#Argument size cannot be negative.");
-			PrepareSpace(size+_size);
-			memmove(buffer+position, _buffer, _size);
-			position+=_size;
-			if(size<position)
-			{
-				size=position;
-			}
-			return _size;
-		}
-
-		vint MemoryStream::Peek(void* _buffer, vint _size)
-		{
-			CHECK_ERROR(block!=0, L"MemoryStream::Peek(pos_t)#Stream is closed, cannot perform this operation.");
-			CHECK_ERROR(_size>=0, L"MemoryStream::Peek(void*, vint)#Argument size cannot be negative.");
-			vint max=size-position;
-			if(_size>max)
-			{
-				_size=max;
-			}
-			memmove(_buffer, buffer+position, _size);
-			return _size;
-		}
-
-		void* MemoryStream::GetInternalBuffer()
-		{
-			return buffer;
-		}
-	}
-}
-
-/***********************************************************************
-.\STREAM\MEMORYWRAPPERSTREAM.CPP
-***********************************************************************/
-
-namespace vl
-{
-	namespace stream
-	{
-/***********************************************************************
-MemoryWrapperStream
-***********************************************************************/
-
-		MemoryWrapperStream::MemoryWrapperStream(void* _buffer, vint _size)
-			:buffer((char*)_buffer)
-			,size(_size)
-			,position(0)
-		{
-			if(size<=0)
-			{
-				buffer=0;
-				size=0;
-			}
-		}
-
-		MemoryWrapperStream::~MemoryWrapperStream()
-		{
-		}
-
-		bool MemoryWrapperStream::CanRead()const
-		{
-			return buffer!=0;
-		}
-
-		bool MemoryWrapperStream::CanWrite()const
-		{
-			return buffer!=0;
-		}
-
-		bool MemoryWrapperStream::CanSeek()const
-		{
-			return buffer!=0;
-		}
-
-		bool MemoryWrapperStream::CanPeek()const
-		{
-			return buffer!=0;
-		}
-
-		bool MemoryWrapperStream::IsLimited()const
-		{
-			return buffer!=0;
-		}
-
-		bool MemoryWrapperStream::IsAvailable()const
-		{
-			return buffer!=0;
-		}
-
-		void MemoryWrapperStream::Close()
-		{
-			buffer=0;
-			size=-1;
-			position=-1;
-		}
-
-		pos_t MemoryWrapperStream::Position()const
-		{
-			return position;
-		}
-
-		pos_t MemoryWrapperStream::Size()const
-		{
-			return size;
-		}
-
-		void MemoryWrapperStream::Seek(pos_t _size)
-		{
-			SeekFromBegin(position+_size);
-		}
-
-		void MemoryWrapperStream::SeekFromBegin(pos_t _size)
-		{
-			CHECK_ERROR(buffer!=0, L"MemoryWrapperStream::SeekFromBegin(pos_t)#Stream is closed, cannot perform this operation.");
-			vint expected=(vint)_size;
-			if(expected<0)
-			{
-				position=0;
-			}
-			else if(expected>=size)
-			{
-				position=size;
-			}
-			else
-			{
-				position=expected;
-			}
-		}
-
-		void MemoryWrapperStream::SeekFromEnd(pos_t _size)
-		{
-			SeekFromBegin(size-_size);
-		}
-
-		vint MemoryWrapperStream::Read(void* _buffer, vint _size)
-		{
-			CHECK_ERROR(buffer!=0, L"MemoryWrapperStream::Read(pos_t)#Stream is closed, cannot perform this operation.");
-			CHECK_ERROR(_size>=0, L"MemoryWrapperStream::Read(void*, vint)#Argument size cannot be negative.");
-			vint max=size-position;
-			if(_size>max)
-			{
-				_size=max;
-			}
-			memmove(_buffer, buffer+position, _size);
-			position+=_size;
-			return _size;
-		}
-
-		vint MemoryWrapperStream::Write(void* _buffer, vint _size)
-		{
-			CHECK_ERROR(buffer!=0, L"MemoryWrapperStream::Write(pos_t)#Stream is closed, cannot perform this operation.");
-			CHECK_ERROR(_size>=0, L"MemoryWrapperStream::Write(void*, vint)#Argument size cannot be negative.");
-			vint max=size-position;
-			if(_size>max)
-			{
-				_size=max;
-			}
-			memmove(buffer+position, _buffer, _size);
-			position+=_size;
-			return _size;
-		}
-
-		vint MemoryWrapperStream::Peek(void* _buffer, vint _size)
-		{
-			CHECK_ERROR(buffer!=0, L"MemoryWrapperStream::Peek(pos_t)#Stream is closed, cannot perform this operation.");
-			CHECK_ERROR(_size>=0, L"MemoryWrapperStream::Peek(void*, vint)#Argument size cannot be negative.");
-			vint max=size-position;
-			if(_size>max)
-			{
-				_size=max;
-			}
-			memmove(_buffer, buffer+position, _size);
-			return _size;
-		}
-	}
-}
-
-/***********************************************************************
 .\GLOBALSTORAGE.CPP
 ***********************************************************************/
 
@@ -4912,30 +1632,32 @@ Utilities
 			}
 		}
 
-		// concatincate response body
-		vint totalSize=0;
-		FOREACH(BufferPair, p, availableBuffers)
 		{
-			totalSize+=p.length;
-		}
-		response.body.Resize(totalSize);
-		if(totalSize>0)
-		{
-			char* utf8=new char[totalSize];
+			// concatincate response body
+			vint totalSize = 0;
+			FOREACH(BufferPair, p, availableBuffers)
 			{
-				char* temp=utf8;
-				FOREACH(BufferPair, p, availableBuffers)
-				{
-					memcpy(temp, p.buffer, p.length);
-					temp+=p.length;
-				}
+				totalSize += p.length;
 			}
-			memcpy(&response.body[0], utf8, totalSize);
-			delete[] utf8;
-		}
-		FOREACH(BufferPair, p, availableBuffers)
-		{
-			delete[] p.buffer;
+			response.body.Resize(totalSize);
+			if (totalSize > 0)
+			{
+				char* utf8 = new char[totalSize];
+				{
+					char* temp = utf8;
+					FOREACH(BufferPair, p, availableBuffers)
+					{
+						memcpy(temp, p.buffer, p.length);
+						temp += p.length;
+					}
+				}
+				memcpy(&response.body[0], utf8, totalSize);
+				delete[] utf8;
+			}
+			FOREACH(BufferPair, p, availableBuffers)
+			{
+				delete[] p.buffer;
+			}
 		}
 	CLEANUP:
 		if(requestInternet) WinHttpCloseHandle(requestInternet);
@@ -4981,361 +1703,7706 @@ Utilities
 
 
 /***********************************************************************
-.\STREAM\COMPRESSIONSTREAM.CPP
+.\LOCALE.CPP
+***********************************************************************/
+#if defined VCZH_MSVC
+#elif defined VCZH_GCC
+#include <ctype.h>
+#include <wctype.h>
+#endif
+
+namespace vl
+{
+	using namespace collections;
+
+#if defined VCZH_MSVC
+
+	extern SYSTEMTIME DateTimeToSystemTime(const DateTime& dateTime);
+
+	BOOL CALLBACK Locale_EnumLocalesProcEx(
+		_In_  LPWSTR lpLocaleString,
+		_In_  DWORD dwFlags,
+		_In_  LPARAM lParam
+		)
+	{
+		((List<Locale>*)lParam)->Add(Locale(lpLocaleString));
+		return TRUE;
+	}
+
+	BOOL CALLBACK Locale_EnumDateFormatsProcExEx(
+		_In_  LPWSTR lpDateFormatString,
+		_In_  CALID CalendarID,
+		_In_  LPARAM lParam
+	)
+	{
+		((List<WString>*)lParam)->Add(lpDateFormatString);
+		return TRUE;
+	}
+
+	BOOL CALLBACK EnumTimeFormatsProcEx(
+		_In_  LPWSTR lpTimeFormatString,
+		_In_  LPARAM lParam
+	)
+	{
+		((List<WString>*)lParam)->Add(lpTimeFormatString);
+		return TRUE;
+	}
+
+	WString Transform(const WString& localeName, const WString& input, DWORD flag)
+	{
+		int length=LCMapStringEx(localeName.Buffer(), flag, input.Buffer(), (int)input.Length()+1, NULL, 0, NULL, NULL, NULL);
+		Array<wchar_t> buffer(length);
+		LCMapStringEx(localeName.Buffer(), flag, input.Buffer(), (int)input.Length()+1, &buffer[0], (int)buffer.Count(), NULL, NULL, NULL);
+		return &buffer[0];
+	}
+
+	DWORD TranslateNormalization(Locale::Normalization normalization)
+	{
+		DWORD result=0;
+		if(normalization&Locale::IgnoreCase) result|=NORM_IGNORECASE;
+		if(normalization&Locale::IgnoreCaseLinguistic) result|=NORM_IGNORECASE | NORM_LINGUISTIC_CASING;
+		if(normalization&Locale::IgnoreKanaType) result|=NORM_IGNOREKANATYPE;
+		if(normalization&Locale::IgnoreNonSpace) result|=NORM_IGNORENONSPACE;
+		if(normalization&Locale::IgnoreSymbol) result|=NORM_IGNORESYMBOLS;
+		if(normalization&Locale::IgnoreWidth) result|=NORM_IGNOREWIDTH;
+		if(normalization&Locale::DigitsAsNumbers) result|=SORT_DIGITSASNUMBERS;
+		if(normalization&Locale::StringSoft) result|=SORT_STRINGSORT;
+		return result;
+	}
+
+#endif
+
+/***********************************************************************
+Locale
+***********************************************************************/
+
+	Locale::Locale(const WString& _localeName)
+		:localeName(_localeName)
+	{
+	}
+
+	Locale::~Locale()
+	{
+	}
+
+	Locale Locale::Invariant()
+	{
+#if defined VCZH_MSVC
+		return Locale(LOCALE_NAME_INVARIANT);
+#elif defined VCZH_GCC
+		return Locale(L"");
+#endif
+	}
+
+	Locale Locale::SystemDefault()
+	{
+#if defined VCZH_MSVC
+		wchar_t buffer[LOCALE_NAME_MAX_LENGTH+1]={0};
+		GetSystemDefaultLocaleName(buffer, LOCALE_NAME_MAX_LENGTH);
+		return Locale(buffer);
+#elif defined VCZH_GCC
+		return Locale(L"en-US");
+#endif
+	}
+
+	Locale Locale::UserDefault()
+	{
+#if defined VCZH_MSVC
+		wchar_t buffer[LOCALE_NAME_MAX_LENGTH+1]={0};
+		GetUserDefaultLocaleName(buffer, LOCALE_NAME_MAX_LENGTH);
+		return Locale(buffer);
+#elif defined VCZH_GCC
+		return Locale(L"en-US");
+#endif
+	}
+
+	void Locale::Enumerate(collections::List<Locale>& locales)
+	{
+#if defined VCZH_MSVC
+		EnumSystemLocalesEx(&Locale_EnumLocalesProcEx, LOCALE_ALL, (LPARAM)&locales, NULL);
+#elif defined VCZH_GCC
+		locales.Add(Locale(L"en-US"));
+#endif
+	}
+
+	const WString& Locale::GetName()const
+	{
+		return localeName;
+	}
+
+	void Locale::GetShortDateFormats(collections::List<WString>& formats)const
+	{
+#if defined VCZH_MSVC
+		EnumDateFormatsExEx(&Locale_EnumDateFormatsProcExEx, localeName.Buffer(), DATE_SHORTDATE, (LPARAM)&formats);
+#elif defined VCZH_GCC
+		formats.Add(L"MM/dd/yyyy");
+		formats.Add(L"yyyy-MM-dd");
+#endif
+	}
+
+	void Locale::GetLongDateFormats(collections::List<WString>& formats)const
+	{
+#if defined VCZH_MSVC
+		EnumDateFormatsExEx(&Locale_EnumDateFormatsProcExEx, localeName.Buffer(), DATE_LONGDATE, (LPARAM)&formats);
+#elif defined VCZH_GCC
+		formats.Add(L"dddd, dd MMMM yyyy");
+#endif
+	}
+
+	void Locale::GetYearMonthDateFormats(collections::List<WString>& formats)const
+	{
+#if defined VCZH_MSVC
+		EnumDateFormatsExEx(&Locale_EnumDateFormatsProcExEx, localeName.Buffer(), DATE_YEARMONTH, (LPARAM)&formats);
+#elif defined VCZH_GCC
+		formats.Add(L"yyyy MMMM");
+#endif
+	}
+
+	void Locale::GetLongTimeFormats(collections::List<WString>& formats)const
+	{
+#if defined VCZH_MSVC
+		EnumTimeFormatsEx(&EnumTimeFormatsProcEx, localeName.Buffer(), 0, (LPARAM)&formats);
+#elif defined VCZH_GCC
+		formats.Add(L"HH:mm:ss");
+#endif
+	}
+
+	void Locale::GetShortTimeFormats(collections::List<WString>& formats)const
+	{
+#if defined VCZH_MSVC
+		EnumTimeFormatsEx(&EnumTimeFormatsProcEx, localeName.Buffer(), TIME_NOSECONDS, (LPARAM)&formats);
+#elif defined VCZH_GCC
+		formats.Add(L"HH:mm");
+		formats.Add(L"hh:mm tt");
+#endif
+	}
+
+	WString Locale::FormatDate(const WString& format, DateTime date)const
+	{
+#if defined VCZH_MSVC
+		SYSTEMTIME st=DateTimeToSystemTime(date);
+		int length=GetDateFormatEx(localeName.Buffer(), 0, &st, format.Buffer(), NULL, 0, NULL);
+		if(length==0) return L"";
+		Array<wchar_t> buffer(length);
+		GetDateFormatEx(localeName.Buffer(), 0, &st, format.Buffer(), &buffer[0], (int)buffer.Count(), NULL);
+		return &buffer[0];
+#elif defined VCZH_GCC
+		/*
+		auto df = L"yyyy,MM,MMM,MMMM,dd,ddd,dddd";
+		auto ds = L"2000,01,Jan,January,02,Sun,Sunday";
+		auto tf = L"hh,HH,mm,ss,tt";
+		auto ts = L"01,13,02,03,PM";
+		*/
+		WString result;
+		const wchar_t* reading = format.Buffer();
+
+		while (*reading)
+		{
+			if (wcsncmp(reading, L"yyyy", 4) == 0)
+			{
+				WString fragment = itow(date.year);
+				while (fragment.Length() < 4) fragment = L"0" + fragment;
+				result += fragment;
+				reading += 4;
+			}
+			else if (wcsncmp(reading, L"MMMM", 4) == 0)
+			{
+				result += GetLongMonthName(date.month);
+				reading += 4;
+			}
+			else if (wcsncmp(reading, L"MMM", 3) == 0)
+			{
+				result += GetShortMonthName(date.month);
+				reading += 3;
+			}
+			else if (wcsncmp(reading, L"MM", 2) == 0)
+			{
+				WString fragment = itow(date.month);
+				while (fragment.Length() < 2) fragment = L"0" + fragment;
+				result += fragment;
+				reading += 2;
+			}
+			else if (wcsncmp(reading, L"dddd", 4) == 0)
+			{
+				result += GetLongDayOfWeekName(date.dayOfWeek);
+				reading += 4;
+			}
+			else if (wcsncmp(reading, L"ddd", 3) == 0)
+			{
+				result += GetShortDayOfWeekName(date.dayOfWeek);
+				reading += 3;
+			}
+			else if (wcsncmp(reading, L"dd", 2) == 0)
+			{
+				WString fragment = itow(date.day);
+				while (fragment.Length() < 2) fragment = L"0" + fragment;
+				result += fragment;
+				reading += 2;
+			}
+			else if (wcsncmp(reading, L"hh", 2) == 0)
+			{
+				WString fragment = itow(date.hour > 12 ? date.hour - 12 : date.hour);
+				while (fragment.Length() < 2) fragment = L"0" + fragment;
+				result += fragment;
+				reading += 2;
+			}
+			else if (wcsncmp(reading, L"HH", 2) == 0)
+			{
+				WString fragment = itow(date.hour);
+				while (fragment.Length() < 2) fragment = L"0" + fragment;
+				result += fragment;
+				reading += 2;
+			}
+			else if (wcsncmp(reading, L"mm", 2) == 0)
+			{
+				WString fragment = itow(date.minute);
+				while (fragment.Length() < 2) fragment = L"0" + fragment;
+				result += fragment;
+				reading += 2;
+			}
+			else if (wcsncmp(reading, L"ss", 2) == 0)
+			{
+				WString fragment = itow(date.second);
+				while (fragment.Length() < 2) fragment = L"0" + fragment;
+				result += fragment;
+				reading += 2;
+			}
+			else if (wcsncmp(reading, L"tt", 2) == 0)
+			{
+				result += date.hour > 12 ? L"PM" : L"AM";
+				reading += 2;
+			}
+			else
+			{
+				result += *reading;
+				reading++;
+			}
+		}
+		return result;
+#endif
+	}
+
+	WString Locale::FormatTime(const WString& format, DateTime time)const
+	{
+#if defined VCZH_MSVC
+		SYSTEMTIME st=DateTimeToSystemTime(time);
+		int length=GetTimeFormatEx(localeName.Buffer(), 0, &st, format.Buffer(), NULL, 0);
+		if(length==0) return L"";
+		Array<wchar_t> buffer(length);
+		GetTimeFormatEx(localeName.Buffer(), 0, &st, format.Buffer(),&buffer[0], (int)buffer.Count());
+		return &buffer[0];
+#elif defined VCZH_GCC
+		return FormatDate(format, time);
+#endif
+	}
+
+	WString Locale::FormatNumber(const WString& number)const
+	{
+#ifdef VCZH_MSVC
+		int length=GetNumberFormatEx(localeName.Buffer(), 0, number.Buffer(), NULL, NULL, 0);
+		if(length==0) return L"";
+		Array<wchar_t> buffer(length);
+		GetNumberFormatEx(localeName.Buffer(), 0, number.Buffer(), NULL, &buffer[0], (int)buffer.Count());
+		return &buffer[0];
+#elif defined VCZH_GCC
+		return number;
+#endif
+	}
+
+	WString Locale::FormatCurrency(const WString& currency)const
+	{
+#ifdef VCZH_MSVC
+		int length=GetCurrencyFormatEx(localeName.Buffer(), 0, currency.Buffer(), NULL, NULL, 0);
+		if(length==0) return L"";
+		Array<wchar_t> buffer(length);
+		GetCurrencyFormatEx(localeName.Buffer(), 0, currency.Buffer(), NULL, &buffer[0], (int)buffer.Count());
+		return &buffer[0];
+#elif defined VCZH_GCC
+		return currency;
+#endif
+	}
+
+	WString Locale::GetShortDayOfWeekName(vint dayOfWeek)const
+	{
+#if defined VCZH_MSVC
+		return FormatDate(L"ddd", DateTime::FromDateTime(2000, 1, 2+dayOfWeek));
+#elif defined VCZH_GCC
+		switch(dayOfWeek)
+		{
+		case 0: return L"Sun";
+		case 1: return L"Mon";
+		case 2:	return L"Tue";
+		case 3:	return L"Wed";
+		case 4:	return L"Thu";
+		case 5:	return L"Fri";
+		case 6:	return L"Sat";
+		}
+		return L"";
+#endif
+	}
+
+	WString Locale::GetLongDayOfWeekName(vint dayOfWeek)const
+	{
+#if defined VCZH_MSVC
+		return FormatDate(L"dddd", DateTime::FromDateTime(2000, 1, 2+dayOfWeek));
+#elif defined VCZH_GCC
+		switch(dayOfWeek)
+		{
+		case 0: return L"Sunday";
+		case 1: return L"Monday";
+		case 2:	return L"Tuesday";
+		case 3:	return L"Wednesday";
+		case 4:	return L"Thursday";
+		case 5:	return L"Friday";
+		case 6:	return L"Saturday";
+		}
+		return L"";
+#endif
+	}
+
+	WString Locale::GetShortMonthName(vint month)const
+	{
+#if defined VCZH_MSVC
+		return FormatDate(L"MMM", DateTime::FromDateTime(2000, month, 1));
+#elif defined VCZH_GCC
+		switch(month)
+		{
+		case 1: return L"Jan";
+		case 2: return L"Feb";
+		case 3: return L"Mar";
+		case 4: return L"Apr";
+		case 5: return L"May";
+		case 6: return L"Jun";
+		case 7: return L"Jul";
+		case 8: return L"Aug";
+		case 9: return L"Sep";
+		case 10: return L"Oct";
+		case 11: return L"Nov";
+		case 12: return L"Dec";
+		}
+		return L"";
+#endif
+	}
+
+	WString Locale::GetLongMonthName(vint month)const
+	{
+#if defined VCZH_MSVC
+		return FormatDate(L"MMMM", DateTime::FromDateTime(2000, month, 1));
+#elif defined VCZH_GCC
+		switch(month)
+		{
+		case 1: return L"January";
+		case 2: return L"February";
+		case 3: return L"March";
+		case 4: return L"April";
+		case 5: return L"May";
+		case 6: return L"June";
+		case 7: return L"July";
+		case 8: return L"August";
+		case 9: return L"September";
+		case 10: return L"October";
+		case 11: return L"November";
+		case 12: return L"December";
+		}
+		return L"";
+#endif
+	}
+
+#ifdef VCZH_MSVC
+	WString Locale::ToFullWidth(const WString& str)const
+	{
+		return Transform(localeName, str, LCMAP_FULLWIDTH);
+	}
+
+	WString Locale::ToHalfWidth(const WString& str)const
+	{
+		return Transform(localeName, str, LCMAP_HALFWIDTH);
+	}
+
+	WString Locale::ToHiragana(const WString& str)const
+	{
+		return Transform(localeName, str, LCMAP_HIRAGANA);
+	}
+
+	WString Locale::ToKatagana(const WString& str)const
+	{
+		return Transform(localeName, str, LCMAP_KATAKANA);
+	}
+#endif
+
+	WString Locale::ToLower(const WString& str)const
+	{
+#if defined VCZH_MSVC
+		return Transform(localeName, str, LCMAP_LOWERCASE);
+#elif defined VCZH_GCC
+		return wlower(str);
+#endif
+	}
+
+	WString Locale::ToUpper(const WString& str)const
+	{
+#if defined VCZH_MSVC
+		return Transform(localeName, str, LCMAP_UPPERCASE);
+#elif defined VCZH_GCC
+		return wupper(str);
+#endif
+	}
+
+	WString Locale::ToLinguisticLower(const WString& str)const
+	{
+#if defined VCZH_MSVC
+		return Transform(localeName, str, LCMAP_LOWERCASE | LCMAP_LINGUISTIC_CASING);
+#elif defined VCZH_GCC
+		return wlower(str);
+#endif
+	}
+
+	WString Locale::ToLinguisticUpper(const WString& str)const
+	{
+#if defined VCZH_MSVC
+		return Transform(localeName, str, LCMAP_UPPERCASE | LCMAP_LINGUISTIC_CASING);
+#elif defined VCZH_GCC
+		return wupper(str);
+#endif
+	}
+
+#ifdef VCZH_MSVC
+	WString Locale::ToSimplifiedChinese(const WString& str)const
+	{
+		return Transform(localeName, str, LCMAP_SIMPLIFIED_CHINESE);
+	}
+
+	WString Locale::ToTraditionalChinese(const WString& str)const
+	{
+		return Transform(localeName, str, LCMAP_TRADITIONAL_CHINESE);
+	}
+
+	WString Locale::ToTileCase(const WString& str)const
+	{
+		return Transform(localeName, str, LCMAP_TITLECASE);
+	}
+#endif
+
+	vint Locale::Compare(const WString& s1, const WString& s2, Normalization normalization)const
+	{
+#if defined VCZH_MSVC
+		switch(CompareStringEx(localeName.Buffer(), TranslateNormalization(normalization), s1.Buffer(), (int)s1.Length(), s2.Buffer(), (int)s2.Length(), NULL, NULL, NULL))
+		{
+		case CSTR_LESS_THAN: return -1;
+		case CSTR_GREATER_THAN: return 1;
+		default: return 0;
+		}
+#elif defined VCZH_GCC
+		switch(normalization)
+		{
+			case Normalization::None:
+				return wcscmp(s1.Buffer(), s2.Buffer());
+			case Normalization::IgnoreCase:
+				return wcscasecmp(s1.Buffer(), s2.Buffer());
+		}
+#endif
+	}
+
+	vint Locale::CompareOrdinal(const WString& s1, const WString& s2)const
+	{
+#if defined VCZH_MSVC
+		switch(CompareStringOrdinal(s1.Buffer(), (int)s1.Length(), s2.Buffer(), (int)s2.Length(), FALSE))
+		{
+		case CSTR_LESS_THAN: return -1;
+		case CSTR_GREATER_THAN: return 1;
+		default: return 0;
+		}
+#elif defined VCZH_GCC
+		return wcscmp(s1.Buffer(), s2.Buffer());
+#endif
+	}
+
+	vint Locale::CompareOrdinalIgnoreCase(const WString& s1, const WString& s2)const
+	{
+#if defined VCZH_MSVC
+		switch(CompareStringOrdinal(s1.Buffer(), (int)s1.Length(), s2.Buffer(), (int)s2.Length(), TRUE))
+		{
+		case CSTR_LESS_THAN: return -1;
+		case CSTR_GREATER_THAN: return 1;
+		default: return 0;
+		}
+#elif defined VCZH_GCC
+		return wcscasecmp(s1.Buffer(), s2.Buffer());
+#endif
+	}
+
+	collections::Pair<vint, vint> Locale::FindFirst(const WString& text, const WString& find, Normalization normalization)const
+	{
+#if defined VCZH_MSVC
+		int length=0;
+		int result=FindNLSStringEx(localeName.Buffer(), FIND_FROMSTART | TranslateNormalization(normalization), text.Buffer(), (int)text.Length(), find.Buffer(), (int)find.Length(), &length, NULL, NULL, NULL);
+		return result==-1?Pair<vint, vint>(-1, 0):Pair<vint, vint>(result, length);
+#elif defined VCZH_GCC
+		if(text.Length() < find.Length() || find.Length() == 0)
+		{
+			return Pair<vint, vint>(-1, 0);
+		}
+		const wchar_t* result = 0;
+		switch(normalization)
+		{
+			case Normalization::None:
+				{
+					const wchar_t* reading = text.Buffer();
+					while(*reading)
+					{
+						if (wcsncmp(reading, find.Buffer(), find.Length())==0)
+						{
+							result = reading;
+							break;
+						}
+						reading++;
+					}
+				}
+				break;
+			case Normalization::IgnoreCase:
+				{
+					const wchar_t* reading = text.Buffer();
+					while(*reading)
+					{
+						if (wcsncasecmp(reading, find.Buffer(), find.Length())==0)
+						{
+							result = reading;
+							break;
+						}
+						reading++;
+					}
+				}
+				break;
+		}
+		return result == nullptr ? Pair<vint, vint>(-1, 0) : Pair<vint, vint>(result - text.Buffer(), find.Length());
+#endif
+	}
+
+	collections::Pair<vint, vint> Locale::FindLast(const WString& text, const WString& find, Normalization normalization)const
+	{
+#if defined VCZH_MSVC
+		int length=0;
+		int result=FindNLSStringEx(localeName.Buffer(), FIND_FROMEND | TranslateNormalization(normalization), text.Buffer(), (int)text.Length(), find.Buffer(), (int)find.Length(), &length, NULL, NULL, NULL);
+		return result==-1?Pair<vint, vint>(-1, 0):Pair<vint, vint>(result, length);
+#elif defined VCZH_GCC
+		if(text.Length() < find.Length() || find.Length() == 0)
+		{
+			return Pair<vint, vint>(-1, 0);
+		}
+		const wchar_t* result = 0;
+		switch(normalization)
+		{
+			case Normalization::None:
+				{
+					const wchar_t* reading = text.Buffer();
+					while(*reading)
+					{
+						if (wcsncmp(reading, find.Buffer(), find.Length())==0)
+						{
+							result = reading;
+						}
+						reading++;
+					}
+				}
+				break;
+			case Normalization::IgnoreCase:
+				{
+					const wchar_t* reading = text.Buffer();
+					while(*reading)
+					{
+						if (wcsncasecmp(reading, find.Buffer(), find.Length())==0)
+						{
+							result = reading;
+						}
+						reading++;
+					}
+				}
+				break;
+		}
+		return result == nullptr ? Pair<vint, vint>(-1, 0) : Pair<vint, vint>(result - text.Buffer(), find.Length());
+#endif
+	}
+
+	bool Locale::StartsWith(const WString& text, const WString& find, Normalization normalization)const
+	{
+#if defined VCZH_MSVC
+		int result=FindNLSStringEx(localeName.Buffer(), FIND_STARTSWITH | TranslateNormalization(normalization), text.Buffer(), (int)text.Length(), find.Buffer(), (int)find.Length(), NULL, NULL, NULL, NULL);
+		return result!=-1;
+#elif defined VCZH_GCC
+		if(text.Length() < find.Length() || find.Length() == 0)
+		{
+			return false;
+		}
+		switch(normalization)
+		{
+			case Normalization::None:
+				return wcsncmp(text.Buffer(), find.Buffer(), find.Length()) == 0;
+			case Normalization::IgnoreCase:
+				return wcsncasecmp(text.Buffer(), find.Buffer(), find.Length()) == 0;
+		}
+#endif
+	}
+
+	bool Locale::EndsWith(const WString& text, const WString& find, Normalization normalization)const
+	{
+#if defined VCZH_MSVC
+		int result=FindNLSStringEx(localeName.Buffer(), FIND_ENDSWITH | TranslateNormalization(normalization), text.Buffer(), (int)text.Length(), find.Buffer(), (int)find.Length(), NULL, NULL, NULL, NULL);
+		return result!=-1;
+#elif defined VCZH_GCC
+		if(text.Length() < find.Length() || find.Length() == 0)
+		{
+			return false;
+		}
+		switch(normalization)
+		{
+			case Normalization::None:
+				return wcsncmp(text.Buffer() + text.Length() - find.Length(), find.Buffer(), find.Length()) == 0;
+			case Normalization::IgnoreCase:
+				return wcsncasecmp(text.Buffer() + text.Length() - find.Length(), find.Buffer(), find.Length()) == 0;
+		}
+#endif
+	}
+}
+
+
+/***********************************************************************
+.\STRING.CPP
+***********************************************************************/
+#if defined VCZH_MSVC
+#elif defined VCZH_GCC
+#define _strtoi64 strtoll
+#define _strtoui64 strtoull
+#define _wcstoi64 wcstoll
+#define _wcstoui64 wcstoull
+#endif
+
+namespace vl
+{
+#if defined VCZH_GCC
+	void _itoa_s(vint32_t value, char* buffer, size_t size, vint radix)
+	{
+		sprintf(buffer, "%d", value);
+	}
+
+	void _itow_s(vint32_t value, wchar_t* buffer, size_t size, vint radix)
+	{
+		swprintf(buffer, size - 1, L"%d", value);
+	}
+
+	void _i64toa_s(vint64_t value, char* buffer, size_t size, vint radix)
+	{
+		sprintf(buffer, "%ld", value);
+	}
+
+	void _i64tow_s(vint64_t value, wchar_t* buffer, size_t size, vint radix)
+	{
+		swprintf(buffer, size - 1, L"%ld", value);
+	}
+
+	void _uitoa_s(vuint32_t value, char* buffer, size_t size, vint radix)
+	{
+		sprintf(buffer, "%u", value);
+	}
+
+	void _uitow_s(vuint32_t value, wchar_t* buffer, size_t size, vint radix)
+	{
+		swprintf(buffer, size - 1, L"%u", value);
+	}
+
+	void _ui64toa_s(vuint64_t value, char* buffer, size_t size, vint radix)
+	{
+		sprintf(buffer, "%lu", value);
+	}
+
+	void _ui64tow_s(vuint64_t value, wchar_t* buffer, size_t size, vint radix)
+	{
+		swprintf(buffer, size - 1, L"%lu", value);
+	}
+
+	void _gcvt_s(char* buffer, size_t size, double value, vint numberOfDigits)
+	{
+		sprintf(buffer, "%f", value);
+		char* point = strchr(buffer, '.');
+		if(!point) return;
+		char* zero = buffer + strlen(buffer);
+		while(zero[-1] == '0')
+		{
+			*--zero = '\0';
+		}
+		if(zero[-1] == '.') *--zero = '\0';
+	}
+
+	void _strlwr_s(char* buffer, size_t size)
+	{
+		while(*buffer)
+		{
+			*buffer=(char)tolower(*buffer);
+			buffer++;
+		}
+	}
+
+	void _strupr_s(char* buffer, size_t size)
+	{
+		while(*buffer)
+		{
+			*buffer=(char)toupper(*buffer);
+			buffer++;
+		}
+	}
+
+	void _wcslwr_s(wchar_t* buffer, size_t size)
+	{
+		while(*buffer)
+		{
+			*buffer=(char)towlower(*buffer);
+			buffer++;
+		}
+	}
+
+	void _wcsupr_s(wchar_t* buffer, size_t size)
+	{
+		while(*buffer)
+		{
+			*buffer=(char)towupper(*buffer);
+			buffer++;
+		}
+	}
+
+	void wcscpy_s(wchar_t* buffer, size_t size, const wchar_t* text)
+	{
+		wcscpy(buffer, text);
+	}
+#endif
+
+	vint atoi_test(const AString& string, bool& success)
+	{
+		char* endptr = 0;
+		vint result = strtol(string.Buffer(), &endptr, 10);
+		success = endptr == string.Buffer() + string.Length() && itoa(result) == string;
+		return result;
+	}
+
+	vint wtoi_test(const WString& string, bool& success)
+	{
+		wchar_t* endptr = 0;
+		vint result = wcstol(string.Buffer(), &endptr, 10);
+		success = endptr == string.Buffer() + string.Length() && itow(result) == string;
+		return result;
+	}
+
+	vint64_t atoi64_test(const AString& string, bool& success)
+	{
+		char* endptr = 0;
+		vint64_t result = _strtoi64(string.Buffer(), &endptr, 10);
+		success = endptr == string.Buffer() + string.Length() && i64toa(result) == string;
+		return result;
+	}
+
+	vint64_t wtoi64_test(const WString& string, bool& success)
+	{
+		wchar_t* endptr = 0;
+		vint64_t result = _wcstoi64(string.Buffer(), &endptr, 10);
+		success = endptr == string.Buffer() + string.Length() && i64tow(result) == string;
+		return result;
+	}
+
+	vuint atou_test(const AString& string, bool& success)
+	{
+		char* endptr = 0;
+		vuint result = strtoul(string.Buffer(), &endptr, 10);
+		success = endptr == string.Buffer() + string.Length() && utoa(result) == string;
+		return result;
+	}
+
+	vuint wtou_test(const WString& string, bool& success)
+	{
+		wchar_t* endptr = 0;
+		vuint result = wcstoul(string.Buffer(), &endptr, 10);
+		success = endptr == string.Buffer() + string.Length() && utow(result) == string;
+		return result;
+	}
+
+	vuint64_t atou64_test(const AString& string, bool& success)
+	{
+		char* endptr = 0;
+		vuint64_t result = _strtoui64(string.Buffer(), &endptr, 10);
+		success = endptr == string.Buffer() + string.Length() && u64toa(result) == string;
+		return result;
+	}
+
+	vuint64_t wtou64_test(const WString& string, bool& success)
+	{
+		wchar_t* endptr = 0;
+		vuint64_t result = _wcstoui64(string.Buffer(), &endptr, 10);
+		success = endptr == string.Buffer() + string.Length() && u64tow(result) == string;
+		return result;
+	}
+
+	double atof_test(const AString& string, bool& success)
+	{
+		char* endptr = 0;
+		double result = strtod(string.Buffer(), &endptr);
+		success = endptr == string.Buffer() + string.Length();
+		return result;
+	}
+
+	double wtof_test(const WString& string, bool& success)
+	{
+		wchar_t* endptr = 0;
+		double result = wcstod(string.Buffer(), &endptr);
+		success = endptr == string.Buffer() + string.Length();
+		return result;
+	}
+
+	vint atoi(const AString& string)
+	{
+		bool success = false;
+		return atoi_test(string, success);
+	}
+
+	vint wtoi(const WString& string)
+	{
+		bool success = false;
+		return wtoi_test(string, success);
+	}
+
+	vint64_t atoi64(const AString& string)
+	{
+		bool success = false;
+		return atoi64_test(string, success);
+	}
+
+	vint64_t wtoi64(const WString& string)
+	{
+		bool success = false;
+		return wtoi64_test(string, success);
+	}
+
+	vuint atou(const AString& string)
+	{
+		bool success = false;
+		return atou_test(string, success);
+	}
+
+	vuint wtou(const WString& string)
+	{
+		bool success = false;
+		return wtou_test(string, success);
+	}
+
+	vuint64_t atou64(const AString& string)
+	{
+		bool success = false;
+		return atou64_test(string, success);
+	}
+
+	vuint64_t wtou64(const WString& string)
+	{
+		bool success = false;
+		return wtou64_test(string, success);
+	}
+
+	double atof(const AString& string)
+	{
+		bool success = false;
+		return atof_test(string, success);
+	}
+
+	double wtof(const WString& string)
+	{
+		bool success = false;
+		return wtof_test(string, success);
+	}
+
+	AString itoa(vint number)
+	{
+		char buffer[100];
+		ITOA_S(number, buffer, sizeof(buffer) / sizeof(*buffer), 10);
+		return buffer;
+	}
+
+	WString itow(vint number)
+	{
+		wchar_t buffer[100];
+		ITOW_S(number, buffer, sizeof(buffer) / sizeof(*buffer), 10);
+		return buffer;
+	}
+
+	AString i64toa(vint64_t number)
+	{
+		char buffer[100];
+		I64TOA_S(number, buffer, sizeof(buffer) / sizeof(*buffer), 10);
+		return buffer;
+	}
+
+	WString i64tow(vint64_t number)
+	{
+		wchar_t buffer[100];
+		I64TOW_S(number, buffer, sizeof(buffer) / sizeof(*buffer), 10);
+		return buffer;
+	}
+
+	AString utoa(vuint number)
+	{
+		char buffer[100];
+		UITOA_S(number, buffer, sizeof(buffer) / sizeof(*buffer), 10);
+		return buffer;
+	}
+
+	WString utow(vuint number)
+	{
+		wchar_t buffer[100];
+		UITOW_S(number, buffer, sizeof(buffer) / sizeof(*buffer), 10);
+		return buffer;
+	}
+
+	AString u64toa(vuint64_t number)
+	{
+		char buffer[100];
+		UI64TOA_S(number, buffer, sizeof(buffer) / sizeof(*buffer), 10);
+		return buffer;
+	}
+
+	WString u64tow(vuint64_t number)
+	{
+		wchar_t buffer[100];
+		UI64TOW_S(number, buffer, sizeof(buffer) / sizeof(*buffer), 10);
+		return buffer;
+	}
+
+	AString ftoa(double number)
+	{
+		char buffer[320];
+		_gcvt_s(buffer, 320, number, 30);
+		vint len = (vint)strlen(buffer);
+		if (buffer[len - 1] == '.')
+		{
+			buffer[len - 1] = '\0';
+		}
+		return buffer;
+	}
+
+	WString ftow(double number)
+	{
+		return atow(ftoa(number));
+	}
+
+	vint _wtoa(const wchar_t* w, char* a, vint chars)
+	{
+#if defined VCZH_MSVC
+		return WideCharToMultiByte(CP_THREAD_ACP, 0, w, -1, a, (int)(a ? chars : 0), 0, 0);
+#elif defined VCZH_GCC
+		return wcstombs(a, w, chars-1)+1;
+#endif
+	}
+
+	AString wtoa(const WString& string)
+	{
+		vint len = _wtoa(string.Buffer(), 0, 0);
+		char* buffer = new char[len];
+		memset(buffer, 0, len*sizeof(*buffer));
+		_wtoa(string.Buffer(), buffer, (int)len);
+		AString s = buffer;
+		delete[] buffer;
+		return s;
+	}
+
+	vint _atow(const char* a, wchar_t* w, vint chars)
+	{
+#if defined VCZH_MSVC
+		return MultiByteToWideChar(CP_THREAD_ACP, 0, a, -1, w, (int)(w ? chars : 0));
+#elif defined VCZH_GCC
+		return mbstowcs(w, a, chars-1)+1;
+#endif
+	}
+
+	WString atow(const AString& string)
+	{
+		vint len = _atow(string.Buffer(), 0, 0);
+		wchar_t* buffer = new wchar_t[len];
+		memset(buffer, 0, len*sizeof(*buffer));
+		_atow(string.Buffer(), buffer, (int)len);
+		WString s = buffer;
+		delete[] buffer;
+		return s;
+	}
+
+	AString alower(const AString& string)
+	{
+		AString result = string.Buffer();
+		_strlwr_s((char*)result.Buffer(), result.Length() + 1);
+		return result;
+	}
+
+	WString wlower(const WString& string)
+	{
+		WString result = string.Buffer();
+		_wcslwr_s((wchar_t*)result.Buffer(), result.Length() + 1);
+		return result;
+	}
+
+	AString aupper(const AString& string)
+	{
+		AString result = string.Buffer();
+		_strupr_s((char*)result.Buffer(), result.Length() + 1);
+		return result;
+	}
+
+	WString wupper(const WString& string)
+	{
+		WString result = string.Buffer();
+		_wcsupr_s((wchar_t*)result.Buffer(), result.Length() + 1);
+		return result;
+	}
+
+	WString LoremIpsum(vint bestLength, LoremIpsumCasing casing)
+	{
+		static const wchar_t* words[] =
+		{
+			L"lorem", L"ipsum", L"dolor", L"sit", L"amet", L"consectetur", L"adipiscing", L"elit", L"integer",
+			L"nec", L"odio", L"praesent", L"libero", L"sed", L"cursus", L"ante", L"dapibus", L"diam",
+			L"sed", L"nisi", L"nulla", L"quis", L"sem", L"at", L"nibh", L"elementum", L"imperdiet", L"duis",
+			L"sagittis", L"ipsum", L"praesent", L"mauris", L"fusce", L"nec", L"tellus", L"sed", L"augue",
+			L"semper", L"porta", L"mauris", L"massa", L"vestibulum", L"lacinia", L"arcu", L"eget", L"nulla",
+			L"class", L"aptent", L"taciti", L"sociosqu", L"ad", L"litora", L"torquent", L"per", L"conubia",
+			L"nostra", L"per", L"inceptos", L"himenaeos", L"curabitur", L"sodales", L"ligula", L"in",
+			L"libero", L"sed", L"dignissim", L"lacinia", L"nunc", L"curabitur", L"tortor", L"pellentesque",
+			L"nibh", L"aenean", L"quam", L"in", L"scelerisque", L"sem", L"at", L"dolor", L"maecenas",
+			L"mattis", L"sed", L"convallis", L"tristique", L"sem", L"proin", L"ut", L"ligula", L"vel",
+			L"nunc", L"egestas", L"porttitor", L"morbi", L"lectus", L"risus", L"iaculis", L"vel", L"suscipit",
+			L"quis", L"luctus", L"non", L"massa", L"fusce", L"ac", L"turpis", L"quis", L"ligula", L"lacinia",
+			L"aliquet", L"mauris", L"ipsum", L"nulla", L"metus", L"metus", L"ullamcorper", L"vel", L"tincidunt",
+			L"sed", L"euismod", L"in", L"nibh", L"quisque", L"volutpat", L"condimentum", L"velit", L"class",
+			L"aptent", L"taciti", L"sociosqu", L"ad", L"litora", L"torquent", L"per", L"conubia", L"nostra",
+			L"per", L"inceptos", L"himenaeos", L"nam", L"nec", L"ante", L"sed", L"lacinia", L"urna",
+			L"non", L"tincidunt", L"mattis", L"tortor", L"neque", L"adipiscing", L"diam", L"a", L"cursus",
+			L"ipsum", L"ante", L"quis", L"turpis", L"nulla", L"facilisi", L"ut", L"fringilla", L"suspendisse",
+			L"potenti", L"nunc", L"feugiat", L"mi", L"a", L"tellus", L"consequat", L"imperdiet", L"vestibulum",
+			L"sapien", L"proin", L"quam", L"etiam", L"ultrices", L"suspendisse", L"in", L"justo", L"eu",
+			L"magna", L"luctus", L"suscipit", L"sed", L"lectus", L"integer", L"euismod", L"lacus", L"luctus",
+			L"magna", L"quisque", L"cursus", L"metus", L"vitae", L"pharetra", L"auctor", L"sem", L"massa",
+			L"mattis", L"sem", L"at", L"interdum", L"magna", L"augue", L"eget", L"diam", L"vestibulum",
+			L"ante", L"ipsum", L"primis", L"in", L"faucibus", L"orci", L"luctus", L"et", L"ultrices",
+			L"posuere", L"cubilia", L"curae;", L"morbi", L"lacinia", L"molestie", L"dui", L"praesent",
+			L"blandit", L"dolor", L"sed", L"non", L"quam", L"in", L"vel", L"mi", L"sit", L"amet", L"augue",
+			L"congue", L"elementum", L"morbi", L"in", L"ipsum", L"sit", L"amet", L"pede", L"facilisis",
+			L"laoreet", L"donec", L"lacus", L"nunc", L"viverra", L"nec", L"blandit", L"vel", L"egestas",
+			L"et", L"augue", L"vestibulum", L"tincidunt", L"malesuada", L"tellus", L"ut", L"ultrices",
+			L"ultrices", L"enim", L"curabitur", L"sit", L"amet", L"mauris", L"morbi", L"in", L"dui",
+			L"quis", L"est", L"pulvinar", L"ullamcorper", L"nulla", L"facilisi", L"integer", L"lacinia",
+			L"sollicitudin", L"massa", L"cras", L"metus", L"sed", L"aliquet", L"risus", L"a", L"tortor",
+			L"integer", L"id", L"quam", L"morbi", L"mi", L"quisque", L"nisl", L"felis", L"venenatis",
+			L"tristique", L"dignissim", L"in", L"ultrices", L"sit", L"amet", L"augue", L"proin", L"sodales",
+			L"libero", L"eget", L"ante", L"nulla", L"quam", L"aenean", L"laoreet", L"vestibulum", L"nisi",
+			L"lectus", L"commodo", L"ac", L"facilisis", L"ac", L"ultricies", L"eu", L"pede", L"ut", L"orci",
+			L"risus", L"accumsan", L"porttitor", L"cursus", L"quis", L"aliquet", L"eget", L"justo",
+			L"sed", L"pretium", L"blandit", L"orci", L"ut", L"eu", L"diam", L"at", L"pede", L"suscipit",
+			L"sodales", L"aenean", L"lectus", L"elit", L"fermentum", L"non", L"convallis", L"id", L"sagittis",
+			L"at", L"neque", L"nullam", L"mauris", L"orci", L"aliquet", L"et", L"iaculis", L"et", L"viverra",
+			L"vitae", L"ligula", L"nulla", L"ut", L"felis", L"in", L"purus", L"aliquam", L"imperdiet",
+			L"maecenas", L"aliquet", L"mollis", L"lectus", L"vivamus", L"consectetuer", L"risus", L"et",
+			L"tortor"
+		};
+		static vint index = 0;
+		const vint WordCount = sizeof(words) / sizeof(*words);
+
+		if (bestLength < 0) bestLength = 0;
+		vint bufferLength = bestLength + 20;
+		wchar_t* buffer = new wchar_t[bufferLength + 1];
+
+		buffer[0] = 0;
+		vint used = 0;
+		wchar_t* writing = buffer;
+		while (used < bestLength)
+		{
+			if (used != 0)
+			{
+				*writing++ = L' ';
+				used++;
+			}
+
+			vint wordSize = (vint)wcslen(words[index]);
+			wcscpy_s(writing, bufferLength - used, words[index]);
+			if (casing == LoremIpsumCasing::AllWordsUpperCase || (casing == LoremIpsumCasing::FirstWordUpperCase && used == 0))
+			{
+				*writing -= L'a' - L'A';
+			}
+
+			if (used != 0 && used + wordSize > bestLength)
+			{
+				vint deltaShort = bestLength - used + 1;
+				vint deltaLong = used + wordSize - bestLength;
+				if (deltaShort < deltaLong)
+				{
+					*--writing = 0;
+					used--;
+					break;
+				}
+			}
+			writing += wordSize;
+			used += wordSize;
+			index = (index + 1) % WordCount;
+		}
+
+		WString result = buffer;
+		delete[] buffer;
+		return result;
+	}
+
+	WString LoremIpsumTitle(vint bestLength)
+	{
+		return LoremIpsum(bestLength, LoremIpsumCasing::AllWordsUpperCase);
+	}
+
+	WString LoremIpsumSentence(vint bestLength)
+	{
+		return LoremIpsum(bestLength, LoremIpsumCasing::FirstWordUpperCase) + L".";
+	}
+
+	WString LoremIpsumParagraph(vint bestLength)
+	{
+		srand((unsigned)time(0));
+		auto casing = LoremIpsumCasing::FirstWordUpperCase;
+		vint comma = 0;
+		WString result;
+		while (result.Length() < bestLength)
+		{
+			vint offset = bestLength - result.Length();
+			if (comma == 0)
+			{
+				comma = rand() % 4 + 1;
+			}
+			vint length = rand() % 45 + 15;
+			if (offset < 20)
+			{
+				comma = 0;
+				length = offset - 1;
+			}
+			else if (length > offset)
+			{
+				comma = 0;
+				length = offset + rand() % 11 - 5;
+			}
+
+			result += LoremIpsum(length, casing);
+			if (comma == 0)
+			{
+				result += L".";
+				break;
+			}
+			else if (comma == 1)
+			{
+				result += L". ";
+				casing = LoremIpsumCasing::FirstWordUpperCase;
+			}
+			else
+			{
+				result += L", ";
+				casing = LoremIpsumCasing::AllWordsLowerCase;
+			}
+			comma--;
+		}
+		return result;
+	}
+}
+
+
+/***********************************************************************
+.\THREADING.CPP
+***********************************************************************/
+#ifdef VCZH_MSVC
+
+namespace vl
+{
+	using namespace threading_internal;
+	using namespace collections;
+
+/***********************************************************************
+WaitableObject
+***********************************************************************/
+
+	namespace threading_internal
+	{
+		struct WaitableData
+		{
+			HANDLE			handle;
+
+			WaitableData(HANDLE _handle)
+				:handle(_handle)
+			{
+			}
+		};
+	}
+
+	WaitableObject::WaitableObject()
+		:waitableData(0)
+	{
+	}
+
+	void WaitableObject::SetData(threading_internal::WaitableData* data)
+	{
+		waitableData=data;
+	}
+
+	bool WaitableObject::IsCreated()
+	{
+		return waitableData!=0;
+	}
+
+	bool WaitableObject::Wait()
+	{
+		return WaitForTime(INFINITE);
+	}
+
+	bool WaitableObject::WaitForTime(vint ms)
+	{
+		if(IsCreated())
+		{
+			if(WaitForSingleObject(waitableData->handle, (DWORD)ms)==WAIT_OBJECT_0)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	bool WaitableObject::WaitAll(WaitableObject** objects, vint count)
+	{
+		Array<HANDLE> handles(count);
+		for(vint i=0;i<count;i++)
+		{
+			handles[i]=objects[i]->waitableData->handle;
+		}
+		DWORD result=WaitForMultipleObjects((DWORD)count, &handles[0], TRUE, INFINITE);
+		return result==WAIT_OBJECT_0 || result==WAIT_ABANDONED_0;
+
+	}
+
+	bool WaitableObject::WaitAllForTime(WaitableObject** objects, vint count, vint ms)
+	{
+		Array<HANDLE> handles(count);
+		for(vint i=0;i<count;i++)
+		{
+			handles[i]=objects[i]->waitableData->handle;
+		}
+		DWORD result=WaitForMultipleObjects((DWORD)count, &handles[0], TRUE, (DWORD)ms);
+		return result==WAIT_OBJECT_0 || result==WAIT_ABANDONED_0;
+	}
+
+	vint WaitableObject::WaitAny(WaitableObject** objects, vint count, bool* abandoned)
+	{
+		Array<HANDLE> handles(count);
+		for(vint i=0;i<count;i++)
+		{
+			handles[i]=objects[i]->waitableData->handle;
+		}
+		DWORD result=WaitForMultipleObjects((DWORD)count, &handles[0], FALSE, INFINITE);
+		if(WAIT_OBJECT_0 <= result && result<WAIT_OBJECT_0+count)
+		{
+			*abandoned=false;
+			return result-WAIT_OBJECT_0;
+		}
+		else if(WAIT_ABANDONED_0 <= result && result<WAIT_ABANDONED_0+count)
+		{
+			*abandoned=true;
+			return result-WAIT_ABANDONED_0;
+		}
+		else
+		{
+			return -1;
+		}
+	}
+
+	vint WaitableObject::WaitAnyForTime(WaitableObject** objects, vint count, vint ms, bool* abandoned)
+	{
+		Array<HANDLE> handles(count);
+		for(vint i=0;i<count;i++)
+		{
+			handles[i]=objects[i]->waitableData->handle;
+		}
+		DWORD result=WaitForMultipleObjects((DWORD)count, &handles[0], FALSE, (DWORD)ms);
+		if(WAIT_OBJECT_0 <= result && result<WAIT_OBJECT_0+count)
+		{
+			*abandoned=false;
+			return result-WAIT_OBJECT_0;
+		}
+		else if(WAIT_ABANDONED_0 <= result && result<WAIT_ABANDONED_0+count)
+		{
+			*abandoned=true;
+			return result-WAIT_ABANDONED_0;
+		}
+		else
+		{
+			return -1;
+		}
+	}
+
+/***********************************************************************
+Thread
+***********************************************************************/
+
+	namespace threading_internal
+	{
+		struct ThreadData : public WaitableData
+		{
+			DWORD						id;
+
+			ThreadData()
+				:WaitableData(NULL)
+			{
+				id=-1;
+			}
+		};
+
+		class ProceduredThread : public Thread
+		{
+		private:
+			Thread::ThreadProcedure		procedure;
+			void*						argument;
+			bool						deleteAfterStopped;
+
+		protected:
+			void Run()
+			{
+				bool deleteAfterStopped = this->deleteAfterStopped;
+				ThreadLocalStorage::FixStorages();
+				try
+				{
+					procedure(this, argument);
+					threadState=Thread::Stopped;
+					ThreadLocalStorage::ClearStorages();
+				}
+				catch (...)
+				{
+					ThreadLocalStorage::ClearStorages();
+					throw;
+				}
+				if(deleteAfterStopped)
+				{
+					delete this;
+				}
+			}
+		public:
+			ProceduredThread(Thread::ThreadProcedure _procedure, void* _argument, bool _deleteAfterStopped)
+				:procedure(_procedure)
+				,argument(_argument)
+				,deleteAfterStopped(_deleteAfterStopped)
+			{
+			}
+		};
+
+		class LambdaThread : public Thread
+		{
+		private:
+			Func<void()>				procedure;
+			bool						deleteAfterStopped;
+
+		protected:
+			void Run()
+			{
+				bool deleteAfterStopped = this->deleteAfterStopped;
+				ThreadLocalStorage::FixStorages();
+				try
+				{
+					procedure();
+					threadState=Thread::Stopped;
+					ThreadLocalStorage::ClearStorages();
+				}
+				catch (...)
+				{
+					ThreadLocalStorage::ClearStorages();
+					throw;
+				}
+				if(deleteAfterStopped)
+				{
+					delete this;
+				}
+			}
+		public:
+			LambdaThread(const Func<void()>& _procedure, bool _deleteAfterStopped)
+				:procedure(_procedure)
+				,deleteAfterStopped(_deleteAfterStopped)
+			{
+			}
+		};
+	}
+
+	void InternalThreadProc(Thread* thread)
+	{
+		thread->Run();
+	}
+
+	DWORD WINAPI InternalThreadProcWrapper(LPVOID lpParameter)
+	{
+		InternalThreadProc((Thread*)lpParameter);
+		return 0;
+	}
+
+	Thread::Thread()
+	{
+		internalData=new ThreadData;
+		internalData->handle=CreateThread(NULL, 0, InternalThreadProcWrapper, this, CREATE_SUSPENDED, &internalData->id);
+		threadState=Thread::NotStarted;
+		SetData(internalData);
+	}
+
+	Thread::~Thread()
+	{
+		if (internalData)
+		{
+			Stop();
+			CloseHandle(internalData->handle);
+			delete internalData;
+		}
+	}
+
+	Thread* Thread::CreateAndStart(ThreadProcedure procedure, void* argument, bool deleteAfterStopped)
+	{
+		if(procedure)
+		{
+			Thread* thread=new ProceduredThread(procedure, argument, deleteAfterStopped);
+			if(thread->Start())
+			{
+				return thread;
+			}
+			else
+			{
+				delete thread;
+			}
+		}
+		return 0;
+	}
+
+	Thread* Thread::CreateAndStart(const Func<void()>& procedure, bool deleteAfterStopped)
+	{
+		Thread* thread=new LambdaThread(procedure, deleteAfterStopped);
+		if(thread->Start())
+		{
+			return thread;
+		}
+		else
+		{
+			delete thread;
+		}
+		return 0;
+	}
+
+	void Thread::Sleep(vint ms)
+	{
+		::Sleep((DWORD)ms);
+	}
+
+	
+	vint Thread::GetCPUCount()
+	{
+		SYSTEM_INFO info;
+		GetSystemInfo(&info);
+		return info.dwNumberOfProcessors;
+	}
+
+	vint Thread::GetCurrentThreadId()
+	{
+		return (vint)::GetCurrentThreadId();
+	}
+
+	bool Thread::Start()
+	{
+		if(threadState==Thread::NotStarted && internalData->handle!=NULL)
+		{
+			if(ResumeThread(internalData->handle)!=-1)
+			{
+				threadState=Thread::Running;
+				return true;
+			}
+		}
+		return false;
+	}
+
+	bool Thread::Stop()
+	{
+		if(internalData->handle!=NULL)
+		{
+			if (SuspendThread(internalData->handle) != -1)
+			{
+				threadState=Thread::Stopped;
+				return true;
+			}
+		}
+		return false;
+	}
+
+	Thread::ThreadState Thread::GetState()
+	{
+		return threadState;
+	}
+
+	void Thread::SetCPU(vint index)
+	{
+		SetThreadAffinityMask(internalData->handle, ((vint)1 << index));
+	}
+
+/***********************************************************************
+Mutex
+***********************************************************************/
+
+	namespace threading_internal
+	{
+		struct MutexData : public WaitableData
+		{
+			MutexData(HANDLE _handle)
+				:WaitableData(_handle)
+			{
+			}
+		};
+	}
+
+	Mutex::Mutex()
+		:internalData(0)
+	{
+	}
+
+	Mutex::~Mutex()
+	{
+		if(internalData)
+		{
+			CloseHandle(internalData->handle);
+			delete internalData;
+		}
+	}
+
+	bool Mutex::Create(bool owned, const WString& name)
+	{
+		if(IsCreated())return false;
+		BOOL aOwned=owned?TRUE:FALSE;
+		LPCTSTR aName=name==L""?NULL:name.Buffer();
+		HANDLE handle=CreateMutex(NULL, aOwned, aName);
+		if(handle)
+		{
+			internalData=new MutexData(handle);
+			SetData(internalData);
+		}
+		return IsCreated();
+	}
+
+	bool Mutex::Open(bool inheritable, const WString& name)
+	{
+		if(IsCreated())return false;
+		BOOL aInteritable=inheritable?TRUE:FALSE;
+		HANDLE handle=OpenMutex(SYNCHRONIZE, aInteritable, name.Buffer());
+		if(handle)
+		{
+			internalData=new MutexData(handle);
+			SetData(internalData);
+		}
+		return IsCreated();
+	}
+
+	bool Mutex::Release()
+	{
+		if(IsCreated())
+		{
+			return ReleaseMutex(internalData->handle)!=0;
+		}
+		return false;
+	}
+
+/***********************************************************************
+Semaphore
+***********************************************************************/
+
+	namespace threading_internal
+	{
+		struct SemaphoreData : public WaitableData
+		{
+			SemaphoreData(HANDLE _handle)
+				:WaitableData(_handle)
+			{
+			}
+		};
+	}
+
+	Semaphore::Semaphore()
+		:internalData(0)
+	{
+	}
+
+	Semaphore::~Semaphore()
+	{
+		if(internalData)
+		{
+			CloseHandle(internalData->handle);
+			delete internalData;
+		}
+	}
+
+	bool Semaphore::Create(vint initialCount, vint maxCount, const WString& name)
+	{
+		if(IsCreated())return false;
+		LONG aInitial=(LONG)initialCount;
+		LONG aMax=(LONG)maxCount;
+		LPCTSTR aName=name==L""?NULL:name.Buffer();
+		HANDLE handle=CreateSemaphore(NULL, aInitial, aMax, aName);
+		if(handle)
+		{
+			internalData=new SemaphoreData(handle);
+			SetData(internalData);
+		}
+		return IsCreated();
+	}
+
+	bool Semaphore::Open(bool inheritable, const WString& name)
+	{
+		if(IsCreated())return false;
+		BOOL aInteritable=inheritable?TRUE:FALSE;
+		HANDLE handle=OpenSemaphore(SYNCHRONIZE, aInteritable, name.Buffer());
+		if(handle)
+		{
+			internalData=new SemaphoreData(handle);
+			SetData(internalData);
+		}
+		return IsCreated();
+	}
+
+	bool Semaphore::Release()
+	{
+		if(IsCreated())
+		{
+			return Release(1)!=-1;
+		}
+		return false;
+	}
+
+	vint Semaphore::Release(vint count)
+	{
+		if(IsCreated())
+		{
+			LONG previous=-1;
+			if(ReleaseSemaphore(internalData->handle, (LONG)count, &previous)!=0)
+			{
+				return (vint)previous;
+			}
+		}
+		return -1;
+	}
+
+/***********************************************************************
+EventObject
+***********************************************************************/
+
+	namespace threading_internal
+	{
+		struct EventData : public WaitableData
+		{
+			EventData(HANDLE _handle)
+				:WaitableData(_handle)
+			{
+			}
+		};
+	}
+
+	EventObject::EventObject()
+		:internalData(0)
+	{
+	}
+
+	EventObject::~EventObject()
+	{
+		if(internalData)
+		{
+			CloseHandle(internalData->handle);
+			delete internalData;
+		}
+	}
+
+	bool EventObject::CreateAutoUnsignal(bool signaled, const WString& name)
+	{
+		if(IsCreated())return false;
+		BOOL aSignaled=signaled?TRUE:FALSE;
+		LPCTSTR aName=name==L""?NULL:name.Buffer();
+		HANDLE handle=CreateEvent(NULL, FALSE, aSignaled, aName);
+		if(handle)
+		{
+			internalData=new EventData(handle);
+			SetData(internalData);
+		}
+		return IsCreated();
+	}
+
+	bool EventObject::CreateManualUnsignal(bool signaled, const WString& name)
+	{
+		if(IsCreated())return false;
+		BOOL aSignaled=signaled?TRUE:FALSE;
+		LPCTSTR aName=name==L""?NULL:name.Buffer();
+		HANDLE handle=CreateEvent(NULL, TRUE, aSignaled, aName);
+		if(handle)
+		{
+			internalData=new EventData(handle);
+			SetData(internalData);
+		}
+		return IsCreated();
+	}
+
+	bool EventObject::Open(bool inheritable, const WString& name)
+	{
+		if(IsCreated())return false;
+		BOOL aInteritable=inheritable?TRUE:FALSE;
+		HANDLE handle=OpenEvent(SYNCHRONIZE, aInteritable, name.Buffer());
+		if(handle)
+		{
+			internalData=new EventData(handle);
+			SetData(internalData);
+		}
+		return IsCreated();
+	}
+
+	bool EventObject::Signal()
+	{
+		if(IsCreated())
+		{
+			return SetEvent(internalData->handle)!=0;
+		}
+		return false;
+	}
+
+	bool EventObject::Unsignal()
+	{
+		if(IsCreated())
+		{
+			return ResetEvent(internalData->handle)!=0;
+		}
+		return false;
+	}
+
+/***********************************************************************
+ThreadPoolLite
+***********************************************************************/
+
+		struct ThreadPoolQueueProcArgument
+		{
+			void(*proc)(void*);
+			void* argument;
+		};
+
+		DWORD WINAPI ThreadPoolQueueProc(void* argument)
+		{
+			Ptr<ThreadPoolQueueProcArgument> proc=(ThreadPoolQueueProcArgument*)argument;
+			ThreadLocalStorage::FixStorages();
+			try
+			{
+				proc->proc(proc->argument);
+				ThreadLocalStorage::ClearStorages();
+			}
+			catch (...)
+			{
+				ThreadLocalStorage::ClearStorages();
+			}
+			return 0;
+		}
+
+		DWORD WINAPI ThreadPoolQueueFunc(void* argument)
+		{
+			Ptr<Func<void()>> proc=(Func<void()>*)argument;
+			ThreadLocalStorage::FixStorages();
+			try
+			{
+				(*proc.Obj())();
+				ThreadLocalStorage::ClearStorages();
+			}
+			catch (...)
+			{
+				ThreadLocalStorage::ClearStorages();
+			}
+			return 0;
+		}
+
+		ThreadPoolLite::ThreadPoolLite()
+		{
+		}
+
+		ThreadPoolLite::~ThreadPoolLite()
+		{
+		}
+
+		bool ThreadPoolLite::Queue(void(*proc)(void*), void* argument)
+		{
+			ThreadPoolQueueProcArgument* p=new ThreadPoolQueueProcArgument;
+			p->proc=proc;
+			p->argument=argument;
+			if(QueueUserWorkItem(&ThreadPoolQueueProc, p, WT_EXECUTEDEFAULT))
+			{
+				return true;
+			}
+			else
+			{
+				delete p;
+				return false;
+			}
+		}
+
+		bool ThreadPoolLite::Queue(const Func<void()>& proc)
+		{
+			Func<void()>* p=new Func<void()>(proc);
+			if(QueueUserWorkItem(&ThreadPoolQueueFunc, p, WT_EXECUTEDEFAULT))
+			{
+				return true;
+			}
+			else
+			{
+				delete p;
+				return false;
+			}
+		}
+
+/***********************************************************************
+CriticalSection
+***********************************************************************/
+
+	namespace threading_internal
+	{
+		struct CriticalSectionData
+		{
+			CRITICAL_SECTION		criticalSection;
+		};
+	}
+
+	CriticalSection::Scope::Scope(CriticalSection& _criticalSection)
+		:criticalSection(&_criticalSection)
+	{
+		criticalSection->Enter();
+	}
+
+	CriticalSection::Scope::~Scope()
+	{
+		criticalSection->Leave();
+	}
+			
+	CriticalSection::CriticalSection()
+	{
+		internalData=new CriticalSectionData;
+		InitializeCriticalSection(&internalData->criticalSection);
+	}
+
+	CriticalSection::~CriticalSection()
+	{
+		DeleteCriticalSection(&internalData->criticalSection);
+		delete internalData;
+	}
+
+	bool CriticalSection::TryEnter()
+	{
+		return TryEnterCriticalSection(&internalData->criticalSection)!=0;
+	}
+
+	void CriticalSection::Enter()
+	{
+		EnterCriticalSection(&internalData->criticalSection);
+	}
+
+	void CriticalSection::Leave()
+	{
+		LeaveCriticalSection(&internalData->criticalSection);
+	}
+
+/***********************************************************************
+ReaderWriterLock
+***********************************************************************/
+
+	namespace threading_internal
+	{
+		struct ReaderWriterLockData
+		{
+			SRWLOCK			lock;
+		};
+	}
+
+	ReaderWriterLock::ReaderScope::ReaderScope(ReaderWriterLock& _lock)
+		:lock(&_lock)
+	{
+		lock->EnterReader();
+	}
+
+	ReaderWriterLock::ReaderScope::~ReaderScope()
+	{
+		lock->LeaveReader();
+	}
+
+	ReaderWriterLock::WriterScope::WriterScope(ReaderWriterLock& _lock)
+		:lock(&_lock)
+	{
+		lock->EnterWriter();
+	}
+
+	ReaderWriterLock::WriterScope::~WriterScope()
+	{
+		lock->LeaveWriter();
+	}
+
+	ReaderWriterLock::ReaderWriterLock()
+		:internalData(new threading_internal::ReaderWriterLockData)
+	{
+		InitializeSRWLock(&internalData->lock);
+	}
+
+	ReaderWriterLock::~ReaderWriterLock()
+	{
+		delete internalData;
+	}
+
+	bool ReaderWriterLock::TryEnterReader()
+	{
+		return TryAcquireSRWLockShared(&internalData->lock)!=0;
+	}
+
+	void ReaderWriterLock::EnterReader()
+	{
+		AcquireSRWLockShared(&internalData->lock);
+	}
+
+	void ReaderWriterLock::LeaveReader()
+	{
+		ReleaseSRWLockShared(&internalData->lock);
+	}
+
+	bool ReaderWriterLock::TryEnterWriter()
+	{
+		return TryAcquireSRWLockExclusive(&internalData->lock)!=0;
+	}
+
+	void ReaderWriterLock::EnterWriter()
+	{
+		AcquireSRWLockExclusive(&internalData->lock);
+	}
+
+	void ReaderWriterLock::LeaveWriter()
+	{
+		ReleaseSRWLockExclusive(&internalData->lock);
+	}
+
+/***********************************************************************
+ConditionVariable
+***********************************************************************/
+
+	namespace threading_internal
+	{
+		struct ConditionVariableData
+		{
+			CONDITION_VARIABLE			variable;
+		};
+	}
+
+	ConditionVariable::ConditionVariable()
+		:internalData(new threading_internal::ConditionVariableData)
+	{
+		InitializeConditionVariable(&internalData->variable);
+	}
+
+	ConditionVariable::~ConditionVariable()
+	{
+		delete internalData;
+	}
+
+	bool ConditionVariable::SleepWith(CriticalSection& cs)
+	{
+		return SleepConditionVariableCS(&internalData->variable, &cs.internalData->criticalSection, INFINITE)!=0;
+	}
+
+	bool ConditionVariable::SleepWithForTime(CriticalSection& cs, vint ms)
+	{
+		return SleepConditionVariableCS(&internalData->variable, &cs.internalData->criticalSection, (DWORD)ms)!=0;
+	}
+
+	bool ConditionVariable::SleepWithReader(ReaderWriterLock& lock)
+	{
+		return SleepConditionVariableSRW(&internalData->variable, &lock.internalData->lock, INFINITE, CONDITION_VARIABLE_LOCKMODE_SHARED)!=0;
+	}
+
+	bool ConditionVariable::SleepWithReaderForTime(ReaderWriterLock& lock, vint ms)
+	{
+		return SleepConditionVariableSRW(&internalData->variable, &lock.internalData->lock, (DWORD)ms, CONDITION_VARIABLE_LOCKMODE_SHARED)!=0;
+	}
+
+	bool ConditionVariable::SleepWithWriter(ReaderWriterLock& lock)
+	{
+		return SleepConditionVariableSRW(&internalData->variable, &lock.internalData->lock, INFINITE, 0)!=0;
+	}
+
+	bool ConditionVariable::SleepWithWriterForTime(ReaderWriterLock& lock, vint ms)
+	{
+		return SleepConditionVariableSRW(&internalData->variable, &lock.internalData->lock, (DWORD)ms, 0)!=0;
+	}
+
+	void ConditionVariable::WakeOnePending()
+	{
+		WakeConditionVariable(&internalData->variable);
+	}
+
+	void ConditionVariable::WakeAllPendings()
+	{
+		WakeAllConditionVariable(&internalData->variable);
+	}
+
+/***********************************************************************
+SpinLock
+***********************************************************************/
+
+	SpinLock::Scope::Scope(SpinLock& _spinLock)
+		:spinLock(&_spinLock)
+	{
+		spinLock->Enter();
+	}
+
+	SpinLock::Scope::~Scope()
+	{
+		spinLock->Leave();
+	}
+			
+	SpinLock::SpinLock()
+		:token(0)
+	{
+	}
+
+	SpinLock::~SpinLock()
+	{
+	}
+
+	bool SpinLock::TryEnter()
+	{
+		return _InterlockedExchange(&token, 1)==0;
+	}
+
+	void SpinLock::Enter()
+	{
+		while(_InterlockedCompareExchange(&token, 1, 0)!=0)
+		{
+			while(token!=0) _mm_pause();
+		}
+	}
+
+	void SpinLock::Leave()
+	{
+		_InterlockedExchange(&token, 0);
+	}
+
+/***********************************************************************
+ThreadLocalStorage
+***********************************************************************/
+
+#define KEY ((DWORD&)key)
+
+	ThreadLocalStorage::ThreadLocalStorage(Destructor _destructor)
+		:destructor(_destructor)
+	{
+		static_assert(sizeof(key) >= sizeof(DWORD), "ThreadLocalStorage's key storage is not large enouth.");
+		PushStorage(this);
+		KEY = TlsAlloc();
+		CHECK_ERROR(KEY != TLS_OUT_OF_INDEXES, L"vl::ThreadLocalStorage::ThreadLocalStorage()#Failed to alloc new thread local storage index.");
+	}
+
+	ThreadLocalStorage::~ThreadLocalStorage()
+	{
+		TlsFree(KEY);
+	}
+
+	void* ThreadLocalStorage::Get()
+	{
+		CHECK_ERROR(!disposed, L"vl::ThreadLocalStorage::Get()#Cannot access a disposed ThreadLocalStorage.");
+		return TlsGetValue(KEY);
+	}
+
+	void ThreadLocalStorage::Set(void* data)
+	{
+		CHECK_ERROR(!disposed, L"vl::ThreadLocalStorage::Set()#Cannot access a disposed ThreadLocalStorage.");
+		TlsSetValue(KEY, data);
+	}
+
+#undef KEY
+}
+#endif
+
+/***********************************************************************
+ThreadLocalStorage Common Implementations
 ***********************************************************************/
 
 namespace vl
 {
-	namespace stream
+	void ThreadLocalStorage::Clear()
 	{
-		using namespace lzw;
-
-/***********************************************************************
-LzwBase
-***********************************************************************/
-
-		void LzwBase::UpdateIndexBits()
+		CHECK_ERROR(!disposed, L"vl::ThreadLocalStorage::Clear()#Cannot access a disposed ThreadLocalStorage.");
+		if(destructor)
 		{
-			if (nextIndex >=2 && (nextIndex & (nextIndex - 1)) == 0)
+			if (auto data = Get())
 			{
-				indexBits++;
+				destructor(data);
 			}
 		}
+		Set(nullptr);
+	}
 
-		lzw::Code* LzwBase::CreateCode(lzw::Code* prefix, vuint8_t byte)
+	void ThreadLocalStorage::Dispose()
+	{
+		CHECK_ERROR(!disposed, L"vl::ThreadLocalStorage::Dispose()#Cannot access a disposed ThreadLocalStorage.");
+		Clear();
+		disposed = true;
+	}
+
+	struct TlsStorageLink
+	{
+		ThreadLocalStorage*		storage = nullptr;
+		TlsStorageLink*			next = nullptr;
+	};
+
+	volatile bool				tlsFixed = false;
+	TlsStorageLink*				tlsHead = nullptr;
+	TlsStorageLink**			tlsTail = &tlsHead;
+
+	void ThreadLocalStorage::PushStorage(ThreadLocalStorage* storage)
+	{
+		CHECK_ERROR(!tlsFixed, L"vl::ThreadLocalStorage::PushStorage(ThreadLocalStorage*)#Cannot create new ThreadLocalStorage instance after calling ThreadLocalStorage::FixStorages().");
+		auto link = new TlsStorageLink;
+		link->storage = storage;
+		*tlsTail = link;
+		tlsTail = &link->next;
+	}
+
+	void ThreadLocalStorage::FixStorages()
+	{
+		tlsFixed = true;
+	}
+
+	void ThreadLocalStorage::ClearStorages()
+	{
+		FixStorages();
+		auto current = tlsHead;
+		while (current)
 		{
-			if (nextIndex < MaxDictionarySize)
-			{
-				Code* code = codeAllocator.Create();
-				code->byte = byte;
-				code->code = nextIndex;
-				code->parent = prefix;
-				code->size = prefix->size + 1;
-				prefix->children.Set(byte, code, mapAllocator);
-				nextIndex++;
+			current->storage->Clear();
+			current = current->next;
+		}
+	}
 
-				return code;
+	void ThreadLocalStorage::DisposeStorages()
+	{
+		FixStorages();
+		auto current = tlsHead;
+		tlsHead = nullptr;
+		tlsTail = nullptr;
+		while (current)
+		{
+			current->storage->Dispose();
+
+			auto temp = current;
+			current = current->next;
+			delete temp;
+		}
+	}
+}
+
+
+/***********************************************************************
+.\THREADINGLINUX.CPP
+***********************************************************************/
+#ifdef VCZH_GCC
+#include <pthread.h>
+#include <fcntl.h>
+#include <semaphore.h>
+#include <errno.h>
+#if defined(__APPLE__) || defined(__APPLE_CC__)
+#include <CoreFoundation/CoreFoundation.h>
+#endif
+
+
+namespace vl
+{
+	using namespace threading_internal;
+	using namespace collections;
+
+
+/***********************************************************************
+Thread
+***********************************************************************/
+
+	namespace threading_internal
+	{
+		struct ThreadData
+		{
+			pthread_t					id;
+			EventObject					ev;
+		};
+
+		class ProceduredThread : public Thread
+		{
+		private:
+			Thread::ThreadProcedure		procedure;
+			void*						argument;
+			bool						deleteAfterStopped;
+
+		protected:
+			void Run()
+			{
+				bool deleteAfterStopped = this->deleteAfterStopped;
+				ThreadLocalStorage::FixStorages();
+				try
+				{
+					procedure(this, argument);
+					threadState=Thread::Stopped;
+					internalData->ev.Signal();
+					ThreadLocalStorage::ClearStorages();
+				}
+				catch (...)
+				{
+					ThreadLocalStorage::ClearStorages();
+					throw;
+				}
+				if(deleteAfterStopped)
+				{
+					delete this;
+				}
+			}
+		public:
+			ProceduredThread(Thread::ThreadProcedure _procedure, void* _argument, bool _deleteAfterStopped)
+				:procedure(_procedure)
+				,argument(_argument)
+				,deleteAfterStopped(_deleteAfterStopped)
+			{
+			}
+		};
+
+		class LambdaThread : public Thread
+		{
+		private:
+			Func<void()>				procedure;
+			bool						deleteAfterStopped;
+
+		protected:
+			void Run()
+			{
+				bool deleteAfterStopped = this->deleteAfterStopped;
+				ThreadLocalStorage::FixStorages();
+				try
+				{
+					procedure();
+					threadState=Thread::Stopped;
+					internalData->ev.Signal();
+					ThreadLocalStorage::ClearStorages();
+				}
+				catch (...)
+				{
+					ThreadLocalStorage::ClearStorages();
+					throw;
+				}
+				if(deleteAfterStopped)
+				{
+					delete this;
+				}
+			}
+		public:
+			LambdaThread(const Func<void()>& _procedure, bool _deleteAfterStopped)
+				:procedure(_procedure)
+				,deleteAfterStopped(_deleteAfterStopped)
+			{
+			}
+		};
+	}
+
+	void InternalThreadProc(Thread* thread)
+	{
+		thread->Run();
+	}
+
+	void* InternalThreadProcWrapper(void* lpParameter)
+	{
+		InternalThreadProc((Thread*)lpParameter);
+		return 0;
+	}
+
+	Thread::Thread()
+	{
+		internalData=new ThreadData;
+		internalData->ev.CreateManualUnsignal(false);
+		threadState=Thread::NotStarted;
+	}
+
+	Thread::~Thread()
+	{
+		if (internalData)
+		{
+			Stop();
+			if (threadState!=Thread::NotStarted)
+			{
+				pthread_detach(internalData->id);
+			}
+			delete internalData;
+		}
+	}
+
+	Thread* Thread::CreateAndStart(ThreadProcedure procedure, void* argument, bool deleteAfterStopped)
+	{
+		if(procedure)
+		{
+			Thread* thread=new ProceduredThread(procedure, argument, deleteAfterStopped);
+			if(thread->Start())
+			{
+				return thread;
 			}
 			else
 			{
-				return 0;
+				delete thread;
 			}
 		}
+		return 0;
+	}
 
-		LzwBase::LzwBase()
-			:codeAllocator(65536)
-			, mapAllocator(1048576)
+	Thread* Thread::CreateAndStart(const Func<void()>& procedure, bool deleteAfterStopped)
+	{
+		Thread* thread=new LambdaThread(procedure, deleteAfterStopped);
+		if(thread->Start())
 		{
-			root = codeAllocator.Create();
-
-			for (vint i = 0; i < 256; i++)
-			{
-				UpdateIndexBits();
-				CreateCode(root, (vuint8_t)i);
-			}
+			return thread;
 		}
-
-		LzwBase::LzwBase(bool (&existingBytes)[256])
+		else
 		{
-			root = codeAllocator.Create();
-			for (vint i = 0; i < 256; i++)
-			{
-				if (existingBytes[i])
-				{
-					UpdateIndexBits();
-					CreateCode(root, (vuint8_t)i);
-				}
-			}
-
-			if (indexBits < 8)
-			{
-				eofIndex = nextIndex++;
-			}
+			delete thread;
 		}
+		return 0;
+	}
 
-		LzwBase::~LzwBase()
+	void Thread::Sleep(vint ms)
+	{
+		if (ms >= 1000)
 		{
+			sleep(ms / 1000);
 		}
+		if (ms % 1000)
+		{
+			usleep((ms % 1000) * 1000);
+		}
+	}
+	
+	vint Thread::GetCPUCount()
+	{
+		return (vint)sysconf(_SC_NPROCESSORS_ONLN);
+	}
+
+	vint Thread::GetCurrentThreadId()
+	{
+		return (vint)::pthread_self();
+	}
+
+	bool Thread::Start()
+	{
+		if(threadState==Thread::NotStarted)
+		{
+			if(pthread_create(&internalData->id, nullptr, &InternalThreadProcWrapper, this)==0)
+			{
+				threadState=Thread::Running;
+				return true;
+			}
+		}
+		return false;
+	}
+
+	bool Thread::Wait()
+	{
+		return internalData->ev.Wait();
+	}
+
+	bool Thread::Stop()
+	{
+		if (threadState==Thread::Running)
+		{
+			if(pthread_cancel(internalData->id)==0)
+			{
+				threadState=Thread::Stopped;
+				internalData->ev.Signal();
+				return true;
+			}
+		}
+		return false;
+	}
+
+	Thread::ThreadState Thread::GetState()
+	{
+		return threadState;
+	}
 
 /***********************************************************************
-LzwEncoder
+Mutex
 ***********************************************************************/
 
-		void LzwEncoder::Flush()
+	namespace threading_internal
+	{
+		struct MutexData
 		{
-			vint written = 0;
-			vint bufferUsedSize = bufferUsedBits / 8;
-			if (bufferUsedBits % 8 != 0)
+			Semaphore			sem;
+		};
+	};
+
+	Mutex::Mutex()
+	{
+		internalData = new MutexData;
+	}
+
+	Mutex::~Mutex()
+	{
+		delete internalData;
+	}
+
+	bool Mutex::Create(bool owned, const WString& name)
+	{
+		return internalData->sem.Create(owned ? 0 : 1, 1, name);
+	}
+
+	bool Mutex::Open(bool inheritable, const WString& name)
+	{
+		return internalData->sem.Open(inheritable, name);
+	}
+
+	bool Mutex::Release()
+	{
+		return internalData->sem.Release();
+	}
+
+	bool Mutex::Wait()
+	{
+		return internalData->sem.Wait();
+	}
+
+/***********************************************************************
+Semaphore
+***********************************************************************/
+
+	namespace threading_internal
+	{
+		struct SemaphoreData
+		{
+			sem_t			semUnnamed;
+			sem_t*			semNamed = nullptr;
+		};
+	}
+
+	Semaphore::Semaphore()
+		:internalData(0)
+	{
+	}
+
+	Semaphore::~Semaphore()
+	{
+		if (internalData)
+		{
+			if (internalData->semNamed)
 			{
-				bufferUsedSize++;
+				sem_close(internalData->semNamed);
 			}
-			while (written < bufferUsedSize)
+			else
 			{
-				vint size = stream->Write(buffer + written, bufferUsedSize - written);
-				CHECK_ERROR(size != 0, L"LzwEncoder::Flush()#Failed to flush the lzw buffer.");
-				written += size;
+				sem_destroy(&internalData->semUnnamed);
 			}
-			bufferUsedBits = 0;
+			delete internalData;
+		}
+	}
+
+	bool Semaphore::Create(vint initialCount, vint maxCount, const WString& name)
+	{
+		if (internalData) return false;
+		if (initialCount > maxCount) return false;
+
+		internalData = new SemaphoreData;
+#if defined(__APPLE__)
+        
+		AString auuid;
+		if(name.Length() == 0)
+		{
+			CFUUIDRef cfuuid = CFUUIDCreate(kCFAllocatorDefault);
+			CFStringRef cfstr = CFUUIDCreateString(kCFAllocatorDefault, cfuuid);
+			auuid = CFStringGetCStringPtr(cfstr, kCFStringEncodingASCII);
+
+			CFRelease(cfstr);
+			CFRelease(cfuuid);
+		}
+		auuid = auuid.Insert(0, "/");
+		// OSX SEM_NAME_LENGTH = 31
+		if(auuid.Length() >= 30)
+			auuid = auuid.Sub(0, 30);
+        
+		if ((internalData->semNamed = sem_open(auuid.Buffer(), O_CREAT, O_RDWR, initialCount)) == SEM_FAILED)
+		{
+			delete internalData;
+			internalData = 0;
+			return false;
+		}
+        
+#else
+		if (name == L"")
+		{
+			if(sem_init(&internalData->semUnnamed, 0, (int)initialCount) == -1)
+			{
+				delete internalData;
+				internalData = 0;
+				return false;
+			}
+		}
+        	else
+        	{
+			AString astr = wtoa(name);
+            
+			if ((internalData->semNamed = sem_open(astr.Buffer(), O_CREAT, 0777, initialCount)) == SEM_FAILED)
+			{
+				delete internalData;
+				internalData = 0;
+				return false;
+			}
+		}
+#endif
+
+		Release(initialCount);
+		return true;
+	}
+
+	bool Semaphore::Open(bool inheritable, const WString& name)
+	{
+		if (internalData) return false;
+		if (inheritable) return false;
+
+		internalData = new SemaphoreData;
+		if (!(internalData->semNamed = sem_open(wtoa(name).Buffer(), 0)))
+		{
+            delete internalData;
+            internalData = 0;
+			return false;
 		}
 
-		vuint8_t highMarks[9] = { 0x00, 0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE, 0xFF };
-		vuint8_t lowMarks[9] = { 0x00, 0x01, 0x03, 0x07, 0x0F, 0x1F, 0x3F, 0x7F, 0xFF };
+		return true;
+	}
 
-		void LzwEncoder::WriteNumber(vint number, vint bitSize)
+	bool Semaphore::Release()
+	{
+		return Release(1);
+	}
+
+	vint Semaphore::Release(vint count)
+	{
+		for (vint i = 0; i < count; i++)
 		{
-			vint bitStart = 0;
-			vint bitStep = 8 - bufferUsedBits % 8;
-			if (bitStep > bitSize)
+			if (internalData->semNamed)
 			{
-				bitStep = bitSize;
+				sem_post(internalData->semNamed);
 			}
-			while (bitStart < bitSize)
+			else
 			{
-				if(bufferUsedBits == BufferSize * 8)
+				sem_post(&internalData->semUnnamed);
+			}
+		}
+		return true;
+	}
+
+	bool Semaphore::Wait()
+	{
+		if (internalData->semNamed)
+		{
+			return sem_wait(internalData->semNamed) == 0;
+		}
+		else
+		{
+			return sem_wait(&internalData->semUnnamed) == 0;
+		}
+	}
+
+/***********************************************************************
+EventObject
+***********************************************************************/
+
+	namespace threading_internal
+	{
+		struct EventData
+		{
+			bool				autoReset;
+			volatile bool		signaled;
+			CriticalSection		mutex;
+			ConditionVariable	cond;
+			volatile vint		counter = 0;
+		};
+	}
+
+	EventObject::EventObject()
+	{
+		internalData = nullptr;
+	}
+
+	EventObject::~EventObject()
+	{
+		if (internalData)
+		{
+			delete internalData;
+		}
+	}
+
+	bool EventObject::CreateAutoUnsignal(bool signaled, const WString& name)
+	{
+		if (name!=L"") return false;
+		if (internalData) return false;
+
+		internalData = new EventData;
+		internalData->autoReset = true;
+		internalData->signaled = signaled;
+		return true;
+	}
+
+	bool EventObject::CreateManualUnsignal(bool signaled, const WString& name)
+	{
+		if (name!=L"") return false;
+		if (internalData) return false;
+
+		internalData = new EventData;
+		internalData->autoReset = false;
+		internalData->signaled = signaled;
+		return true;
+	}
+
+	bool EventObject::Signal()
+	{
+		if (!internalData) return false;
+
+		internalData->mutex.Enter();
+		internalData->signaled = true;
+		if (internalData->counter)
+		{
+			if (internalData->autoReset)
+			{
+				internalData->cond.WakeOnePending();
+				internalData->signaled = false;
+			}
+			else
+			{
+				internalData->cond.WakeAllPendings();
+			}
+		}
+		internalData->mutex.Leave();
+		return true;
+	}
+
+	bool EventObject::Unsignal()
+	{
+		if (!internalData) return false;
+
+		internalData->mutex.Enter();
+		internalData->signaled = false;
+		internalData->mutex.Leave();
+		return true;
+	}
+
+	bool EventObject::Wait()
+	{
+		if (!internalData) return false;
+
+		internalData->mutex.Enter();
+		if (internalData->signaled)
+		{
+			if (internalData->autoReset)
+			{
+				internalData->signaled = false;
+			}
+		}
+		else
+		{
+			internalData->counter++;
+			internalData->cond.SleepWith(internalData->mutex);
+			internalData->counter--;
+		}
+		internalData->mutex.Leave();
+		return true;
+	}
+
+/***********************************************************************
+ThreadPoolLite
+***********************************************************************/
+
+	namespace threading_internal
+	{
+		struct ThreadPoolTask
+		{
+			Func<void()>			task;
+			Ptr<ThreadPoolTask>		next;
+		};
+
+		struct ThreadPoolData
+		{
+			Semaphore				semaphore;
+			EventObject				taskFinishEvent;
+			Ptr<ThreadPoolTask>		taskBegin;
+			Ptr<ThreadPoolTask>*	taskEnd = nullptr;
+			volatile bool			stopping = false;
+			List<Thread*>			taskThreads;
+		};
+
+		SpinLock					threadPoolLock;
+		ThreadPoolData*				threadPoolData = nullptr;
+
+		void ThreadPoolProc(Thread* thread, void* argument)
+		{
+			while (true)
+			{
+				Ptr<ThreadPoolTask> task;
+
+				threadPoolData->semaphore.Wait();
+				SPIN_LOCK(threadPoolLock)
 				{
-					Flush();
-				}
-
-				vint writeStart = bufferUsedBits % 8;
-				vint byteIndex = bufferUsedBits / 8;
-				vuint8_t byte = buffer[byteIndex];
-				byte &= highMarks[writeStart];
-
-				vuint8_t content = (vuint8_t)((number >> bitStart)&lowMarks[bitStep]) << (8 - writeStart - bitStep);
-				byte |= content;
-
-				buffer[byteIndex] = byte;
-				bufferUsedBits += bitStep;
-
-				bitStart += bitStep;
-				vint remain = bitSize - bitStart;
-				bitStep = remain < 8 ? remain : 8;
-			}
-		}
-
-		LzwEncoder::LzwEncoder()
-		{
-			prefix = root;
-		}
-
-		LzwEncoder::LzwEncoder(bool (&existingBytes)[256])
-			:LzwBase(existingBytes)
-		{
-			prefix = root;
-		}
-
-		LzwEncoder::~LzwEncoder()
-		{
-		}
-
-		void LzwEncoder::Setup(IStream* _stream)
-		{
-			stream = _stream;
-		}
-
-		void LzwEncoder::Close()
-		{
-			if (prefix != root)
-			{
-				WriteNumber(prefix->code, indexBits);
-				prefix = root;
-			}
-
-			vint remain = 8 - bufferUsedBits % 8;
-			if (remain != 8 && remain >= indexBits)
-			{
-				CHECK_ERROR(eofIndex != -1, L"LzwEncoder::Close()#Internal error.");
-				WriteNumber(eofIndex, indexBits);
-			}
-			Flush();
-		}
-
-		vint LzwEncoder::Write(void* _buffer, vint _size)
-		{
-			vuint8_t* bytes = (vuint8_t*)_buffer;
-			for (vint i = 0; i < _size; i++)
-			{
-				vuint8_t byte = bytes[i];
-				Code* next = prefix->children.Get(byte);
-				if (next)
-				{
-					prefix = next;
-				}
-				else
-				{
-					WriteNumber(prefix->code, indexBits);
-
-					if (nextIndex < MaxDictionarySize)
+					if (threadPoolData->taskBegin)
 					{
-						UpdateIndexBits();
-						CreateCode(prefix, byte);
+						task = threadPoolData->taskBegin;
+						threadPoolData->taskBegin = task->next;
 					}
-					prefix = root->children.Get(byte);
+
+					if (!threadPoolData->taskBegin)
+					{
+						threadPoolData->taskEnd = &threadPoolData->taskBegin;
+						threadPoolData->taskFinishEvent.Signal();
+					}
+				}
+
+				if (task)
+				{
+					ThreadLocalStorage::FixStorages();
+					try
+					{
+						task->task();
+						ThreadLocalStorage::ClearStorages();
+					}
+					catch (...)
+					{
+						ThreadLocalStorage::ClearStorages();
+					}
+				}
+				else if (threadPoolData->stopping)
+				{
+					return;
 				}
 			}
-			return _size;
 		}
 
+		bool ThreadPoolQueue(const Func<void()>& proc)
+		{
+			SPIN_LOCK(threadPoolLock)
+			{
+				if (!threadPoolData)
+				{
+					threadPoolData = new ThreadPoolData;
+					threadPoolData->semaphore.Create(0, 65536);
+					threadPoolData->taskFinishEvent.CreateManualUnsignal(false);
+					threadPoolData->taskEnd = &threadPoolData->taskBegin;
+
+					for (vint i = 0; i < Thread::GetCPUCount() * 4; i++)
+					{
+						threadPoolData->taskThreads.Add(Thread::CreateAndStart(&ThreadPoolProc, nullptr, false));
+					}
+				}
+
+				if (threadPoolData)
+				{
+					if (threadPoolData->stopping)
+					{
+						return false;
+					}
+
+					auto task = MakePtr<ThreadPoolTask>();
+					task->task = proc;
+					*threadPoolData->taskEnd = task;
+					threadPoolData->taskEnd = &task->next;
+					threadPoolData->semaphore.Release();
+					threadPoolData->taskFinishEvent.Unsignal();
+				}
+			}
+			return true;
+		}
+
+		bool ThreadPoolStop(bool discardPendingTasks)
+		{
+			SPIN_LOCK(threadPoolLock)
+			{
+				if (!threadPoolData) return false;
+				if (threadPoolData->stopping) return false;
+
+				threadPoolData->stopping = true;
+				if (discardPendingTasks)
+				{
+					threadPoolData->taskEnd = &threadPoolData->taskBegin;
+					threadPoolData->taskBegin = nullptr;
+				}
+
+				threadPoolData->semaphore.Release(threadPoolData->taskThreads.Count());
+			}
+
+			threadPoolData->taskFinishEvent.Wait();
+			for (vint i = 0; i < threadPoolData->taskThreads.Count(); i++)
+			{
+				auto thread = threadPoolData->taskThreads[i];
+				thread->Wait();
+				delete thread;
+			}
+			threadPoolData->taskThreads.Clear();
+
+			SPIN_LOCK(threadPoolLock)
+			{
+				delete threadPoolData;
+				threadPoolData = nullptr;
+			}
+			return true;
+		}
+	}
+
+	ThreadPoolLite::ThreadPoolLite()
+	{
+	}
+
+	ThreadPoolLite::~ThreadPoolLite()
+	{
+	}
+
+	bool ThreadPoolLite::Queue(void(*proc)(void*), void* argument)
+	{
+		return ThreadPoolQueue([proc, argument](){proc(argument);});
+	}
+
+	bool ThreadPoolLite::Queue(const Func<void()>& proc)
+	{
+		return ThreadPoolQueue(proc);
+	}
+
+	bool ThreadPoolLite::Stop(bool discardPendingTasks)
+	{
+		return ThreadPoolStop(discardPendingTasks);
+	}
+
 /***********************************************************************
-LzwDecoder
+CriticalSection
 ***********************************************************************/
 
-		bool LzwDecoder::ReadNumber(vint& number, vint bitSize)
+	namespace threading_internal
+	{
+		struct CriticalSectionData
 		{
-			number = 0;
-			if (inputBufferSize == -1)
+			pthread_mutex_t		mutex;
+		};
+	}
+
+	CriticalSection::CriticalSection()
+	{
+		internalData = new CriticalSectionData;
+		pthread_mutex_init(&internalData->mutex, nullptr);
+	}
+
+	CriticalSection::~CriticalSection()
+	{
+		pthread_mutex_destroy(&internalData->mutex);
+		delete internalData;
+	}
+
+	bool CriticalSection::TryEnter()
+	{
+		return pthread_mutex_trylock(&internalData->mutex) == 0;
+	}
+
+	void CriticalSection::Enter()
+	{
+		pthread_mutex_lock(&internalData->mutex);
+	}
+
+	void CriticalSection::Leave()
+	{
+		pthread_mutex_unlock(&internalData->mutex);
+	}
+
+	CriticalSection::Scope::Scope(CriticalSection& _criticalSection)
+		:criticalSection(&_criticalSection)
+	{
+		criticalSection->Enter();
+	}
+
+	CriticalSection::Scope::~Scope()
+	{
+		criticalSection->Leave();
+	}
+
+/***********************************************************************
+ReaderWriterLock
+***********************************************************************/
+
+	namespace threading_internal
+	{
+		struct ReaderWriterLockData
+		{
+			pthread_rwlock_t			rwlock;
+		};
+	}
+
+	ReaderWriterLock::ReaderWriterLock()
+	{
+		internalData = new ReaderWriterLockData;
+		pthread_rwlock_init(&internalData->rwlock, nullptr);
+	}
+
+	ReaderWriterLock::~ReaderWriterLock()
+	{
+		pthread_rwlock_destroy(&internalData->rwlock);
+		delete internalData;
+	}
+
+	bool ReaderWriterLock::TryEnterReader()
+	{
+		return pthread_rwlock_tryrdlock(&internalData->rwlock) == 0;
+	}
+
+	void ReaderWriterLock::EnterReader()
+	{
+		pthread_rwlock_rdlock(&internalData->rwlock);
+	}
+
+	void ReaderWriterLock::LeaveReader()
+	{
+		pthread_rwlock_unlock(&internalData->rwlock);
+	}
+
+	bool ReaderWriterLock::TryEnterWriter()
+	{
+		return pthread_rwlock_trywrlock(&internalData->rwlock) == 0;
+	}
+
+	void ReaderWriterLock::EnterWriter()
+	{
+		pthread_rwlock_wrlock(&internalData->rwlock);
+	}
+
+	void ReaderWriterLock::LeaveWriter()
+	{
+		pthread_rwlock_unlock(&internalData->rwlock);
+	}
+
+	ReaderWriterLock::ReaderScope::ReaderScope(ReaderWriterLock& _lock)
+		:lock(&_lock)
+	{
+		lock->EnterReader();
+	}
+
+	ReaderWriterLock::ReaderScope::~ReaderScope()
+	{
+		lock->LeaveReader();
+	}
+
+	ReaderWriterLock::WriterScope::WriterScope(ReaderWriterLock& _lock)
+		:lock(&_lock)
+	{
+		lock->EnterWriter();
+	}
+
+	ReaderWriterLock::WriterScope::~WriterScope()
+	{
+		lock->LeaveReader();
+	}
+
+/***********************************************************************
+ConditionVariable
+***********************************************************************/
+
+	namespace threading_internal
+	{
+		struct ConditionVariableData
+		{
+			pthread_cond_t			cond;
+		};
+	}
+
+	ConditionVariable::ConditionVariable()
+	{
+		internalData = new ConditionVariableData;
+		pthread_cond_init(&internalData->cond, nullptr);
+	}
+
+	ConditionVariable::~ConditionVariable()
+	{
+		pthread_cond_destroy(&internalData->cond);
+		delete internalData;
+	}
+
+	bool ConditionVariable::SleepWith(CriticalSection& cs)
+	{
+		return pthread_cond_wait(&internalData->cond, &cs.internalData->mutex) == 0;
+	}
+
+	void ConditionVariable::WakeOnePending()
+	{
+		pthread_cond_signal(&internalData->cond);
+	}
+
+	void ConditionVariable::WakeAllPendings()
+	{
+		pthread_cond_broadcast(&internalData->cond);
+	}
+
+/***********************************************************************
+SpinLock
+***********************************************************************/
+
+	SpinLock::Scope::Scope(SpinLock& _spinLock)
+		:spinLock(&_spinLock)
+	{
+		spinLock->Enter();
+	}
+
+	SpinLock::Scope::~Scope()
+	{
+		spinLock->Leave();
+	}
+			
+	SpinLock::SpinLock()
+		:token(0)
+	{
+	}
+
+	SpinLock::~SpinLock()
+	{
+	}
+
+	bool SpinLock::TryEnter()
+	{
+		return __sync_lock_test_and_set(&token, 1)==0;
+	}
+
+	void SpinLock::Enter()
+	{
+		while(__sync_val_compare_and_swap(&token, 0, 1)!=0)
+		{
+			while(token!=0) _mm_pause();
+		}
+	}
+
+	void SpinLock::Leave()
+	{
+		__sync_lock_test_and_set(&token, 0);
+	}
+
+/***********************************************************************
+ThreadLocalStorage
+***********************************************************************/
+
+#define KEY ((pthread_key_t&)key)
+
+	ThreadLocalStorage::ThreadLocalStorage(Destructor _destructor)
+		:destructor(_destructor)
+	{
+		static_assert(sizeof(key) >= sizeof(pthread_key_t), "ThreadLocalStorage's key storage is not large enouth.");
+		PushStorage(this);
+		auto error = pthread_key_create(&KEY, destructor);
+		CHECK_ERROR(error != EAGAIN && error != ENOMEM, L"vl::ThreadLocalStorage::ThreadLocalStorage()#Failed to create a thread local storage index.");
+	}
+
+	ThreadLocalStorage::~ThreadLocalStorage()
+	{
+		pthread_key_delete(KEY);
+	}
+
+	void* ThreadLocalStorage::Get()
+	{
+		CHECK_ERROR(!disposed, L"vl::ThreadLocalStorage::Get()#Cannot access a disposed ThreadLocalStorage.");
+		return pthread_getspecific(KEY);
+	}
+
+	void ThreadLocalStorage::Set(void* data)
+	{
+		CHECK_ERROR(!disposed, L"vl::ThreadLocalStorage::Set()#Cannot access a disposed ThreadLocalStorage.");
+		pthread_setspecific(KEY, data);
+	}
+
+#undef KEY
+}
+#endif
+
+
+/***********************************************************************
+.\COLLECTIONS\PARTIALORDERING.CPP
+***********************************************************************/
+
+namespace vl
+{
+	namespace collections
+	{
+		using namespace po;
+
+/***********************************************************************
+PartialOrderingProcessor
+***********************************************************************/
+
+		void PartialOrderingProcessor::InitNodes(vint itemCount)
+		{
+			nodes.Resize(itemCount);
+
+			for (vint i = 0; i < itemCount; i++)
+			{
+				auto& node = nodes[i];
+				node.ins = &emptyList;
+				node.outs = &emptyList;
+
+				vint inIndex = ins.Keys().IndexOf(i);
+				vint outIndex = outs.Keys().IndexOf(i);
+
+				if (inIndex != -1)
+				{
+					node.ins = &ins.GetByIndex(inIndex);
+				}
+				if (outIndex != -1)
+				{
+					node.outs = &outs.GetByIndex(outIndex);
+				}
+			}
+		}
+
+		void PartialOrderingProcessor::VisitUnvisitedNode(po::Node& node, Array<vint>& reversedOrder, vint& used)
+		{
+			node.visited = true;
+			for (vint i = node.outs->Count() - 1; i >= 0; i--)
+			{
+				auto& outNode = nodes[node.outs->Get(i)];
+				if (!outNode.visited)
+				{
+					VisitUnvisitedNode(outNode, reversedOrder, used);
+				}
+			}
+			reversedOrder[used++] = (vint)(&node - &nodes[0]);
+		}
+
+		void PartialOrderingProcessor::AssignUnassignedNode(po::Node& node, vint componentIndex, vint& used)
+		{
+			node.component = componentIndex;
+			firstNodesBuffer[used++] = (vint)(&node - &nodes[0]);
+			for (vint i = 0; i < node.ins->Count(); i++)
+			{
+				auto& inNode = nodes[node.ins->Get(i)];
+				if (inNode.component == -1)
+				{
+					AssignUnassignedNode(inNode, componentIndex, used);
+				}
+			}
+		}
+
+		void PartialOrderingProcessor::Sort()
+		{
+			// Kosaraju's Algorithm
+			CHECK_ERROR(components.Count() == 0, L"PartialOrdering::Sort()#Sorting twice is not allowed.");
+
+			Array<vint> reversedOrder(nodes.Count());
+			{
+				vint used = 0;
+				for (vint i = nodes.Count() - 1; i >= 0; i--)
+				{
+					auto& node = nodes[i];
+					if (!node.visited)
+					{
+						VisitUnvisitedNode(node, reversedOrder, used);
+					}
+				}
+			}
+
+			firstNodesBuffer.Resize(nodes.Count());
+			{
+				vint lastUsed = 0;
+				vint used = 0;
+				for (vint i = reversedOrder.Count() - 1; i >= 0; i--)
+				{
+					auto& node = nodes[reversedOrder[i]];
+					if (node.component == -1)
+					{
+						AssignUnassignedNode(node, components.Count(), used);
+
+						Component component;
+						component.firstNode = &firstNodesBuffer[lastUsed];
+						component.nodeCount = used - lastUsed;
+						lastUsed = used;
+						components.Add(component);
+					}
+				}
+			}
+		}
+	}
+}
+
+/***********************************************************************
+.\PARSING\PARSING.CPP
+***********************************************************************/
+
+namespace vl
+{
+	namespace parsing
+	{
+		namespace tabling
+		{
+			using namespace definitions;
+			using namespace analyzing;
+			using namespace collections;
+			using namespace regex;
+
+/***********************************************************************
+ParsingGeneralParser
+***********************************************************************/
+
+			ParsingGeneralParser::ParsingGeneralParser(Ptr<ParsingTable> _table)
+				:table(_table)
+			{
+			}
+
+			ParsingGeneralParser::~ParsingGeneralParser()
+			{
+			}
+
+			Ptr<ParsingTable> ParsingGeneralParser::GetTable()
+			{
+				return table;
+			}
+
+			void ParsingGeneralParser::BeginParse()
+			{
+			}
+
+			bool ParsingGeneralParser::Parse(ParsingState& state, ParsingTransitionProcessor& processor, collections::List<Ptr<ParsingError>>& errors)
+			{
+				BeginParse();
+				processor.Reset();
+
+				for(vint i=0;i<state.GetTokens().Count();i++)
+				{
+					const RegexToken* token=&state.GetTokens().Get(i);
+					if(token->token==-1 || !token->completeToken)
+					{
+						errors.Add(new ParsingError(token, L"Unrecognizable token: \""+WString(token->reading, token->length)+L"\"."));
+					}
+				}
+
+				while(true)
+				{
+					ParsingState::TransitionResult result=ParseStep(state, errors);
+					if(!result)
+					{
+						const RegexToken* token=state.GetToken(state.GetCurrentToken());
+						errors.Add(new ParsingError(token, L"Internal error when parsing."));
+						return false;
+					}
+					else if(result.transitionType==ParsingState::TransitionResult::SkipToken)
+					{
+						if(state.GetCurrentTableTokenIndex()==ParsingTable::TokenFinish)
+						{
+							const RegexToken* token=state.GetToken(state.GetCurrentToken());
+							errors.Add(new ParsingError(token, L"Failed to recover error when reaching the end of the input."));
+							return false;
+						}
+						else
+						{
+							state.SkipCurrentToken();
+							continue;
+						}
+					}
+					else if(!processor.Run(result))
+					{
+						const RegexToken* token=state.GetToken(state.GetCurrentToken());
+						errors.Add(new ParsingError(token, L"Internal error when building the parsing tree."));
+						return false;
+					}
+					if(result.tableTokenIndex==ParsingTable::TokenFinish && !processor.GetProcessingAmbiguityBranch())
+					{
+						break;
+					}
+				}
+
+				return true;
+			}
+
+			Ptr<ParsingTreeNode> ParsingGeneralParser::Parse(ParsingState& state, collections::List<Ptr<ParsingError>>& errors)
+			{
+				ParsingTreeBuilder builder;
+				Parse(state, builder, errors);
+
+				Ptr<ParsingTreeNode> node=builder.GetNode();
+				if(!node)
+				{
+					errors.Add(new ParsingError(L"Internal error when building the parsing tree after a succeeded parsing process."));
+					return 0;
+				}
+				return node;
+			}
+
+			Ptr<ParsingTreeNode> ParsingGeneralParser::Parse(const WString& input, const WString& rule, collections::List<Ptr<ParsingError>>& errors, vint codeIndex)
+			{
+				ParsingState state(input, table, codeIndex);
+				if(state.Reset(rule)==-1)
+				{
+					errors.Add(new ParsingError(L"Rule \""+rule+L"\" does not exist."));
+					return 0;
+				}
+				return Parse(state, errors);
+			}
+
+/***********************************************************************
+ParsingStrictParser
+***********************************************************************/
+
+			bool ParsingStrictParser::OnTestErrorRecoverExists()
 			{
 				return false;
 			}
 
-			vint remainBits = inputBufferSize * 8 - inputBufferUsedBits;
-			vint writtenBits = 0;
-			vint bitStep = 8 - inputBufferUsedBits % 8;
-			if (bitStep > bitSize)
+			void ParsingStrictParser::OnClearErrorRecover()
 			{
-				bitStep = bitSize;
 			}
-			while (writtenBits < bitSize)
+
+			ParsingState::TransitionResult ParsingStrictParser::OnErrorRecover(ParsingState& state, vint currentTokenIndex, collections::List<Ptr<ParsingError>>& errors)
 			{
-				if (remainBits == 0)
+				const RegexToken* token=state.GetToken(state.GetCurrentToken());
+				errors.Add(new ParsingError(token, (token==0?L"Error happened during parsing when reaching the end of the input.":L"Error happened during parsing.")));
+				return ParsingState::TransitionResult();
+			}
+
+			ParsingStrictParser::ParsingStrictParser(Ptr<ParsingTable> _table)
+				:ParsingGeneralParser(_table)
+			{
+			}
+
+			ParsingStrictParser::~ParsingStrictParser()
+			{
+			}
+			
+			ParsingState::TransitionResult ParsingStrictParser::ParseStep(ParsingState& state, collections::List<Ptr<ParsingError>>& errors)
+			{
+				ParsingState::TransitionResult result;
+				if (OnTestErrorRecoverExists())
 				{
-					inputBufferSize = stream->Read(inputBuffer, BufferSize);
-					if (inputBufferSize == 0)
-					{
-						inputBufferSize = -1;
-						return false;
-					}
-					remainBits = inputBufferSize * 8;
-					inputBufferUsedBits = 0;
-				}
-
-				vuint8_t byte = inputBuffer[inputBufferUsedBits / 8];
-				byte >>= (8 - inputBufferUsedBits % 8 - bitStep);
-				byte &= lowMarks[bitStep];
-				number |= byte << writtenBits;
-
-				inputBufferUsedBits += bitStep;
-				remainBits -= bitStep;
-				writtenBits += bitStep;
-				vint remain = bitSize - writtenBits;
-				bitStep = remain < 8 ? remain : 8;
-			}
-
-			return true;
-		}
-
-		void LzwDecoder::PrepareOutputBuffer(vint size)
-		{
-			if (outputBuffer.Count() < size)
-			{
-				outputBuffer.Resize(size);
-			}
-			outputBufferSize = size;
-		}
-
-		void LzwDecoder::ExpandCodeToOutputBuffer(lzw::Code* code)
-		{
-			vuint8_t* outputByte = &outputBuffer[0] + code->size;
-			Code* current = code;
-			while (current != root)
-			{
-				*(--outputByte) = current->byte;
-				current = current->parent;
-			}
-			outputBufferUsedBytes = 0;
-		}
-
-		LzwDecoder::LzwDecoder()
-		{
-			for (vint i = 0; i < 256; i++)
-			{
-				dictionary.Add(root->children.Get((vuint8_t)i));
-			}
-		}
-
-		LzwDecoder::LzwDecoder(bool (&existingBytes)[256])
-			:LzwBase(existingBytes)
-		{
-			for (vint i = 0; i < 256; i++)
-			{
-				if (existingBytes[i])
-				{
-					dictionary.Add(root->children.Get((vuint8_t)i));
-				}
-			}
-			if (eofIndex != -1)
-			{
-				dictionary.Add(0);
-			}
-		}
-
-		LzwDecoder::~LzwDecoder()
-		{
-		}
-
-		void LzwDecoder::Setup(IStream* _stream)
-		{
-			stream = _stream;
-		}
-
-		void LzwDecoder::Close()
-		{
-		}
-
-		vint LzwDecoder::Read(void* _buffer, vint _size)
-		{
-			vint written = 0;
-			vuint8_t* bytes = (vuint8_t*)_buffer;
-			while (written < _size)
-			{
-				vint expect = _size - written;
-				vint remain = outputBufferSize - outputBufferUsedBytes;
-				if (remain == 0)
-				{
-					vint index = 0;
-					if (!ReadNumber(index, indexBits) || index == eofIndex)
-					{
-						break;
-					}
-
-					Code* prefix = 0;
-					if (index == dictionary.Count())
-					{
-						prefix = lastCode;
-						PrepareOutputBuffer(prefix->size + 1);
-						ExpandCodeToOutputBuffer(prefix);
-						outputBuffer[outputBufferSize - 1] = outputBuffer[0];
-					}
-					else
-					{
-						prefix = dictionary[index];
-						PrepareOutputBuffer(prefix->size);
-						ExpandCodeToOutputBuffer(prefix);
-					}
-					
-					if (nextIndex < MaxDictionarySize)
-					{
-						if (lastCode)
-						{
-							dictionary.Add(CreateCode(lastCode, outputBuffer[0]));
-						}
-						UpdateIndexBits();
-					}
-					lastCode = dictionary[index];
+					result = OnErrorRecover(state, -1, errors);
 				}
 				else
 				{
-					if (remain > expect)
+					result = state.ReadToken();
+					if (result)
 					{
-						remain = expect;
+						OnClearErrorRecover();
 					}
-					memcpy(bytes + written, &outputBuffer[outputBufferUsedBytes], remain);
+					else
+					{
+						vint currentTokenIndex = state.GetCurrentTableTokenIndex();
+						if (currentTokenIndex != -1)
+						{
+							result = OnErrorRecover(state, currentTokenIndex, errors);
+						}
+					}
+				}
+				return result;
+			}
 
-					outputBufferUsedBytes += remain;
-					written += remain;
+/***********************************************************************
+ParsingAutoRecoverParser
+***********************************************************************/
+
+			ParsingAutoRecoverParser::RecoverFuture& ParsingAutoRecoverParser::GetRecoverFuture(vint index)
+			{
+				return recoverFutures[index];
+			}
+
+			ParsingAutoRecoverParser::RecoverFuture& ParsingAutoRecoverParser::CreateRecoverFuture(vint index, vint previousIndex)
+			{
+				RecoverFuture* rf = 0;
+				if (index >= recoverFutures.Count())
+				{
+					CHECK_ERROR(index == recoverFutures.Count(), L"ParsingAutoRecoverParser::CreateRecoverFuture(vint, vint)#Wrong argument: index.");
+					RecoverFuture recoverFuture;
+					recoverFuture.future = new ParsingState::Future;
+					index = recoverFutures.Add(recoverFuture);
+				}
+				rf = &GetRecoverFuture(index);
+				rf->index = index;
+				rf->previousIndex = previousIndex;
+				return *rf;
+			}
+
+			bool ParsingAutoRecoverParser::OnTestErrorRecoverExists()
+			{
+				return recoveringFutureIndex != -1;
+			}
+
+			void ParsingAutoRecoverParser::OnClearErrorRecover()
+			{
+				recoveringFutureIndex = -1;
+			}
+
+			ParsingState::TransitionResult ParsingAutoRecoverParser::OnErrorRecover(ParsingState& state, vint currentTokenIndex, collections::List<Ptr<ParsingError>>& errors)
+			{
+				if(recoveringFutureIndex==-1)
+				{
+					List<vint> prioritizedTokens;
+					prioritizedTokens.Add(ParsingTable::TokenFinish);
+					CopyFrom(
+						prioritizedTokens,
+						Range<vint>(ParsingTable::UserTokenStart, table->GetTokenCount() - ParsingTable::UserTokenStart)
+						);
+					prioritizedTokens.Add(ParsingTable::LeftRecursiveReduce);
+					prioritizedTokens.Add(ParsingTable::NormalReduce);
+					prioritizedTokens.Remove(currentTokenIndex);
+					prioritizedTokens.Insert(0, currentTokenIndex);
+
+					vint processingFutureIndex=-1;
+					vint usedFutureCount=0;
+					while(processingFutureIndex<usedFutureCount)
+					{
+						RecoverFuture previous;
+						if(processingFutureIndex!=-1)
+						{
+							previous = GetRecoverFuture(processingFutureIndex);
+						}
+						processingFutureIndex++;
+						if(previous.future && previous.future->currentState==-1) continue;
+
+						FOREACH(vint, currentTableTokenIndex, prioritizedTokens)
+						{
+							vint newInsertedTokenCount = previous.insertedTokenCount;
+							if (currentTableTokenIndex != ParsingTable::NormalReduce && currentTableTokenIndex != ParsingTable::LeftRecursiveReduce)
+							{
+								newInsertedTokenCount++;
+							}
+							if (currentTableTokenIndex != currentTokenIndex && newInsertedTokenCount > maxInsertedTokenCount)
+							{
+								continue;
+							}
+
+							RecoverFuture& now = CreateRecoverFuture(usedFutureCount, previous.index);
+							now.insertedTokenCount = newInsertedTokenCount;
+
+							if(state.ReadTokenInFuture(currentTableTokenIndex, previous.future, now.future, 0))
+							{
+								if(currentTableTokenIndex==currentTokenIndex)
+								{
+									if(previous.future)
+									{
+										recoveringFutureIndex = previous.index;
+										RecoverFuture* rf = &GetRecoverFuture(previous.index);
+										while(rf->future->previous)
+										{
+											RecoverFuture* prf = &GetRecoverFuture(rf->previousIndex);
+											prf->nextIndex = rf->index;
+											prf->future->next = rf->future;
+											rf = prf;
+										}
+										recoveringFutureIndex = rf->index;
+									}
+									else
+									{
+										recoveringFutureIndex = 0;
+									}
+									goto FOUND_ERROR_RECOVER_SOLUTION;
+								}
+								else
+								{
+									usedFutureCount++;
+								}
+							}
+						}
+					}
+				}
+			FOUND_ERROR_RECOVER_SOLUTION:
+
+				RecoverFuture* rf = 0;
+				if (recoveringFutureIndex != -1)
+				{
+					rf = &GetRecoverFuture(recoveringFutureIndex);
+					if(rf->future->next)
+					{
+						recoveringFutureIndex = rf->nextIndex;
+					}
+					else
+					{
+						recoveringFutureIndex = -1;
+					}
+				}
+
+				if(rf)
+				{
+					return state.RunTransition(rf->future->selectedItem, 0);
+				}
+				else
+				{
+					return ParsingState::TransitionResult(ParsingState::TransitionResult::SkipToken);
 				}
 			}
-			return written;
+
+			ParsingAutoRecoverParser::ParsingAutoRecoverParser(Ptr<ParsingTable> _table, vint _maxInsertedTokenCount)
+				:ParsingStrictParser(_table)
+				, recoveringFutureIndex(-1)
+				, maxInsertedTokenCount(_maxInsertedTokenCount == -1 ? 4 : _maxInsertedTokenCount)
+			{
+			}
+
+			ParsingAutoRecoverParser::~ParsingAutoRecoverParser()
+			{
+				FOREACH(RecoverFuture, future, recoverFutures)
+				{
+					delete future.future;
+				}
+			}
+
+			void ParsingAutoRecoverParser::BeginParse()
+			{
+				recoveringFutureIndex = -1;
+				ParsingStrictParser::BeginParse();
+			}
+
+/***********************************************************************
+ParsingAmbiguousParser
+***********************************************************************/
+
+			ParsingAmbiguousParser::ParsingAmbiguousParser(Ptr<ParsingTable> _table)
+				:ParsingGeneralParser(_table)
+				,consumedDecisionCount(0)
+			{
+			}
+
+			ParsingAmbiguousParser::~ParsingAmbiguousParser()
+			{
+			}
+
+			void ParsingAmbiguousParser::OnErrorRecover(ParsingState& state, vint currentTokenIndex, collections::List<ParsingState::Future*>& futures, vint& begin, vint& end, collections::List<Ptr<ParsingError>>& errors)
+			{
+				begin=end;
+			}
+
+			vint ParsingAmbiguousParser::GetResolvableFutureLevels(collections::List<ParsingState::Future*>& futures, vint begin, vint end)
+			{
+				if(end-begin<2)
+				{
+					return 1;
+				}
+				List<ParsingState::Future*> resolvingFutures;
+				for(vint i=begin;i<end;i++)
+				{
+					resolvingFutures.Add(futures[i]);
+				}
+
+				vint level=0;
+				while(true)
+				{
+					for(vint i=0;i<resolvingFutures.Count()-1;i++)
+					{
+						ParsingState::Future* first=resolvingFutures[i];
+						ParsingState::Future* second=resolvingFutures[i+1];
+
+						if(first->currentState!=second->currentState
+							|| first->reduceStateCount!=second->reduceStateCount
+							|| first->shiftStates.Count()!=second->shiftStates.Count()
+							)
+						{
+							return level;
+						}
+						else
+						{
+							for(vint j=0;j<first->shiftStates.Count();j++)
+							{
+								if(first->shiftStates[j]!=second->shiftStates[j])
+								{
+									return level;
+								}
+							}
+						}
+					}
+					level++;
+
+					for(vint i=0;i<resolvingFutures.Count();i++)
+					{
+						if(!(resolvingFutures[i]=resolvingFutures[i]->previous))
+						{
+							return level;
+						}
+					}
+				}
+			}
+
+			vint ParsingAmbiguousParser::SearchPathForOneStep(ParsingState& state, collections::List<ParsingState::Future*>& futures, vint& begin, vint& end, collections::List<Ptr<ParsingError>>& errors)
+			{
+				futures.Add(state.ExploreCreateRootFuture());
+				vint previousBegin = 0;
+				vint previousEnd = 1;
+				vint resolvableFutureLevels = 0;
+				bool errorRecovered = false;
+
+				while(true)
+				{
+					// keep all futures that consumed a token in a list
+					List<ParsingState::Future*> consumedTokenFutures;
+					vint processBegin = previousBegin;
+					vint processEnd = previousEnd;
+					while (processEnd > processBegin)
+					{
+						// explore the current token
+						if (state.ExploreStep(futures, processBegin, processEnd - processBegin, futures))
+						{
+							CopyFrom(
+								consumedTokenFutures,
+								From(futures)
+									.Skip(processEnd)
+									.Take(futures.Count() - processEnd),
+								true
+								);
+							futures.RemoveRange(processEnd, futures.Count() - processEnd);
+						}
+
+						// explore left recursive reduce and normal reduce
+						state.ExploreLeftRecursiveReduce(futures, processBegin, processEnd - processBegin, futures);
+						state.ExploreNormalReduce(futures, processBegin, processEnd - processBegin, futures);
+
+						// if a token is consumed, then for those reduce futures, explore them until a token is consumed, and discard all failed futures
+						processBegin = processEnd;
+						processEnd = futures.Count();
+					}
+
+					if (consumedTokenFutures.Count() == 0)
+					{
+						// failed to get any future that consumed a token, do error recovering
+						vint tokenIndex = state.GetCurrentTableTokenIndex();
+						OnErrorRecover(state, tokenIndex, futures, previousBegin, previousEnd, errors);
+						if (previousBegin == previousEnd)
+						{
+							break;
+						}
+					}
+					else
+					{
+						state.SkipCurrentToken();
+						// put all futures that consumed a token from consumedTokenFutures back to future list
+						previousBegin = futures.Count();
+						CopyFrom(futures, consumedTokenFutures, true);
+						previousEnd = futures.Count();
+
+						// resolve all futures and see if all futures collapsed into a equivalent single future
+						resolvableFutureLevels = GetResolvableFutureLevels(futures, previousBegin, previousEnd);
+						if (resolvableFutureLevels != 0)
+						{
+							break;
+						}
+					}
+				}
+
+				begin = previousBegin;
+				end = previousEnd;
+				return resolvableFutureLevels;
+			}
+
+			vint ParsingAmbiguousParser::GetConflictReduceCount(collections::List<ParsingState::Future*>& futures)
+			{
+				vint conflictReduceCount=-1;
+				for(vint i=0;i<futures.Count()-1;i++)
+				{
+					vint count=0;
+					ParsingState::Future* first=futures[i];
+					ParsingState::Future* second=futures[i+1];
+					vint firstIndex=first->selectedItem->instructions.Count();
+					vint secondIndex=second->selectedItem->instructions.Count();
+					while(--firstIndex>=0 && --secondIndex>=0)
+					{
+						ParsingTable::Instruction* firstIns=&first->selectedItem->instructions[firstIndex];
+						ParsingTable::Instruction* secondIns=&second->selectedItem->instructions[secondIndex];
+						if(firstIns && secondIns)
+						{
+							if(firstIns->instructionType==secondIns->instructionType
+								&& firstIns->nameParameter==secondIns->nameParameter
+								&& firstIns->stateParameter==secondIns->stateParameter
+								&& firstIns->value==secondIns->value
+								)
+							{
+								if(firstIns->instructionType==ParsingTable::Instruction::Reduce || firstIns->instructionType==ParsingTable::Instruction::LeftRecursiveReduce)
+								{
+									count++;
+								}
+								continue;
+							}
+						}
+						break;
+					}
+					if(conflictReduceCount==-1 || conflictReduceCount>count)
+					{
+						conflictReduceCount=count;
+					}
+				}
+				if(conflictReduceCount==-1)
+				{
+					conflictReduceCount=0;
+				}
+				return conflictReduceCount;
+			}
+
+			void ParsingAmbiguousParser::GetConflictReduceIndices(collections::List<ParsingState::Future*>& futures, vint conflictReduceCount, collections::Array<vint>& conflictReduceIndices)
+			{
+				conflictReduceIndices.Resize(futures.Count());
+				for(vint i=0;i<futures.Count();i++)
+				{
+					ParsingState::Future* future=futures[i];
+					vint index=future->selectedItem->instructions.Count();
+					vint count=0;
+					while(count<conflictReduceCount && index>0)
+					{
+						switch(future->selectedItem->instructions[--index].instructionType)
+						{
+						case ParsingTable::Instruction::Reduce:
+						case ParsingTable::Instruction::LeftRecursiveReduce:
+							count++;
+							break;
+						default:;
+						}
+					}
+					conflictReduceIndices[i]=index;
+				}
+			}
+			vint ParsingAmbiguousParser::GetAffectedStackNodeCount(collections::List<ParsingState::Future*>& futures, collections::Array<vint>& conflictReduceIndices)
+			{
+				vint affectedStackNodeCount=-1;
+				for(vint i=0;i<futures.Count();i++)
+				{
+					ParsingState::Future* future=futures[i];
+					vint count=1;
+					while(future && future->selectedItem)
+					{
+						vint start=(future==futures[i]?conflictReduceIndices[i]:future->selectedItem->instructions.Count())-1;
+						for(vint j=start;j>=0;j--)
+						{
+							switch(future->selectedItem->instructions[j].instructionType)
+							{
+							case ParsingTable::Instruction::Reduce:
+								count++;
+								break;
+							case ParsingTable::Instruction::Shift:
+								count--;
+								break;
+							default:;
+							}
+						}
+						future=future->previous;
+					}
+
+					if(affectedStackNodeCount==-1)
+					{
+						affectedStackNodeCount=count;
+					}
+					else if(affectedStackNodeCount!=count)
+					{
+						return -1;
+					}
+				}
+				return affectedStackNodeCount;
+			}
+
+			void ParsingAmbiguousParser::BuildSingleDecisionPath(ParsingState& state, ParsingState::Future* future, vint lastAvailableInstructionCount)
+			{
+				List<Pair<ParsingTable::TransitionItem*, regex::RegexToken*>> path;
+				while(future && future->selectedToken!=-1)
+				{
+					path.Add(Pair<ParsingTable::TransitionItem*, regex::RegexToken*>(future->selectedItem, future->selectedRegexToken));
+					future = future->previous;
+				}
+
+				for (vint j = path.Count() - 1; j >= 0; j--)
+				{
+					if(j==0 && lastAvailableInstructionCount!=-1)
+					{
+						decisions.Add(state.RunTransition(path[j].key, path[j].value, 0, lastAvailableInstructionCount, false));
+					}
+					else
+					{
+						decisions.Add(state.RunTransition(path[j].key, path[j].value));
+					}
+				}
+			}
+
+			void ParsingAmbiguousParser::BuildAmbiguousDecisions(ParsingState& state, collections::List<ParsingState::Future*>& futures, vint begin, vint end, vint resolvableFutureLevels, collections::List<Ptr<ParsingError>>& errors)
+			{
+				List<ParsingState::Future*> resolvingFutures;
+				CopyFrom(
+					resolvingFutures,
+					From(futures)
+						.Skip(begin)
+						.Take(end - begin)
+					);
+				for (vint i = 1; i < resolvableFutureLevels; i++)
+				{
+					for(vint j=0;j<resolvingFutures.Count();j++)
+					{
+						resolvingFutures[j] = resolvingFutures[j]->previous;
+					}
+				}
+
+				Array<vint> conflictReduceIndices;
+				vint conflictReduceCount=GetConflictReduceCount(resolvingFutures);
+				GetConflictReduceIndices(resolvingFutures, conflictReduceCount, conflictReduceIndices);
+
+				WString ambiguityNodeType, ambiguityRuleName;
+				if(resolvingFutures[0]->selectedItem->instructions.Count()==conflictReduceIndices[0])
+				{
+					vint rootStartState=state.GetParsingRuleStartState();
+					ambiguityNodeType=state.GetTable()->GetStateInfo(rootStartState).ruleAmbiguousType;
+					ambiguityRuleName=state.GetParsingRule();
+				}
+				else
+				{
+					ParsingTable::Instruction& ins=resolvingFutures[0]->selectedItem->instructions[conflictReduceIndices[0]];
+					ambiguityNodeType=state.GetTable()->GetStateInfo(ins.stateParameter).ruleAmbiguousType;
+					ambiguityRuleName=state.GetTable()->GetStateInfo(ins.stateParameter).ruleName;
+				}
+				if(ambiguityNodeType==L"")
+				{
+					const RegexToken* token=state.GetToken(state.GetCurrentToken());
+					errors.Add(new ParsingError(token, L"Ambiguity happens when reducing rule \""+ambiguityRuleName+L"\" but this rule does not have an associated ambiguous node type."));
+					return;
+				}
+
+				vint affectedStackNodeCount=GetAffectedStackNodeCount(resolvingFutures, conflictReduceIndices);
+				if(affectedStackNodeCount==-1)
+				{
+					const RegexToken* token=state.GetToken(state.GetCurrentToken());
+					errors.Add(new ParsingError(token, (token==0?L"Failed to pass ambiguity checking during parsing when reaching to the end of the input.":L"Failed to pass ambiguity checking during parsing.")));
+					return;
+				}
+
+				Ptr<ParsingState::StateGroup> stateGroup;
+				for(vint i=0;i<resolvingFutures.Count();i++)
+				{
+					if(stateGroup)
+					{
+						state.RestoreSnapshot(stateGroup);
+					}
+					else
+					{
+						stateGroup=state.TakeSnapshot();
+					}
+					{
+						ParsingState::TransitionResult result(
+							i==0
+							?ParsingState::TransitionResult::AmbiguityBegin
+							:ParsingState::TransitionResult::AmbiguityBranch
+							);
+						if(i==0)
+						{
+							result.ambiguityAffectedStackNodeCount=affectedStackNodeCount;
+						}
+						decisions.Add(result);
+					}
+					{
+						BuildSingleDecisionPath(state, resolvingFutures[i], conflictReduceIndices[i]);
+
+						if(i==resolvingFutures.Count()-1)
+						{
+							ParsingState::TransitionResult result(ParsingState::TransitionResult::AmbiguityEnd);
+							result.ambiguityNodeType=ambiguityNodeType;
+							decisions.Add(result);
+
+							vint start=conflictReduceIndices[i];
+							ParsingState::TransitionResult lastDecision=decisions[decisions.Count()-2];
+							decisions.Add(state.RunTransition(lastDecision.transition, lastDecision.token, start, lastDecision.transition->instructions.Count()-start, true));
+						}
+					}
+				}
+
+				ParsingState::Future* lastFuture=futures[end-1];
+				ParsingState::Future** futureCleaner=&lastFuture;
+				for(int i=1;i<resolvableFutureLevels;i++)
+				{
+					futureCleaner=&(*futureCleaner)->previous;
+				}
+				*futureCleaner=0;
+
+				if(lastFuture)
+				{
+					BuildSingleDecisionPath(state, lastFuture, -1);
+				}
+			}
+
+			void ParsingAmbiguousParser::BuildDecisions(ParsingState& state, collections::List<ParsingState::Future*>& futures, vint begin, vint end, vint resolvableFutureLevels, collections::List<Ptr<ParsingError>>& errors)
+			{
+				if(end-begin==0)
+				{
+					const RegexToken* token=state.GetToken(state.GetCurrentToken());
+					errors.Add(new ParsingError(token, (token==0?L"Error happened during parsing when reaching to the end of the input.":L"Error happened during parsing.")));
+				}
+				else if(end-begin==1)
+				{
+					BuildSingleDecisionPath(state, futures[begin], -1);
+				}
+				else
+				{
+					BuildAmbiguousDecisions(state, futures, begin, end, resolvableFutureLevels, errors);
+				}
+			}
+			
+			ParsingState::TransitionResult ParsingAmbiguousParser::ParseStep(ParsingState& state, collections::List<Ptr<ParsingError>>& errors)
+			{
+				if(decisions.Count()==consumedDecisionCount)
+				{
+					List<ParsingState::Future*> futures;
+					vint resultBegin=0;
+					vint resultEnd=0;
+
+					vint resolvableFutureLevels=SearchPathForOneStep(state, futures, resultBegin, resultEnd, errors);
+					BuildDecisions(state, futures, resultBegin, resultEnd, resolvableFutureLevels, errors);
+
+					FOREACH(ParsingState::Future*, future, futures)
+					{
+						delete future;
+					}
+				}
+
+				if(decisions.Count()>consumedDecisionCount)
+				{
+					ParsingState::TransitionResult result=decisions[consumedDecisionCount++];
+					if(consumedDecisionCount==decisions.Count())
+					{
+						decisions.Clear();
+						consumedDecisionCount=0;
+					}
+					return result;
+				}
+				else
+				{
+					return ParsingState::TransitionResult();
+				}
+			}
+
+			void ParsingAmbiguousParser::BeginParse()
+			{
+				decisions.Clear();
+				consumedDecisionCount=0;
+				ParsingGeneralParser::BeginParse();
+			}
+
+/***********************************************************************
+ParsingAutoRecoverAmbiguousParser
+***********************************************************************/
+
+			void ParsingAutoRecoverAmbiguousParser::OnErrorRecover(ParsingState& state, vint currentTokenIndex, collections::List<ParsingState::Future*>& futures, vint& begin, vint& end, collections::List<Ptr<ParsingError>>& errors)
+			{
+				vint insertedTokenCount = 0;
+				while (insertedTokenCount++ < maxInsertedTokenCount)
+				{
+					// keep all futures that consumed a token in a list
+					List<ParsingState::Future*> consumedTokenFutures;
+					vint processBegin = begin;
+					vint processEnd = end;
+					while (processEnd > processBegin)
+					{
+						// explore all tokens
+						for (vint i = processBegin; i < processEnd; i++)
+						{
+							state.Explore(ParsingTable::TokenFinish, futures[i], futures);
+							for (vint token = ParsingTable::UserTokenStart; token < state.GetTable()->GetTokenCount(); token++)
+							{
+								state.Explore(token, futures[i], futures);
+							}
+						}
+						// copy all futures that consumed a token to consumedTokenFutures
+						if (futures.Count() > processEnd)
+						{
+							CopyFrom(
+								consumedTokenFutures,
+								From(futures)
+									.Skip(processEnd)
+									.Take(futures.Count() - processEnd),
+								true
+								);
+							futures.RemoveRange(processEnd, futures.Count() - processEnd);
+						}
+
+						// explore left recursive reduce and normal reduce
+						state.ExploreLeftRecursiveReduce(futures, processBegin, processEnd - processBegin, futures);
+						state.ExploreNormalReduce(futures, processBegin, processEnd - processBegin, futures);
+
+						// if a token is consumed, then for those reduce futures, explore them until a token is consumed, and discard all failed futures
+						processBegin = processEnd;
+						processEnd = futures.Count();
+					}
+
+					if (consumedTokenFutures.Count() == 0)
+					{
+						// failed to get any future that consumed a token
+						goto ERROR_RECOVERY_FAILED;
+					}
+					else
+					{
+						// try to see if the target token is reached
+						List<ParsingState::Future*> recoveryFutures;
+						FOREACH(ParsingState::Future*, future, consumedTokenFutures)
+						{
+							if (future->selectedToken == currentTokenIndex)
+							{
+								// because this is reached by error recoverying, so all futures in availableFutures should have previous futures
+								recoveryFutures.Add(future->previous);
+							}
+						}
+
+						if (recoveryFutures.Count()>0)
+						{
+							// finally reached the expected currentTokenIndex
+							// move these previous futures to the end
+							// then the original parser algorith, will use these previous futures to reach the currentTokenIndex in the next step
+							FOREACH(ParsingState::Future*, future, recoveryFutures)
+							{
+								futures.Remove(future);
+								futures.Add(future);
+							}
+							begin = futures.Count() - recoveryFutures.Count();
+							end = futures.Count();
+
+							// delete all futures in consumedTokenFutures
+							FOREACH(ParsingState::Future*, future, consumedTokenFutures)
+							{
+								delete future;
+							}
+							goto ERROR_RECOVERY_SUCCEEDED;
+						}
+						else
+						{
+							// put all futures that consumed a token from consumedTokenFutures back to future list
+							begin = futures.Count();
+							CopyFrom(futures, consumedTokenFutures, true);
+							end = futures.Count();
+						}
+					}
+				}
+				// if the maxInsertedTokenCount is exceeded, then we get here
+			ERROR_RECOVERY_FAILED:
+				begin = end = futures.Count();
+				return;
+			ERROR_RECOVERY_SUCCEEDED:
+				return;
+			}
+
+			ParsingAutoRecoverAmbiguousParser::ParsingAutoRecoverAmbiguousParser(Ptr<ParsingTable> _table, vint _maxInsertedTokenCount)
+				:ParsingAmbiguousParser(_table)
+				, maxInsertedTokenCount(_maxInsertedTokenCount == -1 ? 4 : _maxInsertedTokenCount)
+			{
+			}
+
+			ParsingAutoRecoverAmbiguousParser::~ParsingAutoRecoverAmbiguousParser()
+			{
+			}
+
+/***********************************************************************
+Helper Functions
+***********************************************************************/
+
+			Ptr<ParsingGeneralParser> CreateStrictParser(Ptr<ParsingTable> table)
+			{
+				if(table)
+				{
+					if(table->GetAmbiguity())
+					{
+						return new ParsingAmbiguousParser(table);
+					}
+					else
+					{
+						return new ParsingStrictParser(table);
+					}
+				}
+				else
+				{
+					return 0;
+				}
+			}
+
+			Ptr<ParsingGeneralParser> CreateAutoRecoverParser(Ptr<ParsingTable> table)
+			{
+				if(table)
+				{
+					if(table->GetAmbiguity())
+					{
+						return new ParsingAutoRecoverAmbiguousParser(table);
+					}
+					else
+					{
+						return new ParsingAutoRecoverParser(table);
+					}
+				}
+				else
+				{
+					return 0;
+				}
+			}
+
+			Ptr<ParsingGeneralParser> CreateBootstrapStrictParser()
+			{
+				List<Ptr<ParsingError>> errors;
+				Ptr<ParsingDefinition> definition=CreateParserDefinition();
+				Ptr<ParsingTable> table=GenerateTable(definition, false, errors);
+				return CreateStrictParser(table);
+			}
+
+			Ptr<ParsingGeneralParser> CreateBootstrapAutoRecoverParser()
+			{
+				List<Ptr<ParsingError>> errors;
+				Ptr<ParsingDefinition> definition=CreateParserDefinition();
+				Ptr<ParsingTable> table=GenerateTable(definition, false, errors);
+				return CreateAutoRecoverParser(table);
+			}
+		}
+	}
+}
+
+/***********************************************************************
+Reflection
+***********************************************************************/
+
+#ifndef VCZH_DEBUG_NO_REFLECTION
+
+namespace vl
+{
+	namespace reflection
+	{
+		namespace description
+		{
+			using namespace parsing;
+
+			PARSINGREFLECTION_TYPELIST(IMPL_VL_TYPE_INFO)
+
+/***********************************************************************
+Type Declaration
+***********************************************************************/
+
+#define _ ,
+
+			BEGIN_STRUCT_MEMBER(ParsingTextPos)
+				STRUCT_MEMBER(index)
+				STRUCT_MEMBER(row)
+				STRUCT_MEMBER(column)
+			END_STRUCT_MEMBER(ParsingTextPos)
+
+			BEGIN_STRUCT_MEMBER(ParsingTextRange)
+				STRUCT_MEMBER(start)
+				STRUCT_MEMBER(end)
+			END_STRUCT_MEMBER(ParsingTextRange)
+
+			BEGIN_CLASS_MEMBER(ParsingTreeNode)
+				CLASS_MEMBER_PROPERTY_FAST(CodeRange)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(Parent)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(SubNodes)
+
+				CLASS_MEMBER_METHOD(Clone, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(InitializeQueryCache, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(ClearQueryCache, NO_PARAMETER)
+				CLASS_MEMBER_METHOD_OVERLOAD(FindSubNode, {L"position"}, ParsingTreeNode*(ParsingTreeNode::*)(const ParsingTextPos&))
+				CLASS_MEMBER_METHOD_OVERLOAD(FindSubNode, {L"range"}, ParsingTreeNode*(ParsingTreeNode::*)(const ParsingTextRange&))
+				CLASS_MEMBER_METHOD_OVERLOAD(FindDeepestNode, {L"position"}, ParsingTreeNode*(ParsingTreeNode::*)(const ParsingTextPos&))
+				CLASS_MEMBER_METHOD_OVERLOAD(FindDeepestNode, {L"range"}, ParsingTreeNode*(ParsingTreeNode::*)(const ParsingTextRange&))
+			END_CLASS_MEMBER(ParsingTreeNode)
+
+			BEGIN_CLASS_MEMBER(ParsingTreeToken)
+				CLASS_MEMBER_CONSTRUCTOR(Ptr<ParsingTreeToken>(const WString&, vint), {L"value" _ L"tokenIndex"})
+
+				CLASS_MEMBER_PROPERTY_FAST(TokenIndex)
+				CLASS_MEMBER_PROPERTY_FAST(Value)
+			END_CLASS_MEMBER(ParsingTreeToken)
+
+			BEGIN_CLASS_MEMBER(ParsingTreeObject)
+				CLASS_MEMBER_CONSTRUCTOR(Ptr<ParsingTreeObject>(const WString&), {L"type"})
+
+				CLASS_MEMBER_PROPERTY_FAST(Type)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(Members)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(MemberNames)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(CreatorRules)
+
+				CLASS_MEMBER_METHOD(GetMember, {L"name"})
+				CLASS_MEMBER_METHOD(SetMember, {L"name" _ L"node"})
+			END_CLASS_MEMBER(ParsingTreeObject)
+
+			BEGIN_CLASS_MEMBER(ParsingTreeArray)
+				CLASS_MEMBER_CONSTRUCTOR(Ptr<ParsingTreeObject>(const WString&), {L"elementType"})
+
+				CLASS_MEMBER_PROPERTY_FAST(ElementType)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(Items)
+
+				CLASS_MEMBER_METHOD(GetItem, {L"index"})
+				CLASS_MEMBER_METHOD(SetItem, {L"index" _ L"node"})
+				CLASS_MEMBER_METHOD(AddItem, {L"node"})
+				CLASS_MEMBER_METHOD(InsertItem, {L"index" _ L"node"})
+				CLASS_MEMBER_METHOD_OVERLOAD(RemoveItem, {L"index"}, bool(ParsingTreeArray::*)(vint))
+				CLASS_MEMBER_METHOD_OVERLOAD(RemoveItem, {L"node"}, bool(ParsingTreeArray::*)(ParsingTreeNode*))
+				CLASS_MEMBER_METHOD(IndexOfItem, {L"node"})
+				CLASS_MEMBER_METHOD(ContainsItem, {L"node"})
+				CLASS_MEMBER_METHOD(Clone, NO_PARAMETER)
+
+				CLASS_MEMBER_METHOD_RENAME(GetCount, Count, NO_PARAMETER)
+				CLASS_MEMBER_PROPERTY_READONLY(Count, GetCount)
+			END_CLASS_MEMBER(ParsingTreeArray)
+
+			BEGIN_CLASS_MEMBER(ParsingTreeCustomBase)
+				CLASS_MEMBER_FIELD(codeRange)
+				CLASS_MEMBER_FIELD(creatorRules)
+			END_CLASS_MEMBER(ParsingTreeCustomBase)
+
+			BEGIN_CLASS_MEMBER(ParsingToken)
+				CLASS_MEMBER_BASE(ParsingTreeCustomBase)
+
+				CLASS_MEMBER_FIELD(tokenIndex)
+				CLASS_MEMBER_FIELD(value)
+			END_CLASS_MEMBER(ParsingToken)
+
+			BEGIN_CLASS_MEMBER(ParsingError)
+				CLASS_MEMBER_CONSTRUCTOR(Ptr<ParsingError>(), NO_PARAMETER)
+				CLASS_MEMBER_CONSTRUCTOR(Ptr<ParsingError>(const WString&), {L"errorMessage"})
+				CLASS_MEMBER_CONSTRUCTOR(Ptr<ParsingError>(ParsingTreeCustomBase*, const WString&), {L"parsingTree" _ L"errorMessage"})
+
+				CLASS_MEMBER_FIELD(codeRange)
+				CLASS_MEMBER_FIELD(parsingTree)
+				CLASS_MEMBER_FIELD(errorMessage)
+			END_CLASS_MEMBER(ParsingError)
+#undef _
+		}
+	}
+}
+
+#endif
+
+namespace vl
+{
+	namespace reflection
+	{
+		namespace description
+		{
+
+/***********************************************************************
+Type Loader
+***********************************************************************/
+			
+#ifndef VCZH_DEBUG_NO_REFLECTION
+			class ParsingTypeLoader : public Object, public ITypeLoader
+			{
+			public:
+				void Load(ITypeManager* manager)
+				{
+					PARSINGREFLECTION_TYPELIST(ADD_TYPE_INFO)
+				}
+
+				void Unload(ITypeManager* manager)
+				{
+				}
+			};
+#endif
+
+			bool LoadParsingTypes()
+			{
+#ifndef VCZH_DEBUG_NO_REFLECTION
+				ITypeManager* manager=GetGlobalTypeManager();
+				if(manager)
+				{
+					Ptr<ITypeLoader> loader=new ParsingTypeLoader;
+					return manager->AddTypeLoader(loader);
+				}
+#endif
+				return false;
+			}
+		}
+	}
+}
+
+/***********************************************************************
+.\PARSING\PARSINGANALYZER.CPP
+***********************************************************************/
+
+namespace vl
+{
+	namespace parsing
+	{
+		using namespace collections;
+		using namespace definitions;
+
+		namespace analyzing
+		{
+
+/***********************************************************************
+ParsingSymbol
+***********************************************************************/
+
+			bool ParsingSymbol::AddSubSymbol(ParsingSymbol* subSymbol)
+			{
+				if(subSymbol->GetParentSymbol()) return false;
+				if(subSymbolMap.Keys().IndexOf(subSymbol->GetName())!=-1) return false;
+				switch(type)
+				{
+				case Global:
+					switch(subSymbol->GetType())
+					{
+					case EnumType:		break;
+					case ClassType:		break;
+					case TokenDef:		break;
+					case RuleDef:		break;
+					default:			return false;
+					}
+					break;
+				case EnumType:
+					switch(subSymbol->GetType())
+					{
+					case EnumItem:		break;
+					default:			return false;
+					}
+					break;
+				case ClassType:
+					switch(subSymbol->GetType())
+					{
+					case EnumType:		
+					case ClassType:
+					case ClassField:	break;
+					default:			return false;
+					}
+					break;
+				default:				return false;
+				}
+
+				subSymbol->parentSymbol=this;
+				subSymbolList.Add(subSymbol);
+				subSymbolMap.Add(subSymbol->GetName(), subSymbol);
+				return true;
+			}
+
+			ParsingSymbol::ParsingSymbol(ParsingSymbolManager* _manager, SymbolType _type, const WString& _name, ParsingSymbol* _descriptorSymbol, const WString& _descriptorString)
+				:manager(_manager)
+				,type(_type)
+				,name(_name)
+				,descriptorSymbol(_descriptorSymbol)
+				,descriptorString(_descriptorString)
+				,parentSymbol(0)
+				,arrayTypeSymbol(0)
+			{
+			}
+
+			ParsingSymbol::~ParsingSymbol()
+			{
+			}
+
+			ParsingSymbolManager* ParsingSymbol::GetManager()
+			{
+				return manager;
+			}
+
+			ParsingSymbol::SymbolType ParsingSymbol::GetType()
+			{
+				return type;
+			}
+
+			const WString& ParsingSymbol::GetName()
+			{
+				return name;
+			}
+
+			vint ParsingSymbol::GetSubSymbolCount()
+			{
+				return subSymbolList.Count();
+			}
+
+			ParsingSymbol* ParsingSymbol::GetSubSymbol(vint index)
+			{
+				if(0<=index && index<subSymbolList.Count())
+				{
+					return subSymbolList[index];
+				}
+				else
+				{
+					return 0;
+				}
+			}
+
+			ParsingSymbol* ParsingSymbol::GetSubSymbolByName(const WString& name)
+			{
+				vint index=subSymbolMap.Keys().IndexOf(name);
+				if(index==-1)
+				{
+					return 0;
+				}
+				else
+				{
+					return subSymbolMap.Values().Get(index);
+				}
+			}
+
+			ParsingSymbol* ParsingSymbol::GetDescriptorSymbol()
+			{
+				return descriptorSymbol;
+			}
+
+			WString ParsingSymbol::GetDescriptorString()
+			{
+				return descriptorString;
+			}
+
+			ParsingSymbol* ParsingSymbol::GetParentSymbol()
+			{
+				return parentSymbol;
+			}
+
+			bool ParsingSymbol::IsType()
+			{
+				switch(type)
+				{
+				case ParsingSymbol::ClassType:
+				case ParsingSymbol::EnumType:
+				case ParsingSymbol::ArrayType:
+				case ParsingSymbol::TokenType:
+					return true;
+				default:
+					return false;
+				}
+			}
+
+			ParsingSymbol* ParsingSymbol::SearchClassSubSymbol(const WString& name)
+			{
+				if(type==ParsingSymbol::ClassType)
+				{
+					ParsingSymbol* scope=this;
+					while(scope)
+					{
+						ParsingSymbol* subSymbol=scope->GetSubSymbolByName(name);
+						if(subSymbol)
+						{
+							return subSymbol;
+						}
+						else
+						{
+							scope=scope->GetDescriptorSymbol();
+						}
+					}
+				}
+				return 0;
+			}
+
+			ParsingSymbol* ParsingSymbol::SearchCommonBaseClass(ParsingSymbol* classType)
+			{
+				if(type==ParsingSymbol::ClassType && classType->GetType()==ParsingSymbol::ClassType)
+				{
+					vint aCount=0;
+					vint bCount=0;
+					ParsingSymbol* a=this;
+					ParsingSymbol* b=classType;
+					while(a || b)
+					{
+						if(a)
+						{
+							aCount++;
+							a=a->GetDescriptorSymbol();
+						}
+						if(b)
+						{
+							bCount++;
+							b=b->GetDescriptorSymbol();
+						}
+					}
+
+					a=this;
+					b=classType;
+					vint min=aCount<bCount?aCount:bCount;
+					for(vint i=aCount;i>min;i--)
+					{
+						a=a->GetDescriptorSymbol();
+					}
+					for(vint i=bCount;i>min;i--)
+					{
+						b=b->GetDescriptorSymbol();
+					}
+
+					while(a!=b)
+					{
+						a=a->GetDescriptorSymbol();
+						b=b->GetDescriptorSymbol();
+					}
+					return a;
+				}
+				return 0;
+			}
+
+/***********************************************************************
+ParsingSymbolManager
+***********************************************************************/
+
+			bool ParsingSymbolManager::TryAddSubSymbol(Ptr<ParsingSymbol> subSymbol, ParsingSymbol* parentSymbol)
+			{
+				if(parentSymbol->AddSubSymbol(subSymbol.Obj()))
+				{
+					createdSymbols.Add(subSymbol);
+					return true;
+				}
+				return false;
+			}
+
+			ParsingSymbolManager::ParsingSymbolManager()
+			{
+				globalSymbol=new ParsingSymbol(this, ParsingSymbol::Global, L"", 0, L"");
+				tokenTypeSymbol=new ParsingSymbol(this, ParsingSymbol::TokenType, L"token", 0, L"");
+				createdSymbols.Add(globalSymbol);
+				createdSymbols.Add(tokenTypeSymbol);
+			}
+
+			ParsingSymbolManager::~ParsingSymbolManager()
+			{
+			}
+
+			ParsingSymbol* ParsingSymbolManager::GetGlobal()
+			{
+				return globalSymbol;
+			}
+
+			ParsingSymbol* ParsingSymbolManager::GetTokenType()
+			{
+				return tokenTypeSymbol;
+			}
+
+			ParsingSymbol* ParsingSymbolManager::GetArrayType(ParsingSymbol* elementType)
+			{
+				if(elementType->IsType())
+				{
+					if(!elementType->arrayTypeSymbol)
+					{
+						elementType->arrayTypeSymbol=new ParsingSymbol(this, ParsingSymbol::ArrayType, L"", elementType, L"");
+						createdSymbols.Add(elementType->arrayTypeSymbol);
+					}
+					return elementType->arrayTypeSymbol;
+				}
+				else
+				{
+					return 0;
+				}
+			}
+
+			ParsingSymbol* ParsingSymbolManager::AddClass(definitions::ParsingDefinitionClassDefinition* classDef, ParsingSymbol* baseType, ParsingSymbol* parentType)
+			{
+				if((!baseType || baseType->GetType()==ParsingSymbol::ClassType) && (!parentType || parentType->IsType()))
+				{
+					ParsingSymbol* symbol=new ParsingSymbol(this, ParsingSymbol::ClassType, classDef->name, baseType, L"");
+					if(TryAddSubSymbol(symbol, parentType?parentType:globalSymbol))
+					{
+						symbolClassDefinitionCache.Add(symbol, classDef);
+						classDefinitionSymbolCache.Add(classDef, symbol);
+						return symbol;
+					}
+				}
+				return 0;
+			}
+
+			ParsingSymbol* ParsingSymbolManager::AddField(const WString& name, ParsingSymbol* classType, ParsingSymbol* fieldType)
+			{
+				if(classType && classType->GetType()==ParsingSymbol::ClassType && fieldType && fieldType->IsType())
+				{
+					ParsingSymbol* symbol=new ParsingSymbol(this, ParsingSymbol::ClassField, name, fieldType, L"");
+					if(TryAddSubSymbol(symbol, classType))
+					{
+						return symbol;
+					}
+				}
+				return 0;
+			}
+
+			ParsingSymbol* ParsingSymbolManager::AddEnum(const WString& name, ParsingSymbol* parentType)
+			{
+				if(!parentType || parentType->GetType()==ParsingSymbol::ClassType)
+				{
+					ParsingSymbol* symbol=new ParsingSymbol(this, ParsingSymbol::EnumType, name, 0, L"");
+					if(TryAddSubSymbol(symbol, parentType?parentType:globalSymbol))
+					{
+						return symbol;
+					}
+				}
+				return 0;
+			}
+
+			ParsingSymbol* ParsingSymbolManager::AddEnumItem(const WString& name, ParsingSymbol* enumType)
+			{
+				if(enumType && enumType->GetType()==ParsingSymbol::EnumType)
+				{
+					ParsingSymbol* symbol=new ParsingSymbol(this, ParsingSymbol::EnumItem, name, enumType, L"");
+					if(TryAddSubSymbol(symbol, enumType))
+					{
+						return symbol;
+					}
+				}
+				return 0;
+			}
+
+			ParsingSymbol* ParsingSymbolManager::AddTokenDefinition(const WString& name, const WString& regex)
+			{
+				ParsingSymbol* symbol=new ParsingSymbol(this, ParsingSymbol::TokenDef, name, tokenTypeSymbol, regex);
+				if(TryAddSubSymbol(symbol, globalSymbol))
+				{
+					return symbol;
+				}
+				return 0;
+			}
+
+			ParsingSymbol* ParsingSymbolManager::AddRuleDefinition(const WString& name, ParsingSymbol* ruleType)
+			{
+				if(ruleType && ruleType->IsType())
+				{
+					ParsingSymbol* symbol=new ParsingSymbol(this, ParsingSymbol::RuleDef, name, ruleType, L"");
+					if(TryAddSubSymbol(symbol, globalSymbol))
+					{
+						return symbol;
+					}
+				}
+				return 0;
+			}
+
+			ParsingSymbolManager::ClassDefinition* ParsingSymbolManager::CacheGetClassDefinition(ParsingSymbol* type)
+			{
+				vint index=symbolClassDefinitionCache.Keys().IndexOf(type);
+				return index==-1?0:symbolClassDefinitionCache.Values().Get(index);
+			}
+
+			ParsingSymbol* ParsingSymbolManager::CacheGetClassType(ClassDefinition* type)
+			{
+				vint index=classDefinitionSymbolCache.Keys().IndexOf(type);
+				return index==-1?0:classDefinitionSymbolCache.Values().Get(index);
+			}
+
+			ParsingSymbol* ParsingSymbolManager::CacheGetType(definitions::ParsingDefinitionType* type, ParsingSymbol* scope)
+			{
+				DefinitionTypeScopePair key(type, scope);
+				vint index=definitionTypeSymbolCache.Keys().IndexOf(key);
+				return index==-1?0:definitionTypeSymbolCache.Values().Get(index);
+			}
+
+			bool ParsingSymbolManager::CacheSetType(definitions::ParsingDefinitionType* type, ParsingSymbol* scope, ParsingSymbol* symbol)
+			{
+				DefinitionTypeScopePair key(type, scope);
+				vint index=definitionTypeSymbolCache.Keys().IndexOf(key);
+				if(index==-1)
+				{
+					definitionTypeSymbolCache.Add(key, symbol);
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			}
+
+			ParsingSymbol* ParsingSymbolManager::CacheGetSymbol(definitions::ParsingDefinitionGrammar* grammar)
+			{
+				vint index=definitionGrammarSymbolCache.Keys().IndexOf(grammar);
+				return index==-1?0:definitionGrammarSymbolCache.Values().Get(index);
+			}
+
+			bool ParsingSymbolManager::CacheSetSymbol(definitions::ParsingDefinitionGrammar* grammar, ParsingSymbol* symbol)
+			{
+				vint index=definitionGrammarSymbolCache.Keys().IndexOf(grammar);
+				if(index==-1)
+				{
+					definitionGrammarSymbolCache.Add(grammar, symbol);
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			}
+
+			ParsingSymbol* ParsingSymbolManager::CacheGetType(definitions::ParsingDefinitionGrammar* grammar)
+			{
+				vint index=definitionGrammarTypeCache.Keys().IndexOf(grammar);
+				return index==-1?0:definitionGrammarTypeCache.Values().Get(index);
+			}
+
+			bool ParsingSymbolManager::CacheSetType(definitions::ParsingDefinitionGrammar* grammar, ParsingSymbol* type)
+			{
+				vint index=definitionGrammarTypeCache.Keys().IndexOf(grammar);
+				if(index==-1)
+				{
+					definitionGrammarTypeCache.Add(grammar, type);
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			}
+
+/***********************************************************************
+FindType
+***********************************************************************/
+
+			WString GetTypeFullName(ParsingSymbol* type)
+			{
+				if(type->GetType()==ParsingSymbol::ArrayType)
+				{
+					return GetTypeFullName(type->GetDescriptorSymbol())+L"[]";
+				}
+				else
+				{
+					WString name=type->GetName();
+					type=type->GetParentSymbol();
+					while(type && type!=type->GetManager()->GetGlobal())
+					{
+						name=type->GetName()+L"."+name;
+						type=type->GetParentSymbol();
+					}
+					return name;
+				}
+			}
+
+/***********************************************************************
+FindType
+***********************************************************************/
+
+			class FindTypeVisitor : public Object, public ParsingDefinitionType::IVisitor
+			{
+			public:
+				ParsingSymbolManager*				manager;
+				ParsingSymbol*						scope;
+				List<Ptr<ParsingError>>&			errors;
+				ParsingSymbol*						result;
+
+				FindTypeVisitor(ParsingSymbolManager* _manager, ParsingSymbol* _scope, List<Ptr<ParsingError>>& _errors)
+					:manager(_manager)
+					,scope(_scope)
+					,errors(_errors)
+					,result(0)
+				{
+				}
+
+				void Visit(ParsingDefinitionPrimitiveType* node)override
+				{
+					ParsingSymbol* currentScope=scope;
+					while(currentScope)
+					{
+						ParsingSymbol* type=currentScope->GetSubSymbolByName(node->name);
+						if(type)
+						{
+							if(type->IsType())
+							{
+								result=type;
+							}
+							else
+							{
+								errors.Add(new ParsingError(node, L"\""+node->name+L"\" in current scope is not a type."));
+							}
+							return;
+						}
+						currentScope=currentScope->GetParentSymbol();
+					}
+					errors.Add(new ParsingError(node, L"Cannot not find \""+node->name+L"\" in current scope."));
+				}
+
+				void Visit(ParsingDefinitionTokenType* node)override
+				{
+					result=manager->GetTokenType();
+				}
+
+				void Visit(ParsingDefinitionSubType* node)override
+				{
+					ParsingSymbol* type=FindType(node->parentType.Obj(), manager, scope, errors);
+					if(type)
+					{
+						ParsingSymbol* subType=type->SearchClassSubSymbol(node->subTypeName);
+						if(!subType)
+						{
+							errors.Add(new ParsingError(node, L"\""+GetTypeFullName(type)+L"\" does not has a sub type called \""+node->subTypeName+L"\"."));
+						}
+						else if(subType->IsType())
+						{
+							result=subType;
+						}
+						else
+						{
+							errors.Add(new ParsingError(node, L"\""+GetTypeFullName(type)+L"\" contains a sub definition called \""+node->subTypeName+L"\" but this is not a type."));
+						}
+					}
+				}
+
+				void Visit(ParsingDefinitionArrayType* node)override
+				{
+					ParsingSymbol* type=FindType(node->elementType.Obj(), manager, scope, errors);
+					if(type)
+					{
+						result=manager->GetArrayType(type);
+					}
+				}
+			};
+
+			ParsingSymbol* FindType(definitions::ParsingDefinitionType* type, ParsingSymbolManager* manager, ParsingSymbol* scope, collections::List<Ptr<ParsingError>>& errors)
+			{
+				ParsingSymbol* result=manager->CacheGetType(type, scope);
+				if(!result)
+				{
+					FindTypeVisitor visitor(manager, (scope?scope:manager->GetGlobal()), errors);
+					type->Accept(&visitor);
+					result=visitor.result;
+					manager->CacheSetType(type, scope, result);
+				}
+				return result;
+			}
+
+/***********************************************************************
+PrepareSymbols
+***********************************************************************/
+
+			class PrepareSymbolsTypeDefinitionVisitor : public Object, public ParsingDefinitionTypeDefinition::IVisitor
+			{
+			public:
+				ParsingSymbolManager*				manager;
+				ParsingSymbol*						scope;
+				List<Ptr<ParsingError>>&			errors;
+
+				PrepareSymbolsTypeDefinitionVisitor(ParsingSymbolManager* _manager, ParsingSymbol* _scope, List<Ptr<ParsingError>>& _errors)
+					:manager(_manager)
+					,scope(_scope)
+					,errors(_errors)
+				{
+				}
+
+				bool EnsureNameNotExists(ParsingDefinitionTypeDefinition* node, const WString& subjectName)
+				{
+					if(scope->SearchClassSubSymbol(node->name))
+					{
+						errors.Add(new ParsingError(node, L"Cannot redefine \""+node->name+L"\" to be "+subjectName+L"."));
+						return false;
+					}
+					else
+					{
+						return true;
+					}
+				}
+
+				void Visit(ParsingDefinitionClassMemberDefinition* node)override
+				{
+					if(EnsureNameNotExists(node, L"a class field"))
+					{
+						ParsingSymbol* fieldType=FindType(node->type.Obj(), manager, scope, errors);
+						if(fieldType)
+						{
+							ParsingSymbol* field=manager->AddField(node->name, scope, fieldType);
+							if(!field)
+							{
+								errors.Add(new ParsingError(node, L"A class field cannot be defined here."));
+							}
+						}
+					}
+				}
+
+				void Visit(ParsingDefinitionClassDefinition* node)override
+				{
+					if(EnsureNameNotExists(node, L"a class type"))
+					{
+						ParsingSymbol* baseType=0;
+						if(node->parentType)
+						{
+							baseType=FindType(node->parentType.Obj(), manager, scope, errors);
+						}
+						ParsingSymbol* classType=manager->AddClass(node, baseType, (scope->GetType()==ParsingSymbol::Global?0:scope));
+						if(classType)
+						{
+							PrepareSymbolsTypeDefinitionVisitor visitor(manager, classType, errors);
+							FOREACH(Ptr<ParsingDefinitionTypeDefinition>, subType, node->subTypes)
+							{
+								subType->Accept(&visitor);
+							}
+							FOREACH(Ptr<ParsingDefinitionClassMemberDefinition>, member, node->members)
+							{
+								member->Accept(&visitor);
+							}
+						}
+						else
+						{
+							errors.Add(new ParsingError(node, L"A class type cannot be defined here."));
+						}
+					}
+				}
+
+				void Visit(ParsingDefinitionEnumMemberDefinition* node)override
+				{
+					if(EnsureNameNotExists(node, L"an enum item"))
+					{
+						ParsingSymbol* enumItem=manager->AddEnumItem(node->name, scope);
+						if(!enumItem)
+						{
+							errors.Add(new ParsingError(node, L"An enum item cannot be defined here."));
+						}
+					}
+				}
+
+				void Visit(ParsingDefinitionEnumDefinition* node)override
+				{
+					if(EnsureNameNotExists(node, L"an enum type"))
+					{
+						ParsingSymbol* enumType=manager->AddEnum(node->name, (scope->GetType()==ParsingSymbol::Global?0:scope));
+						if(enumType)
+						{
+							PrepareSymbolsTypeDefinitionVisitor visitor(manager, enumType, errors);
+							FOREACH(Ptr<ParsingDefinitionEnumMemberDefinition>, member, node->members)
+							{
+								member->Accept(&visitor);
+							}
+						}
+						else
+						{
+							errors.Add(new ParsingError(node, L"An enum type cannot be defined here."));
+						}
+					}
+				}
+			};
+
+			void PrepareSymbols(Ptr<definitions::ParsingDefinition> definition, ParsingSymbolManager* manager, collections::List<Ptr<ParsingError>>& errors)
+			{
+				{
+					PrepareSymbolsTypeDefinitionVisitor visitor(manager, manager->GetGlobal(), errors);
+					FOREACH(Ptr<ParsingDefinitionTypeDefinition>, typeDefinition, definition->types)
+					{
+						typeDefinition->Accept(&visitor);
+					}
+				}
+
+				FOREACH(Ptr<ParsingDefinitionTokenDefinition>, token, definition->tokens)
+				{
+					if(manager->GetGlobal()->GetSubSymbolByName(token->name))
+					{
+						errors.Add(new ParsingError(token.Obj(), L"Cannot redefine \""+token->name+L"\" to be a token definition."));
+					}
+					else
+					{
+						manager->AddTokenDefinition(token->name, token->regex);
+						try
+						{
+							regex_internal::ParseRegexExpression(token->regex);
+						}
+						catch(const ParsingException& ex)
+						{
+							errors.Add(new ParsingError(token.Obj(), L"Wrong token definition for \""+token->name+L"\": "+ex.Message()));
+						}
+					}
+				}
+
+				FOREACH(Ptr<ParsingDefinitionRuleDefinition>, rule, definition->rules)
+				{
+					if(manager->GetGlobal()->GetSubSymbolByName(rule->name))
+					{
+						errors.Add(new ParsingError(rule.Obj(), L"Cannot redefine \""+rule->name+L"\" to be a rule definition."));
+					}
+					else
+					{
+						ParsingSymbol* type=FindType(rule->type.Obj(), manager, 0, errors);
+						if(type)
+						{
+							if(type->GetType()!=ParsingSymbol::ClassType)
+							{
+								errors.Add(new ParsingError(rule.Obj(), L"\""+GetTypeFullName(type)+L"\" cannot be a type of a rule because this is not a class type."));
+							}
+							manager->AddRuleDefinition(rule->name, type);
+						}
+					}
+				}
+			}
+
+/***********************************************************************
+ValidateRuleStructure
+***********************************************************************/
+
+			class ValidateRuleStructureVisitor : public Object, public ParsingDefinitionGrammar::IVisitor
+			{
+			public:
+				Ptr<ParsingDefinition>				definition;
+				ParsingSymbolManager*				manager;
+				ParsingDefinitionRuleDefinition*	rule;
+				List<Ptr<ParsingError>>&			errors;
+				vint								loopCount;
+
+				ValidateRuleStructureVisitor(Ptr<ParsingDefinition> _definition, ParsingSymbolManager* _manager, ParsingDefinitionRuleDefinition* _rule, List<Ptr<ParsingError>>& _errors)
+					:definition(_definition)
+					,manager(_manager)
+					,errors(_errors)
+					,rule(_rule)
+					,loopCount(0)
+				{
+				}
+
+				void CheckCreationType(ParsingDefinitionGrammar* node, ParsingSymbol* nodeType)
+				{
+					if(nodeType->GetType()==ParsingSymbol::ClassType)
+					{
+						ParsingSymbol* ruleType=manager->GetGlobal()->GetSubSymbolByName(rule->name)->GetDescriptorSymbol();
+						ParsingSymbol* currentType=nodeType;
+						while(currentType && currentType!=ruleType)
+						{
+							currentType=currentType->GetDescriptorSymbol();
+						}
+						if(!currentType)
+						{
+							errors.Add(new ParsingError(node, L"Cannot create type \""+GetTypeFullName(nodeType)+L"\" in a rule of type \""+GetTypeFullName(ruleType)+L"\" because there are no implicit conversions from the created type to the rule type."));
+						}
+					}
+					else
+					{
+						errors.Add(new ParsingError(node, L"\""+GetTypeFullName(nodeType)+L"\" cannot be created because this is not a class type."));
+					}
+				}
+
+				void Visit(ParsingDefinitionPrimitiveGrammar* node)override
+				{
+					ParsingSymbol* symbol=manager->GetGlobal()->GetSubSymbolByName(node->name);
+					if(!symbol)
+					{
+						errors.Add(new ParsingError(node, L"Cannot find a token or a rule with name \""+node->name+L"\"."));
+					}
+					else switch(symbol->GetType())
+					{
+					case ParsingSymbol::TokenDef:
+						{
+							bool discard=false;
+							FOREACH(Ptr<ParsingDefinitionTokenDefinition>, token, definition->tokens)
+							{
+								if(token->name==symbol->GetName())
+								{
+									discard=token->discard;
+									break;
+								}
+							}
+							if(discard)
+							{
+								errors.Add(new ParsingError(node, L"Cannot use discard token \""+node->name+L"\" as input."));
+								break;
+							}
+						}
+					case ParsingSymbol::RuleDef:
+						{
+							ParsingSymbol* symbolType=symbol->GetDescriptorSymbol();
+							manager->CacheSetSymbol(node, symbol);
+							manager->CacheSetType(node, symbolType);
+						}
+						break;
+					default:
+						errors.Add(new ParsingError(node, L"\""+node->name+L"\" is not a token definition or rule definition."));
+					}
+				}
+
+				void Visit(ParsingDefinitionTextGrammar* node)override
+				{
+					WString regex=regex_internal::EscapeTextForRegex(node->text);
+					for(vint i=0;i<manager->GetGlobal()->GetSubSymbolCount();i++)
+					{
+						ParsingSymbol* symbol=manager->GetGlobal()->GetSubSymbol(i);
+						if(symbol->GetType()==ParsingSymbol::TokenDef)
+						{
+							WString normalizedRegex=regex_internal::NormalizeEscapedTextForRegex(symbol->GetDescriptorString());
+							if(normalizedRegex==regex)
+							{
+								manager->CacheSetSymbol(node, symbol);
+								manager->CacheSetType(node, manager->GetTokenType());
+								return;
+							}
+						}
+					}
+					errors.Add(new ParsingError(node, L"Cannot find a token whose definition is exactly \""+regex+L"\"."));
+				}
+
+				void Visit(ParsingDefinitionSequenceGrammar* node)override
+				{
+					node->first->Accept(this);
+					node->second->Accept(this);
+				}
+
+				void Visit(ParsingDefinitionAlternativeGrammar* node)override
+				{
+					node->first->Accept(this);
+					node->second->Accept(this);
+				}
+
+				void Visit(ParsingDefinitionLoopGrammar* node)override
+				{
+					loopCount++;
+					node->grammar->Accept(this);
+					loopCount--;
+				}
+
+				void Visit(ParsingDefinitionOptionalGrammar* node)override
+				{
+					node->grammar->Accept(this);
+				}
+
+				void Visit(ParsingDefinitionCreateGrammar* node)override
+				{
+					if(loopCount>0)
+					{
+						errors.Add(new ParsingError(node, L"Parsing tree node creation (the \"as\" operator) is not allowed inside loops."));
+					}
+					if(ParsingSymbol* nodeType=FindType(node->type.Obj(), manager, 0, errors))
+					{
+						CheckCreationType(node, nodeType);
+					}
+					node->grammar->Accept(this);
+				}
+
+				void Visit(ParsingDefinitionAssignGrammar* node)override
+				{
+					if(!node->grammar.Cast<ParsingDefinitionPrimitiveGrammar>() && !node->grammar.Cast<ParsingDefinitionTextGrammar>())
+					{
+						errors.Add(new ParsingError(node, L"Only parsing tree node returned from a rule or a token can be assigned to a class field."));
+					}
+					node->grammar->Accept(this);
+				}
+
+				void Visit(ParsingDefinitionUseGrammar* node)override
+				{
+					if(loopCount>0)
+					{
+						errors.Add(new ParsingError(node, L"Parsing tree node reusing (the \"!\" operator) is not allowed inside loops."));
+					}
+					if(!node->grammar.Cast<ParsingDefinitionPrimitiveGrammar>())
+					{
+						errors.Add(new ParsingError(node, L"Only parsing tree node returned from a rule can be reused."));
+					}
+					else if(ParsingSymbol* symbol=manager->CacheGetSymbol(node->grammar.Obj()))
+					{
+						if(symbol->GetType()!=ParsingSymbol::RuleDef)
+						{
+							errors.Add(new ParsingError(node, L"Only parsing tree node returned from a rule can be reused."));
+						}
+					}
+					if(ParsingSymbol* nodeType=manager->CacheGetType(node->grammar.Obj()))
+					{
+						CheckCreationType(node, nodeType);
+					}
+					node->grammar->Accept(this);
+				}
+
+				void Visit(ParsingDefinitionSetterGrammar* node)override
+				{
+					node->grammar->Accept(this);
+				}
+			};
+
+			void ValidateRuleStructure(Ptr<definitions::ParsingDefinition> definition, Ptr<definitions::ParsingDefinitionRuleDefinition> rule, ParsingSymbolManager* manager, collections::List<Ptr<ParsingError>>& errors)
+			{
+				FOREACH(Ptr<ParsingDefinitionGrammar>, grammar, rule->grammars)
+				{
+					ValidateRuleStructureVisitor visitor(definition, manager, rule.Obj(), errors);
+					grammar->Accept(&visitor);
+				}
+			}
+
+/***********************************************************************
+ResolveRuleSymbols
+***********************************************************************/
+
+			struct GrammarPathFragment
+			{
+				// primitive, text                            -> transition
+				// loop, optional, create, use assign, setter -> epsilon
+				GrammarPathFragment*						previousFragment;
+				ParsingDefinitionGrammar*					grammar;
+				bool										epsilon;
+				ParsingSymbol*								createdType;
+
+				GrammarPathFragment()
+					:previousFragment(0)
+					,grammar(0)
+					,epsilon(false)
+					,createdType(0)
+				{
+				}
+			};
+
+			struct GrammarPath
+			{
+				List<Ptr<GrammarPathFragment>>				fragments;
+				ParsingSymbol*								pathType;
+
+				GrammarPath()
+					:pathType(0)
+				{
+				}
+
+				WString ToString()
+				{
+					WString result;
+					FOREACH(Ptr<GrammarPathFragment>, fragment, fragments)
+					{
+						if(!fragment->epsilon)
+						{
+							if(result!=L"") result+=L" ";
+							result+=GrammarToString(fragment->grammar);
+						}
+					}
+					return result;
+				}
+			};
+
+			struct GrammarPathContainer
+			{
+				List<Ptr<GrammarPath>>						paths;
+			};
+
+			class EnumerateGrammarPathVisitor : public Object, public ParsingDefinitionGrammar::IVisitor
+			{
+			public:
+				ParsingSymbolManager*						manager;
+				ParsingDefinitionRuleDefinition*			rule;
+
+				List<Ptr<GrammarPathFragment>>				createdFragments;
+				List<GrammarPathFragment*>					currentFragmentEnds;
+
+				EnumerateGrammarPathVisitor(ParsingSymbolManager* _manager, ParsingDefinitionRuleDefinition* _rule)
+					:manager(_manager)
+					,rule(_rule)
+				{
+				}
+
+				EnumerateGrammarPathVisitor(const EnumerateGrammarPathVisitor& visitor)
+					:manager(visitor.manager)
+					,rule(visitor.rule)
+				{
+					CopyFrom(currentFragmentEnds, visitor.currentFragmentEnds);
+				}
+
+				void Join(const EnumerateGrammarPathVisitor& visitor)
+				{
+					CopyFrom(createdFragments, visitor.createdFragments, true);
+					CopyFrom(currentFragmentEnds, visitor.currentFragmentEnds, true);
+				}
+
+				void AddFragment(ParsingDefinitionGrammar* node, bool epsilon, ParsingSymbol* createdType)
+				{
+					if(currentFragmentEnds.Count()==0)
+					{
+						GrammarPathFragment* fragment=new GrammarPathFragment;
+						fragment->grammar=node;
+						fragment->epsilon=epsilon;
+						fragment->createdType=createdType;
+						createdFragments.Add(fragment);
+						currentFragmentEnds.Add(fragment);
+					}
+					else for(vint i=0;i<currentFragmentEnds.Count();i++)
+					{
+						GrammarPathFragment* fragment=new GrammarPathFragment;
+						fragment->grammar=node;
+						fragment->epsilon=epsilon;
+						fragment->createdType=createdType;
+						createdFragments.Add(fragment);
+						fragment->previousFragment=currentFragmentEnds[i];
+						currentFragmentEnds[i]=fragment;
+					}
+				}
+
+				void BuildPath(List<Ptr<GrammarPath>>& paths)
+				{
+					FOREACH(GrammarPathFragment*, fragment, currentFragmentEnds)
+					{
+						Ptr<GrammarPath> path=new GrammarPath;
+						paths.Add(path);
+
+						GrammarPathFragment* current=fragment;
+						while(current)
+						{
+							path->fragments.Insert(0, createdFragments[createdFragments.IndexOf(current)]);
+							current=current->previousFragment;
+						}
+					}
+				}
+
+				void Visit(ParsingDefinitionPrimitiveGrammar* node)override
+				{
+					AddFragment(node, false, 0);
+				}
+
+				void Visit(ParsingDefinitionTextGrammar* node)override
+				{
+					AddFragment(node, false, 0);
+				}
+
+				void Visit(ParsingDefinitionSequenceGrammar* node)override
+				{
+					node->first->Accept(this);
+					node->second->Accept(this);
+				}
+
+				void Visit(ParsingDefinitionAlternativeGrammar* node)override
+				{
+					EnumerateGrammarPathVisitor visitor(*this);
+					node->second->Accept(&visitor);
+					node->first->Accept(this);
+					Join(visitor);
+				}
+
+				void Visit(ParsingDefinitionLoopGrammar* node)override
+				{
+					EnumerateGrammarPathVisitor visitor(*this);
+					node->grammar->Accept(&visitor);
+					AddFragment(node, true, 0);
+					Join(visitor);
+				}
+
+				void Visit(ParsingDefinitionOptionalGrammar* node)override
+				{
+					EnumerateGrammarPathVisitor visitor(*this);
+					node->grammar->Accept(&visitor);
+					AddFragment(node, true, 0);
+					Join(visitor);
+				}
+
+				void Visit(ParsingDefinitionCreateGrammar* node)override
+				{
+					node->grammar->Accept(this);
+					AddFragment(node, true, manager->CacheGetType(node->type.Obj(), 0));
+				}
+
+				void Visit(ParsingDefinitionAssignGrammar* node)override
+				{
+					node->grammar->Accept(this);
+					AddFragment(node, true, 0);
+				}
+
+				void Visit(ParsingDefinitionUseGrammar* node)override
+				{
+					node->grammar->Accept(this);
+					AddFragment(node, true, manager->CacheGetSymbol(node->grammar.Obj())->GetDescriptorSymbol());
+				}
+
+				void Visit(ParsingDefinitionSetterGrammar* node)override
+				{
+					node->grammar->Accept(this);
+					AddFragment(node, true, 0);
+				}
+			};
+
+			class ResolveAssignerGrammarVisitor : public Object, public ParsingDefinitionGrammar::IVisitor
+			{
+			public:
+				typedef Dictionary<ParsingDefinitionGrammar*, Ptr<GrammarPathContainer>>	GrammarPathMap;
+				ParsingSymbolManager*			manager;
+				List<Ptr<ParsingError>>&		errors;
+				GrammarPathMap&					grammarPaths;
+
+				ResolveAssignerGrammarVisitor(ParsingSymbolManager* _manager, List<Ptr<ParsingError>>& _errors, GrammarPathMap& _grammarPaths)
+					:manager(_manager)
+					,errors(_errors)
+					,grammarPaths(_grammarPaths)
+				{
+				}
+
+				ParsingSymbol* GetFieldFromCombined(ParsingDefinitionGrammar* node, const WString& fieldName)
+				{
+					Ptr<GrammarPathContainer> paths=grammarPaths[node];
+					ParsingSymbol* pathType=paths->paths[0]->pathType;
+					for(vint i=1;i<paths->paths.Count();i++)
+					{
+						pathType=pathType->SearchCommonBaseClass(paths->paths[i]->pathType);
+						if(!pathType) break;
+					}
+
+					WString pathNames;
+					WString typeNames;
+					for(int i=0;i<paths->paths.Count();i++)
+					{
+						if(i>0)
+						{
+							pathNames+=L", ";
+							typeNames+=L", ";
+						}
+						pathNames+=L"{"+paths->paths[i]->ToString()+L"}";
+						typeNames+=L"\""+GetTypeFullName(paths->paths[i]->pathType)+L"\"";
+					}
+
+					if(pathType)
+					{
+						ParsingSymbol* field=pathType->SearchClassSubSymbol(fieldName);
+						if(!field)
+						{
+							errors.Add(new ParsingError(node, L"There are multiple grammar paths with different created types get through this operation for class field \""+fieldName+L"\", but the common base type \""+GetTypeFullName(pathType)+L"\" of these types doesn't contains the required class field. Types: "+typeNames+L"; Paths: "+pathNames+L"."));
+						}
+						else if(field->GetType()!=ParsingSymbol::ClassField)
+						{
+							errors.Add(new ParsingError(node, L"There are multiple grammar paths with different created types get through this operation for class field \""+fieldName+L"\", and the common base type \""+GetTypeFullName(pathType)+L"\" of these types contains a symbol called \""+fieldName+L"\", but this is not a class field. Types: "+typeNames+L"; Paths: "+pathNames+L"."));
+						}
+						else
+						{
+							return field;
+						}
+					}
+					else
+					{
+						errors.Add(new ParsingError(node, L"There are multiple grammar paths with different created types get through this operation for class field \""+fieldName+L"\", but these types don't have a common base type. Types: "+typeNames+L"; Paths: "+pathNames+L"."));
+					}
+					return 0;
+				}
+
+				void Visit(ParsingDefinitionPrimitiveGrammar* node)override
+				{
+				}
+
+				void Visit(ParsingDefinitionTextGrammar* node)override
+				{
+				}
+
+				void Visit(ParsingDefinitionSequenceGrammar* node)override
+				{
+				}
+
+				void Visit(ParsingDefinitionAlternativeGrammar* node)override
+				{
+				}
+
+				void Visit(ParsingDefinitionLoopGrammar* node)override
+				{
+				}
+
+				void Visit(ParsingDefinitionOptionalGrammar* node)override
+				{
+				}
+
+				void Visit(ParsingDefinitionCreateGrammar* node)override
+				{
+				}
+
+				void Visit(ParsingDefinitionAssignGrammar* node)override
+				{
+					if(ParsingSymbol* field=GetFieldFromCombined(node, node->memberName))
+					{
+						manager->CacheSetSymbol(node, field);
+						manager->CacheSetType(node, field->GetDescriptorSymbol());
+
+						ParsingSymbol* fieldType=field->GetDescriptorSymbol();
+						ParsingSymbol* valueType=manager->CacheGetType(node->grammar.Obj());
+						ParsingSymbol* targetFieldType=fieldType;
+						if(targetFieldType->GetType()==ParsingSymbol::ArrayType)
+						{
+							targetFieldType=targetFieldType->GetDescriptorSymbol();
+						}
+						if(targetFieldType!=valueType && valueType->SearchCommonBaseClass(targetFieldType)!=targetFieldType)
+						{
+							errors.Add(new ParsingError(node, L"Cannot assign value from grammar {"+GrammarToString(node->grammar.Obj())+L"} of type \""+GetTypeFullName(valueType)+L"\" to the field \""+node->memberName+L"\" of type \""+GetTypeFullName(fieldType)+L"\"."));
+						}
+					}
+				}
+
+				void Visit(ParsingDefinitionUseGrammar* node)override
+				{
+				}
+
+				void Visit(ParsingDefinitionSetterGrammar* node)override
+				{
+					if(ParsingSymbol* field=GetFieldFromCombined(node, node->memberName))
+					{
+						manager->CacheSetSymbol(node, field);
+						manager->CacheSetType(node, field->GetDescriptorSymbol());
+
+						if(field->GetDescriptorSymbol()->GetType()!=ParsingSymbol::EnumType)
+						{
+							errors.Add(new ParsingError(node, L"Setter operation (the \"with\" operator) can only specify the value of a class field of an enum type. But \""+GetTypeFullName(field->GetDescriptorSymbol())+L"\" is not a enum type."));
+						}
+						else
+						{
+							ParsingSymbol* enumType=field->GetDescriptorSymbol();
+							ParsingSymbol* enumItem=enumType->GetSubSymbolByName(node->value);
+							if(!enumItem)
+							{
+								errors.Add(new ParsingError(node, L"Type \""+GetTypeFullName(enumType)+L"\" from field \""+node->memberName+L"\" does not have an enum item called \""+node->value+L"\"."));
+							}
+							else if(enumItem->GetType()!=ParsingSymbol::EnumItem)
+							{
+								errors.Add(new ParsingError(node, L"Type \""+GetTypeFullName(enumType)+L"\" from field \""+node->memberName+L"\" has a symbol called \""+node->value+L"\", but this is not an enum item."));
+							}
+						}
+					}
+				}
+			};
+
+			void ResolveRuleSymbols(Ptr<definitions::ParsingDefinitionRuleDefinition> rule, ParsingSymbolManager* manager, collections::List<Ptr<ParsingError>>& errors)
+			{
+				ParsingSymbol* ruleType=manager->GetGlobal()->GetSubSymbolByName(rule->name)->GetDescriptorSymbol();
+
+				FOREACH(Ptr<ParsingDefinitionGrammar>, grammar, rule->grammars)
+				{
+					List<Ptr<GrammarPath>> paths;
+					{
+						EnumerateGrammarPathVisitor visitor(manager, rule.Obj());
+						grammar->Accept(&visitor);
+						visitor.BuildPath(paths);
+					}
+
+					FOREACH(Ptr<GrammarPath>, path, paths)
+					{
+						path->pathType=ruleType;
+						vint createdTypeCount=0;
+						vint transitionCount=0;
+						FOREACH(Ptr<GrammarPathFragment>, fragment, path->fragments)
+						{
+							if(fragment->createdType)
+							{
+								createdTypeCount++;
+								path->pathType=fragment->createdType;
+							}
+							if(!fragment->epsilon)
+							{
+								transitionCount++;
+							}
+						}
+
+						if(createdTypeCount==0)
+						{
+							errors.Add(new ParsingError(grammar.Obj(), L"No parsing tree node is created if the following path is chosen: \""+path->ToString()+L"\" in rule \""+rule->name+L"\"."));
+						}
+						else if(createdTypeCount>1)
+						{
+							errors.Add(new ParsingError(grammar.Obj(), L"Multiple parsing tree nodes are created if the following path is chosen: \""+path->ToString()+L"\" in rule \""+rule->name+L"\"."));
+						}
+						if(transitionCount==0)
+						{
+							errors.Add(new ParsingError(grammar.Obj(), L"Rule \""+rule->name+L"\" is not allowed to infer to an empty token sequence."));
+						}
+					}
+
+					ResolveAssignerGrammarVisitor::GrammarPathMap grammarPathMap;
+					FOREACH(Ptr<GrammarPath>, path, paths)
+					{
+						FOREACH(Ptr<GrammarPathFragment>, fragment, path->fragments)
+						{
+							ParsingDefinitionGrammar* grammar=fragment->grammar;
+							Ptr<GrammarPathContainer> container;
+							vint index=grammarPathMap.Keys().IndexOf(grammar);
+							if(index==-1)
+							{
+								container=new GrammarPathContainer;
+								grammarPathMap.Add(grammar, container);
+							}
+							else
+							{
+								container=grammarPathMap.Values().Get(index);
+							}
+							container->paths.Add(path);
+						}
+					}
+
+					ResolveAssignerGrammarVisitor visitor(manager, errors, grammarPathMap);
+					FOREACH(ParsingDefinitionGrammar*, grammar, grammarPathMap.Keys())
+					{
+						grammar->Accept(&visitor);
+					}
+				}
+			}
+
+/***********************************************************************
+ResolveSymbols
+***********************************************************************/
+
+			void ResolveTypeSymbols(Ptr<ParsingDefinitionTypeDefinition> type, ParsingSymbolManager* manager, ParsingSymbol* scope, collections::List<Ptr<ParsingError>>& errors)
+			{
+				if(Ptr<ParsingDefinitionClassDefinition> node=type.Cast<ParsingDefinitionClassDefinition>())
+				{
+					if(node->ambiguousType)
+					{
+						ParsingSymbol* ambigiousType=FindType(node->ambiguousType.Obj(), manager, scope, errors);
+						WString ambiguousTypeText=TypeToString(node->ambiguousType.Obj());
+						if(!ambigiousType)
+						{
+							errors.Add(new ParsingError(node.Obj(), L"Ambiguous type \""+ambiguousTypeText+L"\" for type \""+node->name+L"\" does not exist."));
+						}
+						else if(ambigiousType->GetType()!=ParsingSymbol::ClassType)
+						{
+							errors.Add(new ParsingError(node.Obj(), L"Ambiguous type \""+ambiguousTypeText+L"\" for type \""+node->name+L"\" is not a type."));
+						}
+						else if(ambigiousType->GetDescriptorSymbol()!=manager->GetGlobal()->GetSubSymbolByName(node->name))
+						{
+							errors.Add(new ParsingError(node.Obj(), L"Ambiguous type \""+ambiguousTypeText+L"\" for type \""+node->name+L"\" does not inherit from \""+node->name+L"\"."));
+						}
+						else
+						{
+							bool correct=false;
+							if(ambigiousType->GetSubSymbolCount()==1)
+							{
+								ParsingSymbol* field=ambigiousType->GetSubSymbol(0);
+								if(field->GetName()==L"items" && field->GetType()==ParsingSymbol::ClassField)
+								{
+									ParsingSymbol* fieldType=field->GetDescriptorSymbol();
+									if(fieldType->GetType()==ParsingSymbol::ArrayType && fieldType->GetDescriptorSymbol()==ambigiousType->GetDescriptorSymbol())
+									{
+										correct=true;
+									}
+								}
+							}
+							if(!correct)
+							{
+								errors.Add(new ParsingError(node.Obj(), L"Ambiguous type \""+ambiguousTypeText+L"\" for type \""+node->name+L"\" can only contains one field called \"item\" which should be an array of \""+node->name+L"\"."));
+							}
+						}
+					}
+
+					ParsingSymbol* classType=manager->CacheGetClassType(node.Obj());
+					if(classType)
+					{
+						FOREACH(Ptr<ParsingDefinitionTypeDefinition>, subType, node->subTypes)
+						{
+							ResolveTypeSymbols(subType, manager, classType, errors);
+						}
+					}
+				}
+			}
+
+			void ResolveSymbols(Ptr<definitions::ParsingDefinition> definition, ParsingSymbolManager* manager, collections::List<Ptr<ParsingError>>& errors)
+			{
+				FOREACH(Ptr<ParsingDefinitionTypeDefinition>, type, definition->types)
+				{
+					ResolveTypeSymbols(type, manager, manager->GetGlobal(), errors);
+				}
+
+				FOREACH(Ptr<ParsingDefinitionRuleDefinition>, rule, definition->rules)
+				{
+					vint errorCount=errors.Count();
+					ValidateRuleStructure(definition, rule, manager, errors);
+					if(errors.Count()==errorCount)
+					{
+						ResolveRuleSymbols(rule, manager, errors);
+					}
+				}
+			}
+
+/***********************************************************************
+ValidateDefinition
+***********************************************************************/
+
+			void ValidateDefinition(Ptr<definitions::ParsingDefinition> definition, ParsingSymbolManager* manager, collections::List<Ptr<ParsingError>>& errors)
+			{
+				PrepareSymbols(definition, manager, errors);
+				if(errors.Count()>0) return;
+				ResolveSymbols(definition, manager, errors);
+			}
+		}
+	}
+}
+
+/***********************************************************************
+.\PARSING\PARSINGAUTOMATON.CPP
+***********************************************************************/
+
+namespace vl
+{
+	namespace parsing
+	{
+		using namespace collections;
+		using namespace definitions;
+
+		namespace analyzing
+		{
+
+/***********************************************************************
+Action
+***********************************************************************/
+
+			Action::Action()
+				:actionType(Create)
+				,actionSource(0)
+				,actionTarget(0)
+				,creatorRule(0)
+				,shiftReduceSource(0)
+				,shiftReduceTarget(0)
+			{
+			}
+
+			Action::~Action()
+			{
+			}
+
+/***********************************************************************
+Transition
+***********************************************************************/
+
+			Transition::Transition()
+				:source(0)
+				,target(0)
+				,transitionType(Epsilon)
+				,stackOperationType(None)
+				,transitionSymbol(0)
+			{
+			}
+
+			Transition::~Transition()
+			{
+			}
+
+			bool Transition::IsEquivalent(Transition* t1, Transition* t2, bool careSourceAndTarget)
+			{
+				if(careSourceAndTarget)
+				{
+					if(t1->source!=t2->source || t1->target!=t2->target)
+					{
+						return false;
+					}
+				}
+				if(	t1->actions.Count()!=t2->actions.Count() ||
+					t1->transitionType!=t2->transitionType ||
+					t1->transitionSymbol!=t2->transitionSymbol)
+				{
+					return false;
+				}
+				for(vint j=0;j<t1->actions.Count();j++)
+				{
+					Ptr<Action> a1=t1->actions[j];
+					Ptr<Action> a2=t2->actions[j];
+					if(	a1->actionType!=a2->actionType ||
+						a1->actionSource!=a2->actionSource ||
+						a1->actionTarget!=a2->actionTarget ||
+						a1->shiftReduceSource!=a2->shiftReduceSource )
+					{
+						return false;
+					}
+				}
+				return true;
+			}
+
+/***********************************************************************
+State
+***********************************************************************/
+
+			State::State()
+				:ownerRule(0)
+				,ownerRuleSymbol(0)
+				,grammarNode(0)
+				,stateNode(0)
+				,statePosition(BeforeNode)
+				,endState(false)
+			{
+			}
+
+			State::~State()
+			{
+			}
+
+/***********************************************************************
+RuleInfo
+***********************************************************************/
+
+			RuleInfo::RuleInfo()
+				:rootRuleStartState(0)
+				,rootRuleEndState(0)
+				,startState(0)
+				,stateNameCount(0)
+			{
+			}
+
+			RuleInfo::~RuleInfo()
+			{
+			}
+
+/***********************************************************************
+Automaton
+***********************************************************************/
+
+			Automaton::Automaton(ParsingSymbolManager* _symbolManager)
+				:symbolManager(_symbolManager)
+			{
+			}
+
+			Automaton::~Automaton()
+			{
+			}
+
+			void Automaton::AddRuleInfo(definitions::ParsingDefinitionRuleDefinition* rule, Ptr<RuleInfo> ruleInfo)
+			{
+				orderedRulesDefs.Add(rule);
+				ruleInfos.Add(ruleInfo);
+				ruleDefToInfoMap.Add(rule, ruleInfo);
+			}
+
+			State* Automaton::RuleStartState(definitions::ParsingDefinitionRuleDefinition* ownerRule)
+			{
+				State* state=new State;
+				states.Add(state);
+
+				state->ownerRule=ownerRule;
+				state->ownerRuleSymbol=symbolManager->GetGlobal()->GetSubSymbolByName(ownerRule->name);
+				state->stateName=ownerRule->name+L".Start";
+				state->stateExpression=L"@ <"+ownerRule->name+L">";
+				return state;
+			}
+
+			State* Automaton::RootRuleStartState(definitions::ParsingDefinitionRuleDefinition* ownerRule)
+			{
+				State* state=new State;
+				states.Add(state);
+
+				state->ownerRule=ownerRule;
+				state->ownerRuleSymbol=symbolManager->GetGlobal()->GetSubSymbolByName(ownerRule->name);
+				state->stateName=ownerRule->name+L".RootStart";
+				state->stateExpression=L"@ $<"+ownerRule->name+L">";
+				return state;
+			}
+
+			State* Automaton::RootRuleEndState(definitions::ParsingDefinitionRuleDefinition* ownerRule)
+			{
+				State* state=new State;
+				states.Add(state);
+
+				state->ownerRule=ownerRule;
+				state->ownerRuleSymbol=symbolManager->GetGlobal()->GetSubSymbolByName(ownerRule->name);
+				state->stateName=ownerRule->name+L".RootEnd";
+				state->stateExpression=L"$<"+ownerRule->name+L"> @";
+				return state;
+			}
+
+			State* Automaton::StartState(definitions::ParsingDefinitionRuleDefinition* ownerRule, definitions::ParsingDefinitionGrammar* grammarNode, definitions::ParsingDefinitionGrammar* stateNode)
+			{
+				State* state=new State;
+				states.Add(state);
+
+				state->ownerRule=ownerRule;
+				state->ownerRuleSymbol=symbolManager->GetGlobal()->GetSubSymbolByName(ownerRule->name);
+				state->grammarNode=grammarNode;
+				state->stateNode=stateNode;
+				state->statePosition=State::BeforeNode;
+				state->stateName=ownerRule->name+L"."+itow(++ruleDefToInfoMap[ownerRule]->stateNameCount);
+				stateNode=FindAppropriateGrammarState(grammarNode, stateNode, true);
+				state->stateExpression=L"<"+ownerRule->name+L">: "+GrammarStateToString(grammarNode, stateNode, true);
+				return state;
+			}
+
+			State* Automaton::EndState(definitions::ParsingDefinitionRuleDefinition* ownerRule, definitions::ParsingDefinitionGrammar* grammarNode, definitions::ParsingDefinitionGrammar* stateNode)
+			{
+				State* state=new State;
+				states.Add(state);
+
+				state->ownerRule=ownerRule;
+				state->ownerRuleSymbol=symbolManager->GetGlobal()->GetSubSymbolByName(ownerRule->name);
+				state->grammarNode=grammarNode;
+				state->stateNode=stateNode;
+				state->statePosition=State::AfterNode;
+				state->stateName=ownerRule->name+L"."+itow(++ruleDefToInfoMap[ownerRule]->stateNameCount);
+				stateNode=FindAppropriateGrammarState(grammarNode, stateNode, false);
+				state->stateExpression=L"<"+ownerRule->name+L">: "+GrammarStateToString(grammarNode, stateNode, false);
+				return state;
+			}
+
+			State* Automaton::CopyState(State* oldState)
+			{
+				State* resultState=0;
+				if(oldState->statePosition==State::BeforeNode)
+				{
+					resultState=StartState(oldState->ownerRule, oldState->grammarNode, oldState->stateNode);
+				}
+				else
+				{
+					resultState=EndState(oldState->ownerRule, oldState->grammarNode, oldState->stateNode);
+				}
+				resultState->endState=oldState->endState;
+				return resultState;
+			}
+
+			Transition* Automaton::CreateTransition(State* start, State* end)
+			{
+				Transition* transition=new Transition;
+				transitions.Add(transition);
+
+				start->transitions.Add(transition);
+				end->inputs.Add(transition);
+
+				transition->source=start;
+				transition->target=end;
+				return transition;
+			}
+
+			Transition* Automaton::TokenBegin(State* start, State* end)
+			{
+				Transition* transition=CreateTransition(start, end);
+				transition->transitionType=Transition::TokenBegin;
+				return transition;
+			}
+
+			Transition* Automaton::TokenFinish(State* start, State* end)
+			{
+				Transition* transition=CreateTransition(start, end);
+				transition->transitionType=Transition::TokenFinish;
+				return transition;
+			}
+
+			Transition* Automaton::NormalReduce(State* start, State* end)
+			{
+				Transition* transition=CreateTransition(start, end);
+				transition->transitionType=Transition::NormalReduce;
+				return transition;
+			}
+
+			Transition* Automaton::LeftRecursiveReduce(State* start, State* end)
+			{
+				Transition* transition=CreateTransition(start, end);
+				transition->transitionType=Transition::LeftRecursiveReduce;
+				return transition;
+			}
+
+			Transition* Automaton::Epsilon(State* start, State* end)
+			{
+				Transition* transition=CreateTransition(start, end);
+				transition->transitionType=Transition::Epsilon;
+				return transition;
+			}
+
+			Transition* Automaton::Symbol(State* start, State* end, ParsingSymbol* transitionSymbol)
+			{
+				Transition* transition=CreateTransition(start, end);
+				transition->transitionType=Transition::Symbol;
+				transition->transitionSymbol=transitionSymbol;
+				return transition;
+			}
+
+			Transition* Automaton::CopyTransition(State* start, State* end, Transition* oldTransition)
+			{
+				Transition* transition=CreateTransition(start, end);
+				transition->transitionType=oldTransition->transitionType;
+				transition->stackOperationType=oldTransition->stackOperationType;
+				transition->transitionSymbol=oldTransition->transitionSymbol;
+				return transition;
+			}
+
+			void Automaton::DeleteTransition(Transition* transition)
+			{
+				transition->source->transitions.Remove(transition);
+				transition->target->inputs.Remove(transition);
+				transitions.Remove(transition);
+			}
+
+			void Automaton::DeleteState(State* state)
+			{
+				while(state->inputs.Count())
+				{
+					DeleteTransition(state->inputs[0]);
+				}
+				while(state->transitions.Count())
+				{
+					DeleteTransition(state->transitions[0]);
+				}
+				states.Remove(state);
+			}
+		}
+	}
+}
+
+/***********************************************************************
+.\PARSING\PARSINGAUTOMATON_CLOSURE.CPP
+***********************************************************************/
+
+namespace vl
+{
+	namespace parsing
+	{
+		using namespace collections;
+		using namespace definitions;
+
+		namespace analyzing
+		{
+
+/***********************************************************************
+CreateNondeterministicPDAFromEpsilonPDA::closure_searching
+***********************************************************************/
+
+			// closure function for searching <epsilon* symbol> reachable states
+			ClosureItem::SearchResult EpsilonClosure(Transition* transition)
+			{
+				return
+					transition->transitionType!=Transition::Epsilon?ClosureItem::Hit:
+					//transition->target->endState?ClosureItem::Blocked:
+					ClosureItem::Continue;
+			}
+
+			// closure searching function
+			void SearchClosureInternal(ClosureItem::SearchResult(*closurePredicate)(Transition*), List<Transition*>& transitionPath, Transition* transition, State* state, List<ClosureItem>& closure)
+			{
+				FOREACH(Transition*, singleTransitionPath, transitionPath)
+				{
+					if(singleTransitionPath->source==state && closurePredicate(singleTransitionPath)!=ClosureItem::Blocked)
+					{
+						Ptr<List<Transition*>> path=new List<Transition*>;
+						CopyFrom(*path.Obj(), transitionPath);
+						closure.Add(ClosureItem(state, path, true));
+						return;
+					}
+				}
+
+				ClosureItem::SearchResult result=transition?closurePredicate(transition):ClosureItem::Continue;
+				switch(result)
+				{
+				case ClosureItem::Continue:
+					{
+						FOREACH(Transition*, newTransition, state->transitions)
+						{
+							if(!transitionPath.Contains(newTransition))
+							{
+								transitionPath.Add(newTransition);
+								SearchClosureInternal(closurePredicate, transitionPath, newTransition, newTransition->target, closure);
+								transitionPath.RemoveAt(transitionPath.Count()-1);
+							}
+						}
+					}
+					break;
+				case ClosureItem::Hit:
+					{
+						Ptr<List<Transition*>> path=new List<Transition*>;
+						CopyFrom(*path.Obj(), transitionPath);
+						closure.Add(ClosureItem(state, path, false));
+					}
+					break;
+				default:;
+				}
+			}
+
+			void SearchClosure(ClosureItem::SearchResult(*closurePredicate)(Transition*), State* startState, List<ClosureItem>& closure)
+			{
+				List<Transition*> transitionPath;
+				SearchClosureInternal(closurePredicate, transitionPath, 0, startState, closure);
+			}
+
+			// map old state to new state and track all states that are not visited yet
+			State* GetMappedState(Ptr<Automaton> newAutomaton, State* oldState, List<State*>& scanningStates, Dictionary<State*, State*>& oldNewStateMap)
+			{
+				State* newState=0;
+				vint mapIndex=oldNewStateMap.Keys().IndexOf(oldState);
+				if(mapIndex==-1)
+				{
+					newState=newAutomaton->CopyState(oldState);
+					oldNewStateMap.Add(oldState, newState);
+				}
+				else
+				{
+					newState=oldNewStateMap.Values().Get(mapIndex);
+				}
+				if(!scanningStates.Contains(oldState))
+				{
+					scanningStates.Add(oldState);
+				}
+				return newState;
+			}
+
+/***********************************************************************
+RemoveEpsilonTransitions
+***********************************************************************/
+
+			void RemoveEpsilonTransitions(collections::Dictionary<State*, State*>& oldNewStateMap, collections::List<State*>& scanningStates, Ptr<Automaton> automaton)
+			{
+				vint currentStateIndex=0;
+
+				while(currentStateIndex<scanningStates.Count())
+				{
+					// map visiting state to new state
+					State* currentOldState=scanningStates[currentStateIndex++];
+					State* currentNewState=GetMappedState(automaton, currentOldState, scanningStates, oldNewStateMap);
+
+					// search for epsilon closure
+					List<ClosureItem> closure;
+					SearchClosure(&EpsilonClosure, currentOldState, closure);
+					FOREACH(ClosureItem, closureItem, closure)
+					{
+						Transition* oldTransition=closureItem.transitions->Get(closureItem.transitions->Count()-1);
+						if(!closureItem.cycle || oldTransition->transitionType!=Transition::Epsilon)
+						{
+							// if the oldTransition begins from an end state
+							if(oldTransition->source->endState && closureItem.transitions->Count()>1)
+							{
+								// keep a epsilon transition that without the last "TokenFinish"
+								State* newEndState=GetMappedState(automaton, oldTransition->source, scanningStates, oldNewStateMap);
+								Transition* transition=automaton->Epsilon(currentNewState, newEndState);
+								FOREACH(Transition*, pathTransition, *closureItem.transitions.Obj())
+								{
+									if(pathTransition==oldTransition) break;
+									CopyFrom(transition->actions, pathTransition->actions, true);
+								}
+							}
+							else
+							{
+								// build compacted non-epsilon transition to the target state of the path
+								State* newEndState=GetMappedState(automaton, oldTransition->target, scanningStates, oldNewStateMap);
+								Transition* transition=automaton->CopyTransition(currentNewState, newEndState, oldTransition);
+								FOREACH(Transition*, pathTransition, *closureItem.transitions.Obj())
+								{
+									CopyFrom(transition->actions, pathTransition->actions, true);
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+/***********************************************************************
+.\PARSING\PARSINGAUTOMATON_EPDA.CPP
+***********************************************************************/
+
+namespace vl
+{
+	namespace parsing
+	{
+		using namespace collections;
+		using namespace definitions;
+
+		namespace analyzing
+		{
+
+/***********************************************************************
+CreateEpsilonPDAVisitor
+***********************************************************************/
+
+			class CreateEpsilonPDAVisitor : public Object, public ParsingDefinitionGrammar::IVisitor
+			{
+			public:
+				Ptr<Automaton>						automaton;
+				ParsingDefinitionRuleDefinition*	rule;
+				ParsingDefinitionGrammar*			ruleGrammar;
+				State*								startState;
+				State*								endState;
+				Transition*							result;
+
+				CreateEpsilonPDAVisitor(Ptr<Automaton> _automaton, ParsingDefinitionRuleDefinition* _rule, ParsingDefinitionGrammar* _ruleGrammar, State* _startState, State* _endState)
+					:automaton(_automaton)
+					,rule(_rule)
+					,ruleGrammar(_ruleGrammar)
+					,startState(_startState)
+					,endState(_endState)
+					,result(0)
+				{
+				}
+
+				static Transition* Create(ParsingDefinitionGrammar* grammar, Ptr<Automaton> automaton, ParsingDefinitionRuleDefinition* rule, ParsingDefinitionGrammar* ruleGrammar, State* startState, State* endState)
+				{
+					CreateEpsilonPDAVisitor visitor(automaton, rule, ruleGrammar, startState, endState);
+					grammar->Accept(&visitor);
+					return visitor.result;
+				}
+
+				Transition* Create(ParsingDefinitionGrammar* grammar, State* startState, State* endState)
+				{
+					return Create(grammar, automaton, rule, ruleGrammar, startState, endState);
+				}
+
+				void Visit(ParsingDefinitionPrimitiveGrammar* node)override
+				{
+					result=automaton->Symbol(startState, endState, automaton->symbolManager->CacheGetSymbol(node));
+				}
+
+				void Visit(ParsingDefinitionTextGrammar* node)override
+				{
+					result=automaton->Symbol(startState, endState, automaton->symbolManager->CacheGetSymbol(node));
+				}
+
+				void Visit(ParsingDefinitionSequenceGrammar* node)override
+				{
+					State* middleState=automaton->EndState(startState->ownerRule, ruleGrammar, node->first.Obj());
+					Create(node->first.Obj(), startState, middleState);
+					Create(node->second.Obj(), middleState, endState);
+				}
+
+				void Visit(ParsingDefinitionAlternativeGrammar* node)override
+				{
+					Create(node->first.Obj(), startState, endState);
+					Create(node->second.Obj(), startState, endState);
+				}
+
+				void Visit(ParsingDefinitionLoopGrammar* node)override
+				{
+					State* loopStart=automaton->StartState(startState->ownerRule, ruleGrammar, node->grammar.Obj());
+					automaton->Epsilon(startState, loopStart);
+					automaton->Epsilon(loopStart, endState);
+					Create(node->grammar.Obj(), loopStart, loopStart);
+				}
+
+				void Visit(ParsingDefinitionOptionalGrammar* node)override
+				{
+					Create(node->grammar.Obj(), startState, endState);
+					automaton->Epsilon(startState, endState);
+				}
+
+				void Visit(ParsingDefinitionCreateGrammar* node)override
+				{
+					State* middleState=automaton->EndState(startState->ownerRule, ruleGrammar, node->grammar.Obj());
+					Create(node->grammar.Obj(), startState, middleState);
+					Transition* transition=automaton->Epsilon(middleState, endState);
+
+					Ptr<Action> action=new Action;
+					action->actionType=Action::Create;
+					action->actionSource=automaton->symbolManager->CacheGetType(node->type.Obj(), 0);
+					action->creatorRule=rule;
+					transition->actions.Add(action);
+				}
+
+				void Visit(ParsingDefinitionAssignGrammar* node)override
+				{
+					Transition* transition=Create(node->grammar.Obj(), startState, endState);
+
+					Ptr<Action> action=new Action;
+					action->actionType=Action::Assign;
+					action->actionSource=automaton->symbolManager->CacheGetSymbol(node);
+					action->creatorRule=rule;
+					transition->actions.Add(action);
+				}
+
+				void Visit(ParsingDefinitionUseGrammar* node)override
+				{
+					Transition* transition=Create(node->grammar.Obj(), startState, endState);
+
+					Ptr<Action> action=new Action;
+					action->actionType=Action::Using;
+					action->creatorRule=rule;
+					transition->actions.Add(action);
+				}
+
+				void Visit(ParsingDefinitionSetterGrammar* node)override
+				{
+					State* middleState=automaton->EndState(startState->ownerRule, ruleGrammar, node->grammar.Obj());
+					Create(node->grammar.Obj(), startState, middleState);
+					Transition* transition=automaton->Epsilon(middleState, endState);
+
+					Ptr<Action> action=new Action;
+					action->actionType=Action::Setter;
+					action->actionSource=automaton->symbolManager->CacheGetSymbol(node);
+					action->actionTarget=action->actionSource->GetDescriptorSymbol()->GetSubSymbolByName(node->value);
+					action->creatorRule=rule;
+					transition->actions.Add(action);
+				}
+			};
+
+/***********************************************************************
+CreateRuleEpsilonPDA
+***********************************************************************/
+
+			void CreateRuleEpsilonPDA(Ptr<Automaton> automaton, Ptr<definitions::ParsingDefinitionRuleDefinition> rule, ParsingSymbolManager* manager)
+			{
+				Ptr<RuleInfo> ruleInfo=new RuleInfo;
+				automaton->AddRuleInfo(rule.Obj(), ruleInfo);
+
+				ruleInfo->rootRuleStartState=automaton->RootRuleStartState(rule.Obj());
+				ruleInfo->rootRuleEndState=automaton->RootRuleEndState(rule.Obj());
+				ruleInfo->startState=automaton->RuleStartState(rule.Obj());
+				automaton->TokenBegin(ruleInfo->rootRuleStartState, ruleInfo->startState);
+
+				FOREACH(Ptr<ParsingDefinitionGrammar>, grammar, rule->grammars)
+				{
+					State* grammarStartState=automaton->StartState(rule.Obj(), grammar.Obj(), grammar.Obj());
+					State* grammarEndState=automaton->EndState(rule.Obj(), grammar.Obj(), grammar.Obj());
+					grammarEndState->stateName+=L".End";
+					grammarEndState->endState=true;
+					automaton->Epsilon(ruleInfo->startState, grammarStartState);
+					automaton->TokenFinish(grammarEndState, ruleInfo->rootRuleEndState);
+					ruleInfo->endStates.Add(grammarEndState);
+					CreateEpsilonPDAVisitor::Create(grammar.Obj(), automaton, rule.Obj(), grammar.Obj(), grammarStartState, grammarEndState);
+				}
+			}
+
+/***********************************************************************
+CreateEpsilonPDA
+***********************************************************************/
+
+			Ptr<Automaton> CreateEpsilonPDA(Ptr<definitions::ParsingDefinition> definition, ParsingSymbolManager* manager)
+			{
+				Ptr<Automaton> automaton=new Automaton(manager);
+				FOREACH(Ptr<ParsingDefinitionRuleDefinition>, rule, definition->rules)
+				{
+					CreateRuleEpsilonPDA(automaton, rule, manager);
+				}
+				return automaton;
+			}
+		}
+	}
+}
+
+/***********************************************************************
+.\PARSING\PARSINGAUTOMATON_GENERATETABLE.CPP
+***********************************************************************/
+
+namespace vl
+{
+	namespace parsing
+	{
+		using namespace collections;
+		using namespace definitions;
+		using namespace tabling;
+
+		namespace analyzing
+		{
+
+/***********************************************************************
+GetTypeNameForCreateInstruction
+***********************************************************************/
+
+			WString GetTypeNameForCreateInstruction(ParsingSymbol* type)
+			{
+				ParsingSymbol* parent=type->GetParentSymbol();
+				if(parent->GetType()==ParsingSymbol::ClassType)
+				{
+					return GetTypeNameForCreateInstruction(parent)+L"."+type->GetName();
+				}
+				else
+				{
+					return type->GetName();
+				}
+			}
+
+/***********************************************************************
+CreateLookAhead
+***********************************************************************/
+
+			void CopyStableLookAheads(List<Ptr<ParsingTable::LookAheadInfo>>& la, List<Ptr<ParsingTable::LookAheadInfo>>& sla, const List<Ptr<ParsingTable::LookAheadInfo>>& la2)
+			{
+				CopyFrom(sla, From(la)
+					.Where([&](Ptr<ParsingTable::LookAheadInfo> lai)
+					{
+						return From(la2).All([&](Ptr<ParsingTable::LookAheadInfo> lai2)
+						{
+							return ParsingTable::LookAheadInfo::TestPrefix(lai, lai2)==ParsingTable::LookAheadInfo::NotPrefix;
+						});
+					}),
+					true);
+			}
+
+			void RemoveStableLookAheads(List<Ptr<ParsingTable::LookAheadInfo>>& la, const List<Ptr<ParsingTable::LookAheadInfo>>& sla)
+			{
+				for(vint i=la.Count()-1;i>=0;i--)
+				{
+					if(sla.Contains(la[i].Obj()))
+					{
+						la.RemoveAt(i);
+					}
+				}
+			}
+
+			bool WalkLookAheads(Ptr<ParsingTable> table, List<Ptr<ParsingTable::LookAheadInfo>>& la, vint maxTokenCount)
+			{
+				vint count=la.Count();
+				for(vint i=0;i<count;i++)
+				{
+					Ptr<ParsingTable::LookAheadInfo> lai=la[i];
+					if(lai->tokens.Count()==maxTokenCount)
+					{
+						return false;
+					}
+					ParsingTable::LookAheadInfo::Walk(table, lai, lai->state, la);
+				}
+				return true;
+			}
+
+			void CompactLookAheads(Ptr<ParsingTable::TransitionItem> t, List<Ptr<ParsingTable::LookAheadInfo>>& sla)
+			{
+				CopyFrom(sla, t->lookAheads, true);
+				CopyFrom(t->lookAheads, From(sla)
+					.Where([&](Ptr<ParsingTable::LookAheadInfo> lai)
+					{
+						return From(sla).All([&](Ptr<ParsingTable::LookAheadInfo> lai2)
+						{
+							if(lai==lai2) return true;
+							ParsingTable::LookAheadInfo::PrefixResult result=ParsingTable::LookAheadInfo::TestPrefix(lai, lai2);
+							switch(result)
+							{
+							case ParsingTable::LookAheadInfo::Prefix:
+								return false;
+							case ParsingTable::LookAheadInfo::Equal:
+								return sla.IndexOf(lai.Obj()) < sla.IndexOf(lai2.Obj());
+							default:
+								return true;
+							}
+						});
+					}));
+			}
+
+			bool CreateLookAhead(Ptr<ParsingTable> table, Ptr<ParsingTable::TransitionItem> t1, Ptr<ParsingTable::TransitionItem> t2, vint maxTokenCount)
+			{
+				List<Ptr<ParsingTable::LookAheadInfo>> la1, la2, sla1, sla2;
+
+				// calculate 1-token look aheads
+				ParsingTable::LookAheadInfo::Walk(table, 0, t1->targetState, la1);
+				ParsingTable::LookAheadInfo::Walk(table, 0, t2->targetState, la2);
+
+				do
+				{
+					// pick up all stable look aheads and remove them from the look ahead list
+					// stable look ahead means, when the look ahead is satisfied, then the transition is picked up with full confidence
+					// non-stable look ahead means, when the look ahead is satisifed, it only increase confidence, needs further tokens for decision
+					CopyStableLookAheads(la1, sla1, la2);
+					CopyStableLookAheads(la2, sla2, la1);
+					RemoveStableLookAheads(la1, sla1);
+					RemoveStableLookAheads(la2, sla2);
+
+					// check if there are non-stable look aheads in two transitions points to the same state
+					// in such situation means that the two transition cannot always be determined using look aheads
+					FOREACH(Ptr<ParsingTable::LookAheadInfo>, lai1, la1)
+					{
+						FOREACH(Ptr<ParsingTable::LookAheadInfo>, lai2, la2)
+						{
+							if (lai1->state == lai2->state)
+							{
+								if (ParsingTable::LookAheadInfo::TestPrefix(lai1, lai2) != ParsingTable::LookAheadInfo::NotPrefix)
+								{
+									return false;
+								}
+								if (ParsingTable::LookAheadInfo::TestPrefix(lai2, lai1) != ParsingTable::LookAheadInfo::NotPrefix)
+								{
+									return false;
+								}
+							}
+						}
+					}
+
+					// use the non-stable look aheads to walk a token further
+					if(!WalkLookAheads(table, la1, maxTokenCount) || !WalkLookAheads(table, la2, maxTokenCount))
+					{
+						return false;
+					}
+				}
+				while(la1.Count()>0 || la2.Count()>0);
+
+				CompactLookAheads(t1, sla1);
+				CompactLookAheads(t2, sla2);
+				return true;
+			}
+
+/***********************************************************************
+CollectAttribute
+***********************************************************************/
+
+			void CollectType(ParsingSymbol* symbol, List<ParsingSymbol*>& types)
+			{
+				if(symbol->GetType()==ParsingSymbol::ClassType)
+				{
+					types.Add(symbol);
+				}
+				vint count=symbol->GetSubSymbolCount();
+				for(vint i=0;i<count;i++)
+				{
+					CollectType(symbol->GetSubSymbol(i), types);
+				}
+			}
+
+			void CollectAttributeInfo(Ptr<ParsingTable::AttributeInfoList> att, List<Ptr<definitions::ParsingDefinitionAttribute>>& atts)
+			{
+				FOREACH(Ptr<definitions::ParsingDefinitionAttribute>, datt, atts)
+				{
+					Ptr<ParsingTable::AttributeInfo> tatt=new ParsingTable::AttributeInfo(datt->name);
+					CopyFrom(tatt->arguments, datt->arguments);
+					att->attributes.Add(tatt);
+				}
+			}
+
+			Ptr<ParsingTable::AttributeInfoList> CreateAttributeInfo(List<Ptr<definitions::ParsingDefinitionAttribute>>& atts)
+			{
+				Ptr<ParsingTable::AttributeInfoList> att=new ParsingTable::AttributeInfoList;
+				CollectAttributeInfo(att, atts);
+				return att;
+			}
+
+/***********************************************************************
+GenerateTable
+***********************************************************************/
+
+			vint LookAheadConflictPriority(vint tableTokenIndex)
+			{
+				switch (tableTokenIndex)
+				{
+				case ParsingTable::NormalReduce:
+					return 0;
+				case ParsingTable::LeftRecursiveReduce:
+					return 1;
+				default:
+					return 2;
+				}
+			}
+
+			void GenerateLookAhead(Ptr<ParsingTable> table, List<State*>& stateIds, vint state, vint token, Ptr<ParsingTable::TransitionItem> t1, Ptr<ParsingTable::TransitionItem> t2, bool enableAmbiguity, collections::List<Ptr<ParsingError>>& errors)
+			{
+				if(ParsingTable::TransitionItem::CheckOrder(t1, t2, ParsingTable::TransitionItem::UnknownOrder)==ParsingTable::TransitionItem::UnknownOrder)
+				{
+					if(enableAmbiguity || !CreateLookAhead(table, t1, t2, 16))
+					{
+						if (LookAheadConflictPriority(t1->token) != LookAheadConflictPriority(t2->token))
+						{
+							return;
+						}
+						WString stateName=itow(state)+L"["+table->GetStateInfo(state).stateName+L"]";
+						WString tokenName=
+							token==ParsingTable::TokenBegin?WString(L"$TokenBegin"):
+							token==ParsingTable::TokenFinish?WString(L"$TokenFinish"):
+							token==ParsingTable::NormalReduce?WString(L"$NormalReduce"):
+							token==ParsingTable::LeftRecursiveReduce?WString(L"$LeftRecursiveReduce"):
+							table->GetTokenInfo(token).name;
+						switch (t1->token)
+						{
+						case ParsingTable::NormalReduce:
+							errors.Add(new ParsingError(stateIds[state]->ownerRule, L"Conflict happened with normal reduce in transition of \""+tokenName+L"\" of state \""+stateName+L"\"."));
+							break;
+						case ParsingTable::LeftRecursiveReduce:
+							errors.Add(new ParsingError(stateIds[state]->ownerRule, L"Conflict happened with left recursive reduce in transition of \""+tokenName+L"\" of state \""+stateName+L"\"."));
+							break;
+						default:
+							errors.Add(new ParsingError(stateIds[state]->ownerRule, L"Conflict happened in transition of \""+tokenName+L"\" of state \""+stateName+L"\"."));
+							break;
+						}
+					}
+				}
+			}
+
+			Ptr<tabling::ParsingTable> GenerateTableFromPDA(Ptr<definitions::ParsingDefinition> definition, ParsingSymbolManager* manager, Ptr<Automaton> jointPDA, bool enableAmbiguity, collections::List<Ptr<ParsingError>>& errors)
+			{
+				List<Ptr<ParsingTable::AttributeInfoList>> atts;
+
+				/***********************************************************************
+				find all class types
+				***********************************************************************/
+				List<ParsingSymbol*> types;
+				Dictionary<WString, vint> typeAtts;
+				Dictionary<Pair<WString, WString>, vint> treeFieldAtts;
+
+				// stable class field order
+				List<ParsingSymbol*> orderedChildTypeKeys;
+				Dictionary<ParsingSymbol*, Ptr<List<ParsingSymbol*>>> childTypeValues;
+
+				// find all class types
+				CollectType(manager->GetGlobal(), types);
+				FOREACH(ParsingSymbol*, type, types)
+				{
+					Ptr<ParsingTable::AttributeInfoList> typeAtt = new ParsingTable::AttributeInfoList;
+					ParsingSymbol* parent = type;
+					while (parent)
+					{
+						ParsingDefinitionClassDefinition* classDef = manager->CacheGetClassDefinition(parent);
+						CollectAttributeInfo(typeAtt, classDef->attributes);
+
+						Ptr<List<ParsingSymbol*>> children;
+						vint index = childTypeValues.Keys().IndexOf(parent);
+						if (index == -1)
+						{
+							children = new List<ParsingSymbol*>;
+							orderedChildTypeKeys.Add(parent);
+							childTypeValues.Add(parent, children);
+						}
+						else
+						{
+							children = childTypeValues.Values().Get(index);
+						}
+
+						children->Add(type);
+						parent = parent->GetDescriptorSymbol();
+					}
+
+					if (typeAtt->attributes.Count() > 0)
+					{
+						typeAtts.Add(GetTypeFullName(type), atts.Count());
+						atts.Add(typeAtt);
+					}
+					else
+					{
+						typeAtts.Add(GetTypeFullName(type), -1);
+					}
+				}
+
+				// find all class fields
+				FOREACH(ParsingSymbol*, type, orderedChildTypeKeys)
+				{
+					List<ParsingSymbol*>& children = *childTypeValues[type].Obj();
+					ParsingDefinitionClassDefinition* classDef = manager->CacheGetClassDefinition(type);
+					List<vint> fieldAtts;
+
+					FOREACH_INDEXER(Ptr<ParsingDefinitionClassMemberDefinition>, field, index, classDef->members)
+					{
+						if (field->attributes.Count() > 0)
+						{
+							fieldAtts.Add(atts.Count());
+							atts.Add(CreateAttributeInfo(field->attributes));
+						}
+						else
+						{
+							fieldAtts.Add(-1);
+						}
+					}
+
+					FOREACH(ParsingSymbol*, child, children)
+					{
+						WString type = GetTypeFullName(child);
+						FOREACH_INDEXER(Ptr<ParsingDefinitionClassMemberDefinition>, field, index, classDef->members)
+						{
+							treeFieldAtts.Add(Pair<WString, WString>(type, field->name), fieldAtts[index]);
+						}
+					}
+				}
+
+				/***********************************************************************
+				find all tokens
+				***********************************************************************/
+				vint tokenCount = 0;
+				vint discardTokenCount = 0;
+				Dictionary<ParsingSymbol*, vint> tokenIds;
+				List<WString> discardTokens;
+
+				Dictionary<WString, vint> tokenAtts;
+				Dictionary<WString, vint> ruleAtts;
+
+				FOREACH(Ptr<ParsingDefinitionTokenDefinition>, token, definition->tokens)
+				{
+					if (token->attributes.Count() > 0)
+					{
+						tokenAtts.Add(token->name, atts.Count());
+						atts.Add(CreateAttributeInfo(token->attributes));
+					}
+					else
+					{
+						tokenAtts.Add(token->name, -1);
+					}
+
+					if (token->discard)
+					{
+						discardTokens.Add(token->name);
+						discardTokenCount++;
+					}
+					else
+					{
+						ParsingSymbol* tokenSymbol = jointPDA->symbolManager->GetGlobal()->GetSubSymbolByName(token->name);
+						tokenIds.Add(tokenSymbol, tokenIds.Count() + ParsingTable::UserTokenStart);
+						tokenCount++;
+					}
+				}
+
+				/***********************************************************************
+				find all rules
+				***********************************************************************/
+				FOREACH(Ptr<ParsingDefinitionRuleDefinition>, rule, definition->rules)
+				{
+					if (rule->attributes.Count() > 0)
+					{
+						ruleAtts.Add(rule->name, atts.Count());
+						atts.Add(CreateAttributeInfo(rule->attributes));
+					}
+					else
+					{
+						ruleAtts.Add(rule->name, -1);
+					}
+				}
+
+				/***********************************************************************
+				find all available states
+				***********************************************************************/
+				List<State*> stateIds;
+				vint availableStateCount = 0;
+				{
+					vint currentState = 0;
+					List<State*> scanningStates;
+					FOREACH(Ptr<RuleInfo>, ruleInfo, jointPDA->ruleInfos)
+					{
+						if (!scanningStates.Contains(ruleInfo->rootRuleStartState))
+						{
+							scanningStates.Add(ruleInfo->rootRuleStartState);
+						}
+
+						while (currentState < scanningStates.Count())
+						{
+							State* state = scanningStates[currentState++];
+							stateIds.Add(state);
+
+							FOREACH(Transition*, transition, state->transitions)
+							{
+								if (!scanningStates.Contains(transition->target))
+								{
+									scanningStates.Add(transition->target);
+								}
+							}
+						}
+					}
+					availableStateCount = scanningStates.Count();
+				}
+
+				// there will be some states that is used in shift and reduce but it is not a reachable state
+				// so the state table will record all state
+				FOREACH(Ptr<State>, state, jointPDA->states)
+				{
+					if (!stateIds.Contains(state.Obj()))
+					{
+						stateIds.Add(state.Obj());
+					}
+				}
+				vint stateCount = stateIds.Count();
+
+				Ptr<ParsingTable> table = new ParsingTable(atts.Count(), typeAtts.Count(), treeFieldAtts.Count(), tokenCount, discardTokenCount, stateCount, definition->rules.Count());
+
+				/***********************************************************************
+				fill attribute infos
+				***********************************************************************/
+				FOREACH_INDEXER(Ptr<ParsingTable::AttributeInfoList>, att, index, atts)
+				{
+					table->SetAttributeInfo(index, att);
+				}
+
+				/***********************************************************************
+				fill tree type infos
+				***********************************************************************/
+				typedef Pair<WString, vint> TreeTypeAttsPair;
+				FOREACH_INDEXER(TreeTypeAttsPair, type, index, typeAtts)
+				{
+					table->SetTreeTypeInfo(index, ParsingTable::TreeTypeInfo(type.key, type.value));
+				}
+
+				/***********************************************************************
+				fill tree field infos
+				***********************************************************************/
+				typedef Pair<Pair<WString, WString>, vint> TreeFieldAttsPair;
+				FOREACH_INDEXER(TreeFieldAttsPair, field, index, treeFieldAtts)
+				{
+					table->SetTreeFieldInfo(index, ParsingTable::TreeFieldInfo(field.key.key, field.key.value, field.value));
+				}
+
+				/***********************************************************************
+				fill token infos
+				***********************************************************************/
+				FOREACH(ParsingSymbol*, symbol, tokenIds.Keys())
+				{
+					ParsingTable::TokenInfo info;
+					info.name = symbol->GetName();
+					info.regex = symbol->GetDescriptorString();
+					info.attributeIndex = tokenAtts[info.name];
+
+					vint id = tokenIds[symbol];
+					table->SetTokenInfo(id, info);
+				}
+
+				FOREACH_INDEXER(WString, name, i, discardTokens)
+				{
+					ParsingSymbol* symbol = jointPDA->symbolManager->GetGlobal()->GetSubSymbolByName(name);
+
+					ParsingTable::TokenInfo info;
+					info.name = symbol->GetName();
+					info.regex = symbol->GetDescriptorString();
+					info.attributeIndex = tokenAtts[info.name];
+					table->SetDiscardTokenInfo(i, info);
+				}
+
+				/***********************************************************************
+				fill rule infos
+				***********************************************************************/
+				FOREACH_INDEXER(ParsingDefinitionRuleDefinition*, rule, i, jointPDA->orderedRulesDefs)
+				{
+					Ptr<RuleInfo> pdaRuleInfo = jointPDA->ruleDefToInfoMap[rule];
+					ParsingTable::RuleInfo info;
+					info.name = rule->name;
+					info.type = TypeToString(rule->type.Obj());
+					info.rootStartState = stateIds.IndexOf(pdaRuleInfo->rootRuleStartState);
+					info.attributeIndex = ruleAtts[info.name];
+
+					if (Ptr<ParsingDefinitionPrimitiveType> classType = rule->type.Cast<ParsingDefinitionPrimitiveType>())
+					{
+						ParsingSymbol* ruleSymbol = manager->GetGlobal()->GetSubSymbolByName(rule->name);
+						ParsingSymbol* ruleType = ruleSymbol->GetDescriptorSymbol();
+						ParsingDefinitionClassDefinition* ruleTypeDef = manager->CacheGetClassDefinition(ruleType);
+						if (ruleTypeDef && ruleTypeDef->ambiguousType)
+						{
+							ParsingSymbol* ambiguousType = manager->CacheGetType(ruleTypeDef->ambiguousType.Obj(), ruleType->GetParentSymbol());
+							info.ambiguousType = GetTypeFullName(ambiguousType);
+						}
+					}
+					table->SetRuleInfo(i, info);
+				}
+
+				/***********************************************************************
+				fill state infos
+				***********************************************************************/
+				FOREACH_INDEXER(State*, state, i, stateIds)
+				{
+					ParsingTable::StateInfo info;
+					info.ruleName = state->ownerRule->name;
+					info.stateName = state->stateName;
+					info.stateExpression = state->stateExpression;
+					table->SetStateInfo(i, info);
+				}
+
+				/***********************************************************************
+				fill transition table
+				***********************************************************************/
+				FOREACH_INDEXER(State*, state, stateIndex, stateIds)
+				{
+					// if this state is not necessary, stop building the table
+					if (stateIndex >= availableStateCount) break;
+
+					FOREACH(Transition*, transition, state->transitions)
+					{
+						vint tokenIndex = -1;
+						switch (transition->transitionType)
+						{
+						case Transition::TokenBegin:
+							tokenIndex = ParsingTable::TokenBegin;
+							break;
+						case Transition::TokenFinish:
+							tokenIndex = ParsingTable::TokenFinish;
+							break;
+						case Transition::NormalReduce:
+							tokenIndex = ParsingTable::NormalReduce;
+							break;
+						case Transition::LeftRecursiveReduce:
+							tokenIndex = ParsingTable::LeftRecursiveReduce;
+							break;
+						case Transition::Symbol:
+							tokenIndex = tokenIds[transition->transitionSymbol];
+							break;
+						default:;
+						}
+
+						Ptr<ParsingTable::TransitionBag> bag = table->GetTransitionBag(stateIndex, tokenIndex);
+						if (!bag)
+						{
+							bag = new ParsingTable::TransitionBag;
+							table->SetTransitionBag(stateIndex, tokenIndex, bag);
+						}
+
+						Ptr<ParsingTable::TransitionItem> item = new ParsingTable::TransitionItem;
+						item->token = tokenIndex;
+						item->targetState = stateIds.IndexOf(transition->target);
+						bag->transitionItems.Add(item);
+
+						FOREACH(Ptr<Action>, action, transition->actions)
+						{
+							ParsingTable::Instruction ins;
+							switch (action->actionType)
+							{
+							case Action::Create:
+							{
+								ins.instructionType = ParsingTable::Instruction::Create;
+								ins.nameParameter = GetTypeNameForCreateInstruction(action->actionSource);
+							}
+							break;
+							case Action::Using:
+							{
+								ins.instructionType = ParsingTable::Instruction::Using;
+							}
+							break;
+							case Action::Assign:
+							{
+								if (action->actionSource->GetDescriptorSymbol()->GetType() == ParsingSymbol::ArrayType)
+								{
+									ins.instructionType = ParsingTable::Instruction::Item;
+								}
+								else
+								{
+									ins.instructionType = ParsingTable::Instruction::Assign;
+								}
+								ins.nameParameter = action->actionSource->GetName();
+							}
+							break;
+							case Action::Setter:
+							{
+								ins.instructionType = ParsingTable::Instruction::Setter;
+								ins.nameParameter = action->actionSource->GetName();
+								ins.value = action->actionTarget->GetName();
+							}
+							break;
+							case Action::Shift:
+							{
+								ins.instructionType = ParsingTable::Instruction::Shift;
+								ins.stateParameter = stateIds.IndexOf(action->shiftReduceSource);
+							}
+							break;
+							case Action::Reduce:
+							{
+								ins.instructionType = ParsingTable::Instruction::Reduce;
+								ins.stateParameter = stateIds.IndexOf(action->shiftReduceSource);
+								item->stackPattern.Add(ins.stateParameter);
+							}
+							break;
+							case Action::LeftRecursiveReduce:
+							{
+								ins.instructionType = ParsingTable::Instruction::LeftRecursiveReduce;
+								ins.stateParameter = stateIds.IndexOf(action->shiftReduceSource);
+							}
+							break;
+							}
+							ins.creatorRule = action->creatorRule->name;
+							item->instructions.Add(ins);
+						}
+					}
+				}
+
+				/***********************************************************************
+				check conflict and build look ahead table
+				***********************************************************************/
+				for (vint i = 0; i < table->GetStateCount(); i++)
+				{
+					for (vint j = 0; j < table->GetTokenCount(); j++)
+					{
+						Ptr<ParsingTable::TransitionBag> bag = table->GetTransitionBag(i, j);
+						if (bag)
+						{
+							CopyFrom(
+								bag->transitionItems,
+								From(bag->transitionItems)
+								.OrderBy([&](Ptr<ParsingTable::TransitionItem> t1, Ptr<ParsingTable::TransitionItem> t2)
+							{
+								// stable transition order
+								vint i1 = bag->transitionItems.IndexOf(t1.Obj());
+								vint i2 = bag->transitionItems.IndexOf(t2.Obj());
+								auto defaultOrder =
+									i1 < i2 ? ParsingTable::TransitionItem::CorrectOrder :
+									i1 > i2 ? ParsingTable::TransitionItem::WrongOrder :
+									ParsingTable::TransitionItem::SameOrder
+									;
+								return ParsingTable::TransitionItem::Compare(t1, t2, defaultOrder);
+							})
+							);
+
+							// build look ahead inside a transition
+							for (vint k1 = 0; k1 < bag->transitionItems.Count() - 1; k1++)
+							{
+								for (vint k2 = k1 + 1; k2 < bag->transitionItems.Count(); k2++)
+								{
+									Ptr<ParsingTable::TransitionItem> t1 = bag->transitionItems[k1];
+									Ptr<ParsingTable::TransitionItem> t2 = bag->transitionItems[k2];
+									GenerateLookAhead(table, stateIds, i, j, t1, t2, enableAmbiguity, errors);
+								}
+							}
+
+							// build look ahead between this transition and reduce transitions
+							for (vint t = ParsingTable::NormalReduce; t <= ParsingTable::LeftRecursiveReduce && t < j; t++)
+							{
+								if (Ptr<ParsingTable::TransitionBag> reduceBag = table->GetTransitionBag(i, t))
+								{
+									for (vint k1 = 0; k1 < reduceBag->transitionItems.Count(); k1++)
+									{
+										for (vint k2 = 0; k2 < bag->transitionItems.Count(); k2++)
+										{
+											Ptr<ParsingTable::TransitionItem> t1 = reduceBag->transitionItems[k1];
+											Ptr<ParsingTable::TransitionItem> t2 = bag->transitionItems[k2];
+											GenerateLookAhead(table, stateIds, i, j, t1, t2, enableAmbiguity, errors);
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+
+				/***********************************************************************
+				initialize table
+				***********************************************************************/
+				if (errors.Count() > 0)
+				{
+					table->SetAmbiguity(true);
+				}
+				table->Initialize();
+				return table;
+			}
+
+			Ptr<tabling::ParsingTable> GenerateTable(Ptr<definitions::ParsingDefinition> definition, bool enableAmbiguity, collections::List<Ptr<ParsingError>>& errors)
+			{
+				errors.Clear();
+				ParsingSymbolManager symbolManager;
+				ValidateDefinition(definition, &symbolManager, errors);
+				if(errors.Count()==0)
+				{
+					Ptr<Automaton> epsilonPDA=CreateEpsilonPDA(definition, &symbolManager);
+					Ptr<Automaton> nondeterministicPDA=CreateNondeterministicPDAFromEpsilonPDA(epsilonPDA);
+					Ptr<Automaton> jointPDA=CreateJointPDAFromNondeterministicPDA(nondeterministicPDA);
+					CompactJointPDA(jointPDA);
+					MarkLeftRecursiveInJointPDA(jointPDA, errors);
+					if(errors.Count()==0)
+					{
+						Ptr<ParsingTable> table=GenerateTableFromPDA(definition, &symbolManager, jointPDA, enableAmbiguity, errors);
+						if(enableAmbiguity || errors.Count()==0)
+						{
+							return table;
+						}
+					}
+				}
+				return 0;
+			}
+		}
+	}
+}
+
+/***********************************************************************
+.\PARSING\PARSINGAUTOMATON_JPDA.CPP
+***********************************************************************/
+
+namespace vl
+{
+	namespace parsing
+	{
+		using namespace collections;
+		using namespace definitions;
+
+		namespace analyzing
+		{
+/***********************************************************************
+CreateJointPDAFromNondeterministicPDA
+***********************************************************************/
+
+			Ptr<Automaton> CreateJointPDAFromNondeterministicPDA(Ptr<Automaton> nondeterministicPDA)
+			{
+				Ptr<Automaton> automaton=new Automaton(nondeterministicPDA->symbolManager);
+
+				// build rule info data
+				Dictionary<WString, ParsingDefinitionRuleDefinition*> ruleMap;
+				Dictionary<State*, State*> oldNewStateMap;
+				FOREACH(ParsingDefinitionRuleDefinition*, rule, nondeterministicPDA->orderedRulesDefs)
+				{
+					// build new rule info
+					Ptr<RuleInfo> ruleInfo=nondeterministicPDA->ruleDefToInfoMap[rule];
+					Ptr<RuleInfo> newRuleInfo=new RuleInfo;
+					automaton->AddRuleInfo(rule, newRuleInfo);
+					ruleMap.Add(rule->name, rule);
+
+					newRuleInfo->rootRuleStartState=automaton->RootRuleStartState(rule);
+					newRuleInfo->rootRuleEndState=automaton->RootRuleEndState(rule);
+					newRuleInfo->startState=automaton->RuleStartState(rule);
+
+					oldNewStateMap.Add(ruleInfo->rootRuleStartState, newRuleInfo->rootRuleStartState);
+					oldNewStateMap.Add(ruleInfo->rootRuleEndState, newRuleInfo->rootRuleEndState);
+					oldNewStateMap.Add(ruleInfo->startState, newRuleInfo->startState);
+
+					newRuleInfo->rootRuleStartState->stateExpression=ruleInfo->rootRuleStartState->stateExpression;
+					newRuleInfo->rootRuleEndState->stateExpression=ruleInfo->rootRuleEndState->stateExpression;
+					newRuleInfo->startState->stateExpression=ruleInfo->startState->stateExpression;
+				}
+
+				FOREACH(Ptr<State>, oldState, nondeterministicPDA->states)
+				{
+					if((oldState->inputs.Count()>0 || oldState->transitions.Count()>0) && !oldNewStateMap.Keys().Contains(oldState.Obj()))
+					{
+						State* newState=automaton->CopyState(oldState.Obj());
+						oldNewStateMap.Add(oldState.Obj(), newState);
+						newState->stateExpression=oldState->stateExpression;
+					}
+				}
+
+				// create transitions
+				FOREACH(ParsingDefinitionRuleDefinition*, rule, nondeterministicPDA->orderedRulesDefs)
+				{
+					Ptr<RuleInfo> ruleInfo=nondeterministicPDA->ruleDefToInfoMap[rule];
+					Ptr<RuleInfo> newRuleInfo=automaton->ruleDefToInfoMap[rule];
+
+					// complete new rule info
+					FOREACH(State*, endState, ruleInfo->endStates)
+					{
+						newRuleInfo->endStates.Add(oldNewStateMap[endState]);
+					}
+
+					// create joint transitions according to old automaton
+					List<State*> scanningStates;
+					vint currentStateIndex=0;
+					scanningStates.Add(ruleInfo->rootRuleStartState);
+
+					while(currentStateIndex<scanningStates.Count())
+					{
+						State* currentOldState=scanningStates[currentStateIndex++];
+						State* currentNewState=oldNewStateMap[currentOldState];
+						FOREACH(Transition*, oldTransition, currentOldState->transitions)
+						{
+							State* oldSource=oldTransition->source;
+							State* oldTarget=oldTransition->target;
+							State* newSource=oldNewStateMap[oldSource];
+							State* newTarget=oldNewStateMap[oldTarget];
+
+							if(!scanningStates.Contains(oldSource)) scanningStates.Add(oldSource);
+							if(!scanningStates.Contains(oldTarget)) scanningStates.Add(oldTarget);
+
+							if(oldTransition->transitionType==Transition::Symbol && oldTransition->transitionSymbol->GetType()==ParsingSymbol::RuleDef)
+							{
+								// if this is a rule transition, create
+								// source -> ruleStart
+								// ruleEnd[] -> target
+								ParsingDefinitionRuleDefinition* rule=ruleMap[oldTransition->transitionSymbol->GetName()];
+								Ptr<RuleInfo> oldRuleInfo=nondeterministicPDA->ruleDefToInfoMap[rule];
+
+								{
+									Transition* shiftTransition=automaton->Epsilon(newSource, oldNewStateMap[oldRuleInfo->startState]);
+									Ptr<Action> action=new Action;
+									action->actionType=Action::Shift;
+									action->shiftReduceSource=newSource;
+									action->shiftReduceTarget=newTarget;
+									action->creatorRule=shiftTransition->source->ownerRule;
+									shiftTransition->actions.Add(action);
+								}
+
+								FOREACH(State*, oldEndState, oldRuleInfo->endStates)
+								{
+									Transition* reduceTransition=automaton->NormalReduce(oldNewStateMap[oldEndState], newTarget);
+									Ptr<Action> action=new Action;
+									action->actionType=Action::Reduce;
+									action->shiftReduceSource=newSource;
+									action->shiftReduceTarget=newTarget;
+									action->creatorRule=reduceTransition->source->ownerRule;
+									reduceTransition->actions.Add(action);
+									CopyFrom(reduceTransition->actions, oldTransition->actions, true);
+								}
+							}
+							else
+							{
+								// if not, just copy
+								Transition* newTransition=automaton->CopyTransition(newSource, newTarget, oldTransition);
+								CopyFrom(newTransition->actions, oldTransition->actions);
+							}
+						}
+					}
+				}
+				return automaton;
+			}
+
+/***********************************************************************
+CompactJointPDA
+***********************************************************************/
+			
+			// closure function for searching shift-reduce-compact transition
+			ClosureItem::SearchResult ShiftReduceCompactClosure(Transition* transition)
+			{
+				return
+					transition->stackOperationType!=Transition::None?ClosureItem::Blocked:
+					transition->transitionType!=Transition::Epsilon?ClosureItem::Hit:
+					ClosureItem::Continue;
+			}
+
+			void CompactJointPDA(Ptr<Automaton> jointPDA)
+			{
+				FOREACH(Ptr<State>, state, jointPDA->states)
+				{
+					State* currentState=state.Obj();
+
+					// search for epsilon closure
+					List<ClosureItem> closure;
+					SearchClosure(&ShiftReduceCompactClosure, currentState, closure);
+
+					FOREACH(ClosureItem, closureItem, closure)
+					{
+						Transition* lastTransition=closureItem.transitions->Get(closureItem.transitions->Count()-1);
+						Transition::StackOperationType stackOperationType=Transition::None;
+						Transition::TransitionType transitionType=lastTransition->transitionType;
+
+						if(closureItem.cycle && lastTransition->transitionType==Transition::Epsilon)
+						{
+							bool containsShift=false;
+							bool containsReduce=false;
+							FOREACH(Transition*, pathTransition, *closureItem.transitions.Obj())
+							{
+								FOREACH(Ptr<Action>, action, pathTransition->actions)
+								{
+									if(action->actionType==Action::Shift) containsShift=true;
+									if(action->actionType==Action::Reduce) containsReduce=true;
+								}
+							}
+							if(containsShift && !containsReduce)
+							{
+								// a left recursive compacted shift transition is found
+								// if the left recursive state is not the current state
+								// that means this transition path fall into other left recursive state
+								// e.g.
+								//     Term = Factor | Term (here is a left recursion) * Factor
+								//     Exp = Term (this rule symbol transition will fall into Term's left recursive state) ...
+								// if such a case happened, this transition path will be simply discarded
+								if(closureItem.state==currentState)
+								{
+									stackOperationType=Transition::LeftRecursive;
+								}
+							}
+							else if(!containsShift && containsReduce)
+							{
+								// a right recursive compacted reduce transition is found
+								// if this state will receive $TokenFinish, then the stack pattern number can be infinite
+								// e.g. for right recursive expression "a b c" == "(a (b c))"
+								// when trying to do a transition by $TokenFinish
+								//     "a b" should reduce once
+								//     "a b c" should reduce twice
+								// because that a reduce is not considered a virtual token, so this is not going to be happened
+							}
+						}
+						else if(closureItem.transitions->Count()>1)
+						{
+							// in joint PDA, only shift and reduce transitions are epsilon transition
+							// if there are more than one transition in a path, then there should be shift or reduce transitions in the path
+							stackOperationType=Transition::ShiftReduceCompacted;
+						}
+
+						if(stackOperationType!=Transition::None)
+						{
+							// build shift-reduce-compacted transition to the target state of the path
+							Transition* transition=jointPDA->CopyTransition(currentState, lastTransition->target, lastTransition);
+							transition->transitionType=transitionType;
+							transition->stackOperationType=stackOperationType;
+
+							// there will be <shift* token>, <reduce* token> or <reduce* shift* token>
+							// but there will not be something like <reduce* shift* reduce* token>
+							// so we can append stackPattern safely
+							FOREACH(Transition*, pathTransition, *closureItem.transitions.Obj())
+							{
+								CopyFrom(transition->actions, pathTransition->actions, true);
+							}
+						}
+					}
+				}
+
+				// delete unnecessary transactions
+				for(vint i=jointPDA->transitions.Count()-1;i>=0;i--)
+				{
+					Transition* transition=jointPDA->transitions[i].Obj();
+					if(transition->stackOperationType==Transition::None && transition->transitionType==Transition::Epsilon)
+					{
+						jointPDA->DeleteTransition(transition);
+					}
+				}
+			}
+
+/***********************************************************************
+MarkLeftRecursiveInJointPDA
+***********************************************************************/
+
+			void MarkLeftRecursiveInJointPDA(Ptr<Automaton> jointPDA, collections::List<Ptr<ParsingError>>& errors)
+			{
+				vint errorCount=errors.Count();
+				// record all left recursive shifts and delete all left recursive epsilon transition
+				SortedList<Pair<State*, State*>> leftRecursiveShifts;
+				FOREACH(Ptr<State>, state, jointPDA->states)
+				{
+					for(vint i=state->transitions.Count()-1;i>=0;i--)
+					{
+						Transition* transition=state->transitions[i];
+						if(transition->stackOperationType==Transition::LeftRecursive)
+						{
+							Ptr<Action> shiftAction;
+							FOREACH(Ptr<Action>, action, transition->actions)
+							{
+								if(action->actionType==Action::Shift)
+								{
+									if(shiftAction)
+									{
+										errors.Add(new ParsingError(state->ownerRule, L"Indirect left recursive transition in rule \""+state->ownerRule->name+L"\" is not allowed."));
+										goto FOUND_INDIRECT_LEFT_RECURSIVE_TRANSITION;
+									}
+									else
+									{
+										shiftAction=action;
+									}
+								}
+							}
+							if(shiftAction)
+							{
+								leftRecursiveShifts.Add(Pair<State*, State*>(shiftAction->shiftReduceSource, shiftAction->shiftReduceTarget));
+							}
+						FOUND_INDIRECT_LEFT_RECURSIVE_TRANSITION:
+							jointPDA->DeleteTransition(transition);
+						}
+					}
+				}
+				if(errorCount!=errors.Count())
+				{
+					return;
+				}
+
+				// change all reduce actions whose (shiftReduceSource, shiftReduceTarget) is recorded in leftRecursiveShifts to left-recursive-reduce
+				// when a reduce is converted to a left-recursive-reduce, the corresponding state in stackPattern should be removed
+				// so this will keep count(Reduce) == count(stackPattern)
+				FOREACH(Ptr<State>, state, jointPDA->states)
+				{
+					FOREACH(Transition*, transition, state->transitions)
+					{
+						for(vint i=transition->actions.Count()-1;i>=0;i--)
+						{
+							Ptr<Action> action=transition->actions[i];
+							if(action->actionType==Action::Reduce)
+							{
+								Pair<State*, State*> shift(action->shiftReduceSource, action->shiftReduceTarget);
+								if(leftRecursiveShifts.Contains(shift))
+								{
+									// check if this is a normal reduce transition, and change it to a left recursive reduce transition.
+									if (transition->transitionType == Transition::NormalReduce)
+									{
+										transition->transitionType = Transition::LeftRecursiveReduce;
+										// need to create a new action because in the previous phrases, these action object are shared and treated as read only
+										Ptr<Action> newAction=new Action;
+										newAction->actionType=Action::LeftRecursiveReduce;
+										newAction->actionSource=action->actionSource;
+										newAction->actionTarget=action->actionTarget;
+										newAction->creatorRule=action->creatorRule;
+										newAction->shiftReduceSource=action->shiftReduceSource;
+										newAction->shiftReduceTarget=action->shiftReduceTarget;
+										newAction->creatorRule=shift.key->ownerRule;
+										transition->actions[i]=newAction;
+									}
+									else
+									{
+										errors.Add(new ParsingError(state->ownerRule, L"Left recursive reduce action in non-normal-reduce found in rule \""+state->ownerRule->name+L"\" is not allowed."));
+									}
+								}
+							}
+						}
+					}
+				}
+
+				// delete complicated transitions
+				FOREACH(Ptr<State>, state, jointPDA->states)
+				{
+					while(true)
+					{
+						bool deleted=false;
+						FOREACH(Transition*, t1, state->transitions)
+						FOREACH(Transition*, t2, state->transitions)
+						if(t1!=t2)
+						{
+							if(Transition::IsEquivalent(t1, t2, true))
+							{
+								jointPDA->DeleteTransition(t2);
+								deleted=true;
+								goto TRANSITION_DELETED;
+							}
+						}
+					TRANSITION_DELETED:
+						if(!deleted) break;
+					}
+				}
+			}
+		}
+	}
+}
+
+/***********************************************************************
+.\PARSING\PARSINGAUTOMATON_MERGESTATES.CPP
+***********************************************************************/
+
+namespace vl
+{
+	namespace parsing
+	{
+		using namespace collections;
+		using namespace definitions;
+
+		namespace analyzing
+		{
+
+/***********************************************************************
+DeleteUnnecessaryStates
+***********************************************************************/
+
+			void DeleteUnnecessaryStates(Ptr<Automaton> automaton, Ptr<RuleInfo> ruleInfo, List<State*>& newStates)
+			{
+				// delete all states that are not reachable to the end state
+				while(true)
+				{
+					// find a non-end state without out transitions
+					vint deleteCount=0;
+					for(vint i=newStates.Count()-1;i>=0;i--)
+					{
+						State* newState=newStates[i];
+						if(newState->transitions.Count()==0)
+						{
+							if(newState!=ruleInfo->rootRuleEndState && !newState->endState)
+							{
+								automaton->DeleteState(newState);
+								newStates.RemoveAt(i);
+							}
+						}
+					}
+					if(deleteCount==0)
+					{
+						break;
+					}
+				}
+			}
+
+/***********************************************************************
+IsMergableCandidate
+***********************************************************************/
+
+			bool IsMergableCandidate(State* state, Ptr<RuleInfo> ruleInfo)
+			{
+				if(state==ruleInfo->rootRuleStartState || state==ruleInfo->rootRuleEndState || state==ruleInfo->startState)
+				{
+					return false;
+				}
+				return true;
+			}
+
+/***********************************************************************
+RearrangeState
+***********************************************************************/
+
+#define COMPARE_SYMBOL(S1, S2)\
+			if (S1 && S2)\
+			{\
+				if (S1->GetType() < S2->GetType()) return -1;\
+				if (S1->GetType() > S2->GetType()) return 1;\
+				if (S1->GetName() < S2->GetName()) return -1;\
+				if (S1->GetName() > S2->GetName()) return 1;\
+			}\
+			else if (S1)\
+			{\
+				return 1;\
+			}\
+			else if (S2)\
+			{\
+				return -1;\
+			}\
+
+			vint CompareTransitionForRearranging(Transition* t1, Transition* t2)
+			{
+				if (t1->transitionType < t2->transitionType) return -1;
+				if (t1->transitionType > t2->transitionType) return 1;
+				COMPARE_SYMBOL(t1->transitionSymbol, t2->transitionSymbol);
+				return 0;
+			}
+
+			vint CompareActionForRearranging(Ptr<Action> a1, Ptr<Action> a2)
+			{
+				if(a1->actionType<a2->actionType) return -1;
+				if(a1->actionType>a2->actionType) return 1;
+				COMPARE_SYMBOL(a1->actionSource, a2->actionSource);
+				COMPARE_SYMBOL(a1->actionTarget, a2->actionTarget);
+				return 0;
+			}
+
+#undef COMPARE_SYMBOL
+
+			void RearrangeState(State* state, SortedList<State*>& stateContentSorted)
+			{
+				if(!stateContentSorted.Contains(state))
+				{
+					FOREACH(Transition*, transition, state->transitions)
+					{
+						CopyFrom(transition->actions, From(transition->actions).OrderBy(&CompareActionForRearranging));
+					}
+					CopyFrom(state->transitions, From(state->transitions).OrderBy(&CompareTransitionForRearranging));
+					stateContentSorted.Add(state);
+				}
+			}
+
+/***********************************************************************
+MoveActionsForMergingState
+***********************************************************************/
+
+			void MoveActionsForMergingState(Transition* transition)
+			{
+				// collect all movable actions
+				List<Ptr<Action>> movableActions;
+				for(vint i=transition->actions.Count()-1;i>=0;i--)
+				{
+					switch(transition->actions[i]->actionType)
+					{
+					// Using and Assign actions are not movable
+					case Action::Using:
+					case Action::Assign:
+						break;
+					default:
+						movableActions.Add(transition->actions[i]);
+						transition->actions.RemoveAt(i);
+					}
+				}
+
+				// copy all movable actions
+				FOREACH(Transition*, t, transition->source->inputs)
+				{
+					CopyFrom(t->actions, movableActions, true);
+				}
+			}
+
+/***********************************************************************
+IsMergableBecause(Transitions|Input)
+***********************************************************************/
+
+			bool IsMergableBecauseTransitions(State* state1, State* state2)
+			{
+				if(state1->transitions.Count()!=state2->transitions.Count()) return false;
+				if(state1->transitions.Count()==1 && state2->transitions.Count()==1)
+				{
+					Transition* t1=state1->transitions[0];
+					Transition* t2=state2->transitions[0];
+					if(CompareTransitionForRearranging(t1, t2)==0 && !Transition::IsEquivalent(t1, t2, false) && t1->target==t2->target)
+					{
+						MoveActionsForMergingState(t1);
+						MoveActionsForMergingState(t2);
+					}
+				}
+				for(vint i=0;i<state1->transitions.Count();i++)
+				{
+					Transition* t1=state1->transitions[i];
+					Transition* t2=state2->transitions[i];
+					if(!Transition::IsEquivalent(t1, t2, false) || t1->target!=t2->target)
+					{
+						return false;
+					}
+				}
+				return true;
+			}
+
+			bool IsMergableBecauseInputs(State* state1, State* state2)
+			{
+				if(state1->inputs.Count()!=state2->inputs.Count()) return false;
+				for(vint i=0;i<state1->inputs.Count();i++)
+				{
+					Transition* t1=state1->inputs[i];
+					Transition* t2=state2->inputs[i];
+					if(!Transition::IsEquivalent(t1, t2, false) || t1->source!=t2->source)
+					{
+						return false;
+					}
+				}
+				return true;
+			}
+
+/***********************************************************************
+MergeState2ToState1Because(Transitions|Input)
+***********************************************************************/
+
+			void MergeState2ToState1BecauseTransitions(Ptr<Automaton> automaton, State* state1, State* state2)
+			{
+				// modify state1's expression
+				state1->stateExpression+=L"\r\n"+state2->stateExpression;
+
+				// retarget state2's input to state1
+				for(vint i=state2->inputs.Count()-1;i>=0;i--)
+				{
+					Transition* t2=state2->inputs[i];
+					bool add=true;
+					FOREACH(Transition*, t1, state1->inputs)
+					{
+						if(Transition::IsEquivalent(t1, t2, false) && t1->source==t2->source)
+						{
+							add=false;
+							break;
+						}
+					}
+					if(add)
+					{
+						state1->inputs.Add(t2);
+						t2->target=state1;
+						state2->inputs.RemoveAt(i);
+					}
+				}
+
+				automaton->DeleteState(state2);
+			}
+
+			void MergeState2ToState1BecauseInputs(Ptr<Automaton> automaton, State* state1, State* state2)
+			{
+				// modify state1's expression
+				state1->stateExpression+=L"\r\n"+state2->stateExpression;
+
+				// retarget state2's input to state1
+				for(vint i=state2->transitions.Count()-1;i>=0;i--)
+				{
+					Transition* t2=state2->transitions[i];
+					bool add=true;
+					FOREACH(Transition*, t1, state1->transitions)
+					{
+						if(Transition::IsEquivalent(t1, t2, false) && t1->target==t2->target)
+						{
+							add=false;
+							break;
+						}
+					}
+					if(add)
+					{
+						state1->transitions.Add(t2);
+						t2->source=state1;
+						state2->transitions.RemoveAt(i);
+					}
+				}
+
+				automaton->DeleteState(state2);
+			}
+
+/***********************************************************************
+MergeStates
+***********************************************************************/
+
+			void MergeStates(Ptr<Automaton> automaton, Ptr<RuleInfo> ruleInfo, List<State*>& newStates)
+			{
+				SortedList<State*> stateContentSorted;
+				while(true)
+				{
+					for(vint i=0;i<newStates.Count();i++)
+					{
+						State* state1=newStates[i];
+						if(IsMergableCandidate(state1, ruleInfo))
+						{
+							for(vint j=i+1;j<newStates.Count();j++)
+							{
+								State* state2=newStates[j];
+								if(state1!=state2 && IsMergableCandidate(state2, ruleInfo))
+								{
+									RearrangeState(state1, stateContentSorted);
+									RearrangeState(state2, stateContentSorted);
+									if(IsMergableBecauseTransitions(state1, state2))
+									{
+										MergeState2ToState1BecauseTransitions(automaton, state1, state2);
+										newStates.RemoveAt(j);
+										goto MERGED_STATES_PAIR;
+									}
+									else if(IsMergableBecauseInputs(state1, state2))
+									{
+										MergeState2ToState1BecauseInputs(automaton, state1, state2);
+										newStates.RemoveAt(j);
+										goto MERGED_STATES_PAIR;
+									}
+								}
+							}
+						}
+					}
+					break;
+				MERGED_STATES_PAIR:
+					continue;
+				}
+			}
+		}
+	}
+}
+
+/***********************************************************************
+.\PARSING\PARSINGAUTOMATON_NPDA.CPP
+***********************************************************************/
+
+namespace vl
+{
+	namespace parsing
+	{
+		using namespace collections;
+		using namespace definitions;
+
+		namespace analyzing
+		{
+
+/***********************************************************************
+CreateNondeterministicPDAFromEpsilonPDA
+***********************************************************************/
+
+			Ptr<Automaton> CreateNondeterministicPDAFromEpsilonPDA(Ptr<Automaton> epsilonPDA)
+			{
+				Ptr<Automaton> automaton=new Automaton(epsilonPDA->symbolManager);
+				FOREACH(ParsingDefinitionRuleDefinition*, rule, epsilonPDA->orderedRulesDefs)
+				{
+					// build new rule info
+					Ptr<RuleInfo> ruleInfo=epsilonPDA->ruleDefToInfoMap[rule];
+					Ptr<RuleInfo> newRuleInfo=new RuleInfo;
+					automaton->AddRuleInfo(rule, newRuleInfo);
+
+					newRuleInfo->rootRuleStartState=automaton->RootRuleStartState(rule);
+					newRuleInfo->rootRuleEndState=automaton->RootRuleEndState(rule);
+					newRuleInfo->startState=automaton->RuleStartState(rule);
+
+					// build state mapping and state visiting tracking
+					Dictionary<State*, State*> oldNewStateMap;
+					List<State*> scanningStates;
+					vint currentStateIndex=0;
+					oldNewStateMap.Add(ruleInfo->rootRuleStartState, newRuleInfo->rootRuleStartState);
+					oldNewStateMap.Add(ruleInfo->rootRuleEndState, newRuleInfo->rootRuleEndState);
+					oldNewStateMap.Add(ruleInfo->startState, newRuleInfo->startState);
+					// begin with a root rule state state
+					scanningStates.Add(ruleInfo->rootRuleStartState);
+					// remove epsilon transitions
+					RemoveEpsilonTransitions(oldNewStateMap, scanningStates, automaton);
+
+					// stable state orders
+					List<State*> newStates;
+					CopyFrom(
+						newStates,
+						From(epsilonPDA->states)
+							.Where([&](Ptr<State> s) {return oldNewStateMap.Keys().Contains(s.Obj()); })
+							.Select([&](Ptr<State> s) { return oldNewStateMap[s.Obj()]; })
+						);
+					DeleteUnnecessaryStates(automaton, newRuleInfo, newStates);
+					MergeStates(automaton, newRuleInfo, newStates);
+
+					// there should be at east one and only one transition that is TokenBegin from rootRuleStartState
+					// update the startState because the startState may be deleted
+					newRuleInfo->startState=newRuleInfo->rootRuleStartState->transitions[0]->target;
+
+					// record end states
+					FOREACH(State*, state, newStates)
+					{
+						if(state->endState)
+						{
+							newRuleInfo->endStates.Add(state);
+						}
+					}
+				}
+				return automaton;
+			}
 		}
 	}
 }
@@ -6570,8 +10637,1072 @@ Bootstrap
 
 
 /***********************************************************************
+.\PARSING\PARSINGLOGGING.CPP
+***********************************************************************/
+
+namespace vl
+{
+	using namespace stream;
+	using namespace collections;
+
+	namespace parsing
+	{
+		namespace definitions
+		{
+			void LogString(const WString& input, TextWriter& writer)
+			{
+				writer.WriteChar(L'\"');
+				for(int i=0;i<input.Length();i++)
+				{
+					if(input[i]==L'\"')
+					{
+						writer.WriteString(L"\"\"");
+					}
+					else
+					{
+						writer.WriteChar(input[i]);
+					}
+				}
+				writer.WriteChar(L'\"');
+			}
+
+			WString SerializeString(const WString& value)
+			{
+				return GenerateToStream([&](StreamWriter& writer)
+				{
+					LogString(value, writer);
+				});
+			}
+
+			void LogAttributeList(ParsingDefinitionBase* definition, TextWriter& writer)
+			{
+				for(vint i=0;i<definition->attributes.Count();i++)
+				{
+					ParsingDefinitionAttribute* att=definition->attributes[i].Obj();
+					if(i>0) writer.WriteChar(L',');
+					writer.WriteString(L" @");
+					writer.WriteString(att->name);
+					writer.WriteChar(L'(');
+					for(vint j=0;j<att->arguments.Count();j++)
+					{
+						if(j>0) writer.WriteString(L", ");
+						LogString(att->arguments[j], writer);
+					}
+					writer.WriteChar(L')');
+				}
+			}
+
+/***********************************************************************
+Logger (ParsingDefinitionType)
+***********************************************************************/
+
+			class ParsingDefinitionTypeLogger : public Object, public ParsingDefinitionType::IVisitor
+			{
+			public:
+				TextWriter&		writer;
+
+				ParsingDefinitionTypeLogger(TextWriter& _writer)
+					:writer(_writer)
+				{
+				}
+
+				static void LogInternal(ParsingDefinitionType* type, TextWriter& writer)
+				{
+					ParsingDefinitionTypeLogger visitor(writer);
+					type->Accept(&visitor);
+				}
+
+				void Visit(ParsingDefinitionPrimitiveType* node)override
+				{
+					writer.WriteString(node->name);
+				}
+
+				void Visit(ParsingDefinitionTokenType* node)override
+				{
+					writer.WriteString(L"token");
+				}
+
+				void Visit(ParsingDefinitionSubType* node)override
+				{
+					LogInternal(node->parentType.Obj(), writer);
+					writer.WriteString(L".");
+					writer.WriteString(node->subTypeName);
+				}
+
+				void Visit(ParsingDefinitionArrayType* node)override
+				{
+					LogInternal(node->elementType.Obj(), writer);
+					writer.WriteString(L"[]");
+				}
+			};
+
+			void Log(ParsingDefinitionType* type, TextWriter& writer)
+			{
+				ParsingDefinitionTypeLogger::LogInternal(type, writer);
+			}
+
+/***********************************************************************
+Logger (ParsingDefinitionTypeDefinition)
+***********************************************************************/
+
+			class ParsingDefinitionTypeDefinitionLogger : public Object, public ParsingDefinitionTypeDefinition::IVisitor
+			{
+			public:
+				WString			prefix;
+				TextWriter&		writer;
+
+				static void LogInternal(ParsingDefinitionTypeDefinition* definition, const WString& prefix, TextWriter& writer)
+				{
+					ParsingDefinitionTypeDefinitionLogger visitor(prefix, writer);
+					definition->Accept(&visitor);
+				}
+
+				ParsingDefinitionTypeDefinitionLogger(const WString& _prefix, TextWriter& _writer)
+					:prefix(_prefix)
+					,writer(_writer)
+				{
+				}
+
+				void Visit(ParsingDefinitionClassMemberDefinition* node)override
+				{
+					writer.WriteString(prefix);
+					Log(node->type.Obj(), writer);
+					writer.WriteString(L" ");
+					writer.WriteString(node->name);
+					if(node->unescapingFunction!=L"")
+					{
+						writer.WriteString(L" (");
+						writer.WriteString(node->unescapingFunction);
+						writer.WriteString(L")");
+					}
+					LogAttributeList(node, writer);
+					writer.WriteLine(L";");
+				}
+
+				void Visit(ParsingDefinitionClassDefinition* node)override
+				{
+					writer.WriteString(prefix);
+					writer.WriteString(L"class ");
+					writer.WriteString(node->name);
+					if(node->ambiguousType)
+					{
+						writer.WriteString(L" ambiguous(");
+						Log(node->ambiguousType.Obj(), writer);
+						writer.WriteString(L")");
+					}
+					if(node->parentType)
+					{
+						writer.WriteString(L" : ");
+						Log(node->parentType.Obj(), writer);
+					}
+					LogAttributeList(node, writer);
+					writer.WriteLine(L"");
+
+					writer.WriteString(prefix);
+					writer.WriteLine(L"{");
+
+					for(int i=0;i<node->subTypes.Count();i++)
+					{
+						LogInternal(node->subTypes[i].Obj(), prefix+L"    ", writer);
+						writer.WriteLine(L"");
+					}
+
+					for(int i=0;i<node->members.Count();i++)
+					{
+						LogInternal(node->members[i].Obj(), prefix+L"    ", writer);
+					}
+
+					writer.WriteString(prefix);
+					writer.WriteLine(L"}");
+				}
+
+				void Visit(ParsingDefinitionEnumMemberDefinition* node)override
+				{
+					writer.WriteString(prefix);
+					writer.WriteString(node->name);
+					LogAttributeList(node, writer);
+					writer.WriteLine(L",");
+				}
+
+				void Visit(ParsingDefinitionEnumDefinition* node)override
+				{
+					writer.WriteString(prefix);
+					writer.WriteString(L"enum ");
+					writer.WriteString(node->name);
+					LogAttributeList(node, writer);
+					writer.WriteLine(L"");
+
+					writer.WriteString(prefix);
+					writer.WriteLine(L"{");
+
+					for(int i=0;i<node->members.Count();i++)
+					{
+						LogInternal(node->members[i].Obj(), prefix+L"    ", writer);
+					}
+
+					writer.WriteString(prefix);
+					writer.WriteLine(L"}");
+				}
+			};
+
+			void Log(ParsingDefinitionTypeDefinition* definition, const WString& prefix, TextWriter& writer)
+			{
+				ParsingDefinitionTypeDefinitionLogger::LogInternal(definition, prefix, writer);
+			}
+
+/***********************************************************************
+Logger (ParsingDefinitionGrammar)
+***********************************************************************/
+
+#define PRIORITY_NONE			0
+#define PRIORITY_CREATE			1
+#define PRIORITY_SET			1
+#define PRIORITY_ALTERNATIVE	2
+#define PRIORITY_SEQUENCE		3
+#define PRIORITY_USE			4
+#define PRIORITY_ASSIGN			4
+
+			class ParsingDefinitionGrammarLogger : public Object, public ParsingDefinitionGrammar::IVisitor
+			{
+			public:
+				TextWriter&					writer;
+				int							parentPriority;
+				ParsingDefinitionGrammar*	stateNode;
+				bool						beforeNode;
+
+				ParsingDefinitionGrammarLogger(TextWriter& _writer, int _parentPriority, ParsingDefinitionGrammar* _stateNode, bool _beforeNode)
+					:writer(_writer)
+					,parentPriority(_parentPriority)
+					,stateNode(_stateNode)
+					,beforeNode(_beforeNode)
+				{
+				}
+
+				static void LogInternal(ParsingDefinitionGrammar* grammar, int parentPriority, ParsingDefinitionGrammar* stateNode, bool beforeNode, TextWriter& writer)
+				{
+					if(grammar==stateNode && beforeNode)
+					{
+						writer.WriteString(L"@");
+					}
+					ParsingDefinitionGrammarLogger visitor(writer, parentPriority, stateNode, beforeNode);
+					grammar->Accept(&visitor);
+					if(grammar==stateNode && !beforeNode)
+					{
+						writer.WriteString(L"@");
+					}
+				}
+
+				void LogInternal(ParsingDefinitionGrammar* grammar, int parentPriority, TextWriter& writer)
+				{
+					LogInternal(grammar, parentPriority, stateNode, beforeNode, writer);
+				}
+
+				void Visit(ParsingDefinitionPrimitiveGrammar* node)override
+				{
+					writer.WriteString(node->name);
+				}
+
+				void Visit(ParsingDefinitionTextGrammar* node)override
+				{
+					LogString(node->text, writer);
+				}
+
+				void Visit(ParsingDefinitionSequenceGrammar* node)override
+				{
+					int priority=PRIORITY_SEQUENCE;
+					if(parentPriority>priority)
+					{
+						writer.WriteString(L"( ");
+					}
+					LogInternal(node->first.Obj(), priority, writer);
+					writer.WriteString(L" ");
+					LogInternal(node->second.Obj(), priority, writer);
+					if(parentPriority>priority)
+					{
+						writer.WriteString(L" )");
+					}
+				}
+
+				void Visit(ParsingDefinitionAlternativeGrammar* node)override
+				{
+					int priority=PRIORITY_ALTERNATIVE;
+					if(parentPriority>priority)
+					{
+						writer.WriteString(L"( ");
+					}
+					LogInternal(node->first.Obj(), priority, writer);
+					writer.WriteString(L" | ");
+					LogInternal(node->second.Obj(), priority, writer);
+					if(parentPriority>priority)
+					{
+						writer.WriteString(L" )");
+					}
+				}
+
+				void Visit(ParsingDefinitionLoopGrammar* node)override
+				{
+					writer.WriteString(L"{ ");
+					LogInternal(node->grammar.Obj(), PRIORITY_NONE, writer);
+					writer.WriteString(L" }");
+				}
+
+				void Visit(ParsingDefinitionOptionalGrammar* node)override
+				{
+					writer.WriteString(L"[ ");
+					LogInternal(node->grammar.Obj(), PRIORITY_NONE, writer);
+					writer.WriteString(L" ]");
+				}
+
+				void Visit(ParsingDefinitionCreateGrammar* node)override
+				{
+					int priority=PRIORITY_CREATE;
+					if(parentPriority>priority)
+					{
+						writer.WriteString(L"( ");
+					}
+					LogInternal(node->grammar.Obj(), priority, writer);
+					writer.WriteString(L" as ");
+					Log(node->type.Obj(), writer);
+					if(parentPriority>priority)
+					{
+						writer.WriteString(L" )");
+					}
+				}
+
+				void Visit(ParsingDefinitionAssignGrammar* node)override
+				{
+					int priority=PRIORITY_ASSIGN;
+					if(parentPriority>priority)
+					{
+						writer.WriteString(L"( ");
+					}
+					LogInternal(node->grammar.Obj(), priority, writer);
+					writer.WriteString(L" : ");
+					writer.WriteString(node->memberName);
+					if(parentPriority>priority)
+					{
+						writer.WriteString(L" )");
+					}
+				}
+
+				void Visit(ParsingDefinitionUseGrammar* node)override
+				{
+					int priority=PRIORITY_USE;
+					if(parentPriority>priority)
+					{
+						writer.WriteString(L"( ");
+					}
+					writer.WriteString(L"!");
+					LogInternal(node->grammar.Obj(), priority, writer);
+					if(parentPriority>priority)
+					{
+						writer.WriteString(L" )");
+					}
+				}
+
+				void Visit(ParsingDefinitionSetterGrammar* node)override
+				{
+					int priority=PRIORITY_SET;
+					if(parentPriority>priority)
+					{
+						writer.WriteString(L"( ");
+					}
+					LogInternal(node->grammar.Obj(), priority, writer);
+					writer.WriteString(L" with { ");
+					writer.WriteString(node->memberName);
+					writer.WriteString(L" = ");
+					LogString(node->value, writer);
+					writer.WriteString(L" }");
+					if(parentPriority>priority)
+					{
+						writer.WriteString(L" )");
+					}
+				}
+			};
+
+			void Log(ParsingDefinitionGrammar* grammar, TextWriter& writer)
+			{
+				ParsingDefinitionGrammarLogger::LogInternal(grammar, PRIORITY_NONE, 0, true, writer);
+			}
+
+			void Log(ParsingDefinitionGrammar* grammar, ParsingDefinitionGrammar* stateNode, bool beforeNode, TextWriter& writer)
+			{
+				ParsingDefinitionGrammarLogger::LogInternal(grammar, PRIORITY_NONE, stateNode, beforeNode, writer);
+			}
+
+#undef PRIORITY_NONE
+#undef PRIORITY_CREATE
+#undef PRIORITY_SET
+#undef PRIORITY_ALTERNATIVE
+#undef PRIORITY_SEQUENCE
+#undef PRIORITY_USE
+#undef PRIORITY_ASSIGN
+
+/***********************************************************************
+FindAppropriateGrammarState
+***********************************************************************/
+
+			class FindAppropriateGrammarStateVisitor : public Object, public ParsingDefinitionGrammar::IVisitor
+			{
+			public:
+				ParsingDefinitionGrammar*	stateNode;
+				bool						beforeNode;
+				ParsingDefinitionGrammar*	beforeReference;
+				ParsingDefinitionGrammar*	afterReference;
+				ParsingDefinitionGrammar*	result;
+
+				FindAppropriateGrammarStateVisitor(ParsingDefinitionGrammar* _stateNode, bool _beforeNode, ParsingDefinitionGrammar* _beforeReference, ParsingDefinitionGrammar* _afterReference)
+					:stateNode(_stateNode)
+					,beforeNode(_beforeNode)
+					,beforeReference(_beforeReference)
+					,afterReference(_afterReference)
+					,result(0)
+				{
+				}
+
+				static ParsingDefinitionGrammar* Find(ParsingDefinitionGrammar* grammar, ParsingDefinitionGrammar* stateNode, bool beforeNode, ParsingDefinitionGrammar* beforeReference, ParsingDefinitionGrammar* afterReference)
+				{
+					if(grammar==stateNode)
+					{
+						return
+							beforeNode
+							?(beforeReference?beforeReference:stateNode)
+							:(afterReference?afterReference:stateNode)
+							;
+					}
+					else
+					{
+						FindAppropriateGrammarStateVisitor visitor(stateNode, beforeNode, beforeReference, afterReference);
+						grammar->Accept(&visitor);
+						return visitor.result;
+					}
+				}
+
+				void Visit(ParsingDefinitionPrimitiveGrammar* node)override
+				{
+				}
+
+				void Visit(ParsingDefinitionTextGrammar* node)override
+				{
+				}
+
+				void Visit(ParsingDefinitionSequenceGrammar* node)override
+				{
+					result=Find(node->first.Obj(), stateNode, beforeNode, (beforeReference?beforeReference:node), 0);
+					if(!result)
+					{
+						result=Find(node->second.Obj(), stateNode, beforeNode, 0, (afterReference?afterReference:node));
+					}
+				}
+
+				void Visit(ParsingDefinitionAlternativeGrammar* node)override
+				{
+					result=Find(node->first.Obj(), stateNode, beforeNode, (beforeReference?beforeReference:node), (afterReference?afterReference:node));
+					if(!result)
+					{
+						result=Find(node->second.Obj(), stateNode, beforeNode, (beforeReference?beforeReference:node), (afterReference?afterReference:node));
+					}
+				}
+
+				void Visit(ParsingDefinitionLoopGrammar* node)override
+				{
+					result=Find(node->grammar.Obj(), stateNode, beforeNode, (beforeReference?beforeReference:node), (afterReference?afterReference:node));
+				}
+
+				void Visit(ParsingDefinitionOptionalGrammar* node)override
+				{
+					result=Find(node->grammar.Obj(), stateNode, beforeNode, (beforeReference?beforeReference:node), (afterReference?afterReference:node));
+				}
+
+				void Visit(ParsingDefinitionCreateGrammar* node)override
+				{
+					result=Find(node->grammar.Obj(), stateNode, beforeNode, (beforeReference?beforeReference:node), (afterReference?afterReference:node));
+				}
+
+				void Visit(ParsingDefinitionAssignGrammar* node)override
+				{
+					result=Find(node->grammar.Obj(), stateNode, beforeNode, (beforeReference?beforeReference:node), (afterReference?afterReference:node));
+				}
+
+				void Visit(ParsingDefinitionUseGrammar* node)override
+				{
+					result=Find(node->grammar.Obj(), stateNode, beforeNode, (beforeReference?beforeReference:node), (afterReference?afterReference:node));
+				}
+
+				void Visit(ParsingDefinitionSetterGrammar* node)override
+				{
+					result=Find(node->grammar.Obj(), stateNode, beforeNode, beforeReference, afterReference);
+				}
+			};
+
+/***********************************************************************
+Logger (ParsingDefinitionGrammar)
+***********************************************************************/
+
+			WString TypeToString(ParsingDefinitionType* type)
+			{
+				return GenerateToStream([&](StreamWriter& writer)
+				{
+					Log(type, writer);
+				}, 64);
+			}
+
+			WString GrammarToString(ParsingDefinitionGrammar* grammar)
+			{
+				return GrammarStateToString(grammar, 0, true);
+			}
+
+			WString GrammarStateToString(ParsingDefinitionGrammar* grammar, ParsingDefinitionGrammar* stateNode, bool beforeNode)
+			{
+				return GenerateToStream([&](StreamWriter& writer)
+				{
+					Log(grammar, stateNode, beforeNode, writer);
+				}, 64);
+			}
+
+			ParsingDefinitionGrammar* FindAppropriateGrammarState(ParsingDefinitionGrammar* grammar, ParsingDefinitionGrammar* stateNode, bool beforeNode)
+			{
+				return FindAppropriateGrammarStateVisitor::Find(grammar, stateNode, beforeNode, 0, 0);
+			}
+
+			void Log(Ptr<ParsingDefinition> definition, TextWriter& writer)
+			{
+				FOREACH(Ptr<ParsingDefinitionTypeDefinition>, type, definition->types)
+				{
+					Log(type.Obj(), L"", writer);
+					writer.WriteLine(L"");
+				}
+
+				FOREACH(Ptr<ParsingDefinitionTokenDefinition>, token, definition->tokens)
+				{
+					if(token->discard)
+					{
+						writer.WriteString(L"discardtoken ");
+					}
+					else
+					{
+						writer.WriteString(L"token ");
+					}
+					writer.WriteString(token->name);
+					writer.WriteString(L" = ");
+					LogString(token->regex, writer);
+					LogAttributeList(token.Obj(), writer);
+					writer.WriteLine(L";");
+				}
+				writer.WriteLine(L"");
+
+				FOREACH(Ptr<ParsingDefinitionRuleDefinition>, rule, definition->rules)
+				{
+					writer.WriteString(L"rule ");
+					Log(rule->type.Obj(), writer);
+					writer.WriteString(L" ");
+					writer.WriteString(rule->name);
+					LogAttributeList(rule.Obj(), writer);
+					writer.WriteLine(L"");
+
+					FOREACH(Ptr<ParsingDefinitionGrammar>, grammar, rule->grammars)
+					{
+						writer.WriteString(L"        = ");
+						Log(grammar.Obj(), writer);
+						writer.WriteLine(L"");
+					}
+					writer.WriteLine(L"        ;");
+				}
+			}
+		}
+
+		namespace analyzing
+		{
+/***********************************************************************
+Logger (Automaton)
+***********************************************************************/
+
+			void LogTransitionSymbol(ParsingSymbol* symbol, stream::TextWriter& writer)
+			{
+				if(symbol->GetType()==ParsingSymbol::TokenDef)
+				{
+					writer.WriteString(L"[");
+					writer.WriteString(symbol->GetName());
+
+					WString regex=symbol->GetDescriptorString();
+					if(regex_internal::IsRegexEscapedLiteralString(regex))
+					{
+						writer.WriteString(L" ");
+						definitions::LogString(regex_internal::UnescapeTextForRegex(regex), writer);
+					}
+					writer.WriteString(L"]");
+				}
+				else
+				{
+					writer.WriteString(L"<");
+					writer.WriteString(symbol->GetName());
+					writer.WriteString(L">");
+				}
+			}
+
+			void Log(Ptr<Automaton> automaton, stream::TextWriter& writer)
+			{
+				FOREACH(Ptr<RuleInfo>, ruleInfo, automaton->ruleInfos)
+				{
+					writer.WriteString(L"Root Rule Start: ");
+					writer.WriteLine(ruleInfo->rootRuleStartState->stateName);
+
+					writer.WriteString(L"Root Rule End: ");
+					writer.WriteLine(ruleInfo->rootRuleEndState->stateName);
+
+					writer.WriteString(L"Rule Start: ");
+					writer.WriteLine(ruleInfo->startState->stateName);
+
+					FOREACH(State*, endState, ruleInfo->endStates)
+					{
+						writer.WriteString(L"Rule End: ");
+						writer.WriteLine(endState->stateName);
+					}
+
+					writer.WriteLine(L"");
+				}
+
+				List<State*> states;
+				FOREACH(Ptr<RuleInfo>, ruleInfo, automaton->ruleInfos)
+				{
+					vint currentState=states.Count();
+					states.Add(ruleInfo->rootRuleStartState);
+
+					while(currentState<states.Count())
+					{
+						State* state=states[currentState++];
+						writer.WriteLine(state->stateExpression);
+						if(state->endState)
+						{
+							writer.WriteString(L"END STATE ");
+						}
+						else
+						{
+							writer.WriteString(L"STATE ");
+						}
+						writer.WriteLine(state->stateName);
+
+						FOREACH(Transition*, transition, state->transitions)
+						{
+							if(!states.Contains(transition->target))
+							{
+								states.Add(transition->target);
+							}
+							switch(transition->transitionType)
+							{
+							case Transition::Epsilon:
+								writer.WriteString(L"    EPSILON");
+								break;
+							case Transition::TokenBegin:
+								writer.WriteString(L"    TOKEN-BEGIN");
+								break;
+							case Transition::TokenFinish:
+								writer.WriteString(L"    TOKEN-FINISH");
+								break;
+							case Transition::NormalReduce:
+								writer.WriteString(L"    NORMAL-REDUCE");
+								break;
+							case Transition::LeftRecursiveReduce:
+								writer.WriteString(L"    LREC-REDUCE");
+								break;
+							case Transition::Symbol:
+								{
+									writer.WriteString(L"    ");
+									if(transition->transitionSymbol)
+									{
+										LogTransitionSymbol(transition->transitionSymbol, writer);
+									}
+								}
+								break;
+							}
+							switch(transition->stackOperationType)
+							{
+							case Transition::None:
+								writer.WriteString(L" => ");
+								break;
+							case Transition::ShiftReduceCompacted:
+								writer.WriteString(L" [SHIFT-REDUCE-COMPACTED] => ");
+								break;
+							case Transition::LeftRecursive:
+								writer.WriteString(L" [LEFT-RECURSIVE] => ");
+								break;
+							}
+							writer.WriteLine(transition->target->stateName);
+
+							FOREACH(Ptr<Action>, action, transition->actions)
+							{
+								switch(action->actionType)
+								{
+								case Action::Create:
+									writer.WriteString(L"        CREATE ");
+									break;
+								case Action::Assign:
+									writer.WriteString(L"        ASSIGN ");
+									break;
+								case Action::Using:
+									writer.WriteString(L"        USING ");
+									break;
+								case Action::Setter:
+									writer.WriteString(L"        SET ");
+									break;
+								case Action::Shift:
+									writer.WriteString(L"        SHIFT ");
+									break;
+								case Action::Reduce:
+									writer.WriteString(L"        REDUCE ");
+									break;
+								case Action::LeftRecursiveReduce:
+									writer.WriteString(L"        LR-REDUCE ");
+									break;
+								}
+
+								if(action->shiftReduceSource && action->shiftReduceTarget)
+								{
+									writer.WriteString(L"[");
+									writer.WriteString(action->shiftReduceSource->stateName);
+									writer.WriteString(L" => ");
+									writer.WriteString(action->shiftReduceTarget->stateName);
+									writer.WriteString(L"] ");
+								}
+
+								if(action->actionSource)
+								{
+									writer.WriteString(action->actionSource->GetName());
+								}
+								if(action->actionTarget)
+								{
+									writer.WriteString(L" => ");
+									writer.WriteString(action->actionTarget->GetName());
+								}
+								writer.WriteLine(L"");
+							}
+						}
+						writer.WriteLine(L"");
+					}
+					writer.WriteLine(L"--------------------------------");
+				}
+			}
+		}
+
+		namespace tabling
+		{
+/***********************************************************************
+Logger (ParsingTable)
+***********************************************************************/
+
+			void LogAttributeList(Ptr<ParsingTable> table, vint attributeIndex, const WString& prefix, stream::TextWriter& writer)
+			{
+				if(attributeIndex!=-1)
+				{
+					Ptr<ParsingTable::AttributeInfoList> atts=table->GetAttributeInfo(attributeIndex);
+					FOREACH(Ptr<ParsingTable::AttributeInfo>, att, atts->attributes)
+					{
+						writer.WriteString(prefix);
+						writer.WriteString(L"@");
+						writer.WriteString(att->name);
+						writer.WriteString(L"(");
+						for(vint i=0;i<att->arguments.Count();i++)
+						{
+							if(i>0) writer.WriteString(L", ");
+							definitions::LogString(att->arguments[i], writer);
+						}
+						writer.WriteLine(L")");
+					}
+				}
+			}
+
+			void Log(Ptr<ParsingTable> table, stream::TextWriter& writer)
+			{
+				vint rows=table->GetStateCount()+1;
+				vint columns=table->GetTokenCount()+1;
+				Array<WString> stringTable(rows*columns);
+
+				stringTable[0]=L"<Parsing Table>";
+
+				for(vint row=0; row<table->GetStateCount();row++)
+				{
+					stringTable[(row+1)*columns]=itow(row)+L": "+table->GetStateInfo(row).stateName;
+				}
+
+				for(vint column=0;column<table->GetTokenCount();column++)
+				{
+					WString content=
+						column==ParsingTable::TokenBegin?L"0: $TokenBegin":
+						column==ParsingTable::TokenFinish?L"1: $TokenFinish":
+						column==ParsingTable::NormalReduce?L"2: $NormalReduce":
+						column==ParsingTable::LeftRecursiveReduce?L"3: $LeftRecursiveReduce":
+						itow(column)+L": "+table->GetTokenInfo(column).name+L"\r\n  "+table->GetTokenInfo(column).regex;
+					stringTable[column+1]=content;
+				}
+
+				for(vint row=0; row<table->GetStateCount();row++)
+				{
+					for(vint column=0;column<table->GetTokenCount();column++)
+					{
+						Ptr<ParsingTable::TransitionBag> bag=table->GetTransitionBag(row, column);
+						if(bag)
+						{
+							WString content;
+							FOREACH(Ptr<ParsingTable::TransitionItem>, item, bag->transitionItems)
+							{
+								if(content!=L"") content+=L"\r\n";
+								content+=itow(item->targetState);
+								FOREACH_INDEXER(vint, state, index, item->stackPattern)
+								{
+									content+=(index==0?L" : ":L", ");
+									content+=itow(state);
+								}
+								content+=L"\r\n";
+
+								FOREACH(Ptr<ParsingTable::LookAheadInfo>, lookAhead, item->lookAheads)
+								{
+									content+=L"  ";
+									FOREACH_INDEXER(vint, token, index, lookAhead->tokens)
+									{
+										content+=(index==0?L"> ":L", ");
+										content+=itow(token);
+									}
+									content+=L"\r\n";
+								}
+
+								content+=L"  ";
+								FOREACH(ParsingTable::Instruction, ins, item->instructions)
+								{
+									switch(ins.instructionType)
+									{
+									case ParsingTable::Instruction::Create:
+										content+=L"C";
+										break;
+									case ParsingTable::Instruction::Using:
+										content+=L"U";
+										break;
+									case ParsingTable::Instruction::Assign:
+										content+=L"A";
+										break;
+									case ParsingTable::Instruction::Item:
+										content+=L"I";
+										break;
+									case ParsingTable::Instruction::Setter:
+										content+=L"S";
+										break;
+									case ParsingTable::Instruction::Shift:
+										content+=L"[+"+itow(ins.stateParameter)+L"]";
+										break;
+									case ParsingTable::Instruction::Reduce:
+										content+=L"[-"+itow(ins.stateParameter)+L"]";
+										break;
+									case ParsingTable::Instruction::LeftRecursiveReduce:
+										content+=L"[!"+itow(ins.stateParameter)+L"]";
+										break;
+									}
+								}
+							}
+							stringTable[(row+1)*columns+(column+1)]=content;
+						}
+					}
+				}
+
+				writer.WriteLine(L"Target-State : Stack-Pattern ...");
+				writer.WriteLine(L"> Look-Ahead ...");
+				writer.WriteLine(L"C: Create");
+				writer.WriteLine(L"U: Using");
+				writer.WriteLine(L"A: Assign");
+				writer.WriteLine(L"I: Item");
+				writer.WriteLine(L"S: Setter");
+				writer.WriteLine(L"[+s]: Shift[push s]");
+				writer.WriteLine(L"[-s]: Reduce[pop s]");
+				writer.WriteLine(L"[!s]: Left-Recursive-Reduce[fake s]");
+				writer.WriteLine(L"");
+
+				for(vint i=0;i<table->GetRuleCount();i++)
+				{
+					const ParsingTable::RuleInfo& ruleInfo=table->GetRuleInfo(i);
+					writer.WriteString(ruleInfo.name);
+					writer.WriteChar(L'<');
+					writer.WriteString(ruleInfo.type);
+					if(ruleInfo.ambiguousType!=L"")
+					{
+						writer.WriteString(L", ");
+						writer.WriteString(ruleInfo.ambiguousType);
+					}
+					writer.WriteString(L">: ");
+					writer.WriteString(itow(ruleInfo.rootStartState));
+					writer.WriteChar(L'[');
+					writer.WriteString(table->GetStateInfo(ruleInfo.rootStartState).stateName);
+					writer.WriteChar(L']');
+					writer.WriteLine(L"");
+				}
+
+				writer.WriteMonospacedEnglishTable(stringTable, rows, columns);
+				writer.WriteLine(L"");
+
+				writer.WriteLine(L"Metadata(Tokens):");
+				for(vint i=0;i<table->GetTokenCount();i++)
+				{
+					const ParsingTable::TokenInfo& info=table->GetTokenInfo(i);
+					writer.WriteString(L"    ");
+					writer.WriteString(info.name);
+					writer.WriteString(L"=");
+					writer.WriteLine(info.regex);
+					LogAttributeList(table, info.attributeIndex, L"        ", writer);
+				}
+				writer.WriteLine(L"");
+
+				writer.WriteLine(L"Metadata(Rules):");
+				for(vint i=0;i<table->GetRuleCount();i++)
+				{
+					const ParsingTable::RuleInfo& info=table->GetRuleInfo(i);
+					writer.WriteString(L"    ");
+					writer.WriteLine(info.name);
+					LogAttributeList(table, info.attributeIndex, L"        ", writer);
+				}
+				writer.WriteLine(L"");
+
+				writer.WriteLine(L"Metadata(Classes):");
+				for(vint i=0;i<table->GetTreeTypeInfoCount();i++)
+				{
+					const ParsingTable::TreeTypeInfo& info=table->GetTreeTypeInfo(i);
+					writer.WriteString(L"    ");
+					writer.WriteLine(info.type);
+					LogAttributeList(table, info.attributeIndex, L"        ", writer);
+				}
+				writer.WriteLine(L"");
+
+				writer.WriteLine(L"Metadata(Class Members):");
+				for(vint i=0;i<table->GetTreeFieldInfoCount();i++)
+				{
+					const ParsingTable::TreeFieldInfo& info=table->GetTreeFieldInfo(i);
+					writer.WriteString(L"    ");
+					writer.WriteString(info.type);
+					writer.WriteString(L".");
+					writer.WriteLine(info.field);
+					LogAttributeList(table, info.attributeIndex, L"        ", writer);
+				}
+				writer.WriteLine(L"");
+			}
+		}
+
+/***********************************************************************
+Logger (ParsingTreeNode)
+***********************************************************************/
+
+		class LogParsingTreeNodeVisitor : public Object, public ParsingTreeNode::IVisitor
+		{
+		protected:
+			TextWriter&				writer;
+			WString					prefix;
+			WString					originalInput;
+		public:
+			LogParsingTreeNodeVisitor(TextWriter& _writer, const WString& _originalInput, const WString& _prefix)
+				:writer(_writer)
+				,prefix(_prefix)
+				,originalInput(_originalInput)
+			{
+			}
+
+			void Write(ParsingTreeNode* node)
+			{
+				if(node)
+				{
+					node->Accept(this);
+				}
+				else
+				{
+					writer.WriteString(L"null");
+				}
+			}
+
+			void WriteInput(ParsingTreeNode* node)
+			{
+				if(originalInput!=L"")
+				{
+					ParsingTextRange range=node->GetCodeRange();
+					if(range.start.index!=ParsingTextPos::UnknownValue && range.end.index!=ParsingTextPos::UnknownValue)
+					{
+						vint start=range.start.index;
+						vint length=range.end.index-start+1;
+						if(length>0)
+						{
+							writer.WriteString(L" // [");
+							writer.WriteString(originalInput.Sub(start, length));
+							writer.WriteString(L"]");
+						}
+					}
+				}
+			}
+
+			void Visit(ParsingTreeToken* node)
+			{
+				writer.WriteChar(L'[');
+				writer.WriteString(node->GetValue());
+				writer.WriteChar(L']');
+				WriteInput(node);
+			}
+
+			void Visit(ParsingTreeObject* node)
+			{
+				WString oldPrefix=prefix;
+				writer.WriteString(node->GetType());
+				writer.WriteString(L" <");
+				for(vint i=0;i<node->GetCreatorRules().Count();i++)
+				{
+					if(i!=0) writer.WriteString(L", ");
+					writer.WriteString(node->GetCreatorRules()[i]);
+				}
+				writer.WriteString(L"> {");
+				WriteInput(node);
+				writer.WriteLine(L"");
+				prefix+=L"    ";
+				for(vint i=0;i<node->GetMembers().Count();i++)
+				{
+					writer.WriteString(prefix);
+					writer.WriteString(node->GetMembers().Keys().Get(i));
+					writer.WriteString(L" = ");
+					Write(node->GetMembers().Values().Get(i).Obj());
+					writer.WriteLine(L"");
+				}
+				prefix=oldPrefix;
+				writer.WriteString(prefix);
+				writer.WriteString(L"}");
+			}
+
+			void Visit(ParsingTreeArray* node)
+			{
+				WString oldPrefix=prefix;
+				writer.WriteString(node->GetElementType());
+				writer.WriteString(L"[] {");
+				WriteInput(node);
+				writer.WriteLine(L"");
+				prefix+=L"    ";
+				for(vint i=0;i<node->Count();i++)
+				{
+					writer.WriteString(prefix);
+					Write(node->GetItem(i).Obj());
+					writer.WriteLine(L",");
+				}
+				prefix=oldPrefix;
+				writer.WriteString(prefix);
+				writer.WriteString(L"}");
+			}
+		};
+
+		void Log(ParsingTreeNode* node, const WString& originalInput, stream::TextWriter& writer, const WString& prefix)
+		{
+			writer.WriteString(prefix);
+			LogParsingTreeNodeVisitor visitor(writer, originalInput, prefix);
+			node->Accept(&visitor);
+		}
+	}
+}
+
+/***********************************************************************
 .\PARSING\PARSINGSTATE.CPP
 ***********************************************************************/
+
+#if defined(VCZH_GCC) && defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wnull-dereference"
+#endif
 
 namespace vl
 {
@@ -7685,6 +12816,10 @@ ParsingTransitionCollector
 	}
 }
 
+#if defined(VCZH_GCC) && defined(__clang__)
+#pragma clang diagnostic pop
+#endif
+
 
 /***********************************************************************
 .\PARSING\PARSINGTABLE.CPP
@@ -7986,6 +13121,11 @@ ParsingTable::TransitionItem
 ParsingTable
 ***********************************************************************/
 
+#if defined(VCZH_GCC) && defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wnull-dereference"
+#endif
+
 			ParsingTable::ParsingTable(vint _attributeInfoCount, vint _treeTypeInfoCount, vint _treeFieldInfoCount, vint _tokenCount, vint discardTokenCount, vint _stateCount, vint _ruleCount)
 				:ambiguity(false)
 				,tokenCount(_tokenCount+UserTokenStart)
@@ -8169,26 +13309,26 @@ ParsingTable
 					tokens.Add(info.regex);
 				}
 
-				vint regexTokenIndex=0;
-				for(vint i=UserTokenStart;i<tokenInfos.Count();i++)
+				vint regexTokenIndex = 0;
+				for (vint i = UserTokenStart; i < tokenInfos.Count(); i++)
 				{
-					tokenInfos[i].regexTokenIndex=regexTokenIndex++;
+					tokenInfos[i].regexTokenIndex = regexTokenIndex++;
 				}
-				for(vint i=0;i<discardTokenInfos.Count();i++)
+				for (vint i = 0; i < discardTokenInfos.Count(); i++)
 				{
-					discardTokenInfos[i].regexTokenIndex=regexTokenIndex++;
+					discardTokenInfos[i].regexTokenIndex = regexTokenIndex++;
 				}
-				lexer=new RegexLexer(tokens);
+				lexer = new RegexLexer(tokens, {});
 
 				ruleMap.Clear();
 				FOREACH_INDEXER(RuleInfo, rule, index, ruleInfos)
 				{
 					ruleMap.Add(rule.name, index);
 				}
-				for(vint i=0;i<stateInfos.Count();i++)
+				for (vint i = 0; i < stateInfos.Count(); i++)
 				{
-					StateInfo& info=stateInfos[i];
-					info.ruleAmbiguousType=ruleInfos[ruleMap[info.ruleName]].ambiguousType;
+					StateInfo& info = stateInfos[i];
+					info.ruleAmbiguousType = ruleInfos[ruleMap[info.ruleName]].ambiguousType;
 				}
 
 				treeTypeInfoMap.Clear();
@@ -8219,6 +13359,10 @@ ParsingTable
 			{
 				return regexTokenIndex>=tokenCount-UserTokenStart?regexTokenIndex-(tokenCount-UserTokenStart):-1;
 			}
+
+#if defined(VCZH_GCC) && defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 		}
 	}
 }
@@ -8227,6 +13371,11 @@ ParsingTable
 /***********************************************************************
 .\PARSING\PARSINGTREE.CPP
 ***********************************************************************/
+
+#if defined(VCZH_GCC) && defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wnull-dereference"
+#endif
 
 namespace vl
 {
@@ -8994,6 +14143,1887 @@ ParsingWriter
 	}
 }
 
+#if defined(VCZH_GCC) && defined(__clang__)
+#pragma clang diagnostic pop
+#endif
+
+
+/***********************************************************************
+.\PARSING\JSON\PARSINGJSON.CPP
+***********************************************************************/
+
+namespace vl
+{
+	namespace parsing
+	{
+		namespace json
+		{
+			using namespace stream;
+			using namespace collections;
+
+/***********************************************************************
+Unescaping Function Foward Declarations
+***********************************************************************/
+
+			void JsonUnescapingString(vl::parsing::ParsingToken& value, const vl::collections::List<vl::regex::RegexToken>& tokens)
+			{
+				value.value = GenerateToStream([&](StreamWriter& writer)
+				{
+					JsonUnescapeString(value.value.Sub(1, value.value.Length() - 2), writer);
+				});
+			}
+
+/***********************************************************************
+JsonPrintVisitor
+***********************************************************************/
+
+			class JsonPrintVisitor : public Object, public JsonNode::IVisitor
+			{
+			public:
+				TextWriter&					writer;
+
+				JsonPrintVisitor(TextWriter& _writer)
+					:writer(_writer)
+				{
+				}
+
+				void Visit(JsonLiteral* node)
+				{
+					switch(node->value)
+					{
+					case JsonLiteral::JsonValue::True:
+						writer.WriteString(L"true");
+						break;
+					case JsonLiteral::JsonValue::False:
+						writer.WriteString(L"false");
+						break;
+					case JsonLiteral::JsonValue::Null:
+						writer.WriteString(L"null");
+						break;
+					}
+				}
+
+				void Visit(JsonString* node)
+				{
+					writer.WriteChar(L'\"');
+					JsonEscapeString(node->content.value, writer);
+					writer.WriteChar(L'\"');
+				}
+
+				void Visit(JsonNumber* node)
+				{
+					writer.WriteString(node->content.value);
+				}
+
+				void Visit(JsonArray* node)
+				{
+					writer.WriteChar(L'[');
+					FOREACH_INDEXER(Ptr<JsonNode>, item, i, node->items)
+					{
+						if(i>0) writer.WriteChar(L',');
+						item->Accept(this);
+					}
+					writer.WriteChar(L']');
+				}
+
+				void Visit(JsonObjectField* node)
+				{
+					writer.WriteChar(L'\"');
+					JsonEscapeString(node->name.value, writer);
+					writer.WriteString(L"\":");
+					node->value->Accept(this);
+				}
+
+				void Visit(JsonObject* node)
+				{
+					writer.WriteChar(L'{');
+					FOREACH_INDEXER(Ptr<JsonObjectField>, field, i, node->fields)
+					{
+						if(i>0) writer.WriteChar(L',');
+						field->Accept(this);
+					}
+					writer.WriteChar(L'}');
+				}
+			};
+
+/***********************************************************************
+API
+***********************************************************************/
+
+			void JsonEscapeString(const WString& text, stream::TextWriter& writer)
+			{
+				const wchar_t* reading=text.Buffer();
+				while(wchar_t c=*reading++)
+				{
+					switch(c)
+					{
+					case L'\"': writer.WriteString(L"\\\""); break;
+					case L'\\': writer.WriteString(L"\\\\"); break;
+					case L'/': writer.WriteString(L"\\/"); break;
+					case L'\b': writer.WriteString(L"\\b"); break;
+					case L'\f': writer.WriteString(L"\\f"); break;
+					case L'\n': writer.WriteString(L"\\n"); break;
+					case L'\r': writer.WriteString(L"\\r"); break;
+					case L'\t': writer.WriteString(L"\\t"); break;
+					default: writer.WriteChar(c);
+					}
+				}
+			}
+
+			vuint16_t GetHex(wchar_t c)
+			{
+				if(L'0'<=c && c<=L'9')
+				{
+					return c-L'0';
+				}
+				else if(L'A'<=c && c<=L'F')
+				{
+					return c-L'A';
+				}
+				else if(L'a'<=c && c<=L'f')
+				{
+					return c-L'a';
+				}
+				else
+				{
+					return 0;
+				}
+			}
+
+			void JsonUnescapeString(const WString& text, stream::TextWriter& writer)
+			{
+				const wchar_t* reading=text.Buffer();
+				while(wchar_t c=*reading++)
+				{
+					if(c==L'\\' && *reading)
+					{
+						switch(c=*reading++)
+						{
+						case L'b': writer.WriteChar(L'\b'); break;
+						case L'f': writer.WriteChar(L'\f'); break;
+						case L'n': writer.WriteChar(L'\n'); break;
+						case L'r': writer.WriteChar(L'\r'); break;
+						case L't': writer.WriteChar(L'\t'); break;
+						case L'u':
+							{
+								wchar_t h1, h2, h3, h4;
+								if((h1=reading[0]) && (h2=reading[1]) && (h3=reading[2]) && (h4=reading[3]))
+								{
+									reading+=4;
+									wchar_t h=(wchar_t)(vuint16_t)(
+										(GetHex(h1)<<12) +
+										(GetHex(h2)<<8) +
+										(GetHex(h3)<<4) +
+										(GetHex(h4)<<0)
+										);
+									writer.WriteChar(h);
+								}
+							}
+							break;
+						default: writer.WriteChar(c);
+						}
+					}
+					else
+					{
+						writer.WriteChar(c);
+					}
+				}
+			}
+
+			void JsonPrint(Ptr<JsonNode> node, stream::TextWriter& writer)
+			{
+				JsonPrintVisitor visitor(writer);
+				node->Accept(&visitor);
+			}
+
+			WString JsonToString(Ptr<JsonNode> node)
+			{
+				return GenerateToStream([&](StreamWriter& writer)
+				{
+					JsonPrint(node, writer);
+				});
+			}
+		}
+	}
+}
+
+
+/***********************************************************************
+.\PARSING\JSON\PARSINGJSON_AST.CPP
+***********************************************************************/
+/***********************************************************************
+Vczh Library++ 3.0
+Developer: Zihan Chen(vczh)
+Parser::ParsingJson.parser.txt
+
+This file is generated by: Vczh Parser Generator
+***********************************************************************/
+
+
+namespace vl
+{
+	namespace parsing
+	{
+		namespace json
+		{
+/***********************************************************************
+Visitor Pattern Implementation
+***********************************************************************/
+
+			void JsonLiteral::Accept(JsonNode::IVisitor* visitor)
+			{
+				visitor->Visit(this);
+			}
+
+			void JsonString::Accept(JsonNode::IVisitor* visitor)
+			{
+				visitor->Visit(this);
+			}
+
+			void JsonNumber::Accept(JsonNode::IVisitor* visitor)
+			{
+				visitor->Visit(this);
+			}
+
+			void JsonArray::Accept(JsonNode::IVisitor* visitor)
+			{
+				visitor->Visit(this);
+			}
+
+			void JsonObjectField::Accept(JsonNode::IVisitor* visitor)
+			{
+				visitor->Visit(this);
+			}
+
+			void JsonObject::Accept(JsonNode::IVisitor* visitor)
+			{
+				visitor->Visit(this);
+			}
+
+		}
+	}
+}
+namespace vl
+{
+	namespace reflection
+	{
+		namespace description
+		{
+#ifndef VCZH_DEBUG_NO_REFLECTION
+			using namespace vl::parsing::json;
+
+#define PARSING_TOKEN_FIELD(NAME)\
+			CLASS_MEMBER_EXTERNALMETHOD_TEMPLATE(get_##NAME, NO_PARAMETER, vl::WString(ClassType::*)(), [](ClassType* node) { return node->NAME.value; }, L"*", L"*")\
+			CLASS_MEMBER_EXTERNALMETHOD_TEMPLATE(set_##NAME, { L"value" }, void(ClassType::*)(const vl::WString&), [](ClassType* node, const vl::WString& value) { node->NAME.value = value; }, L"*", L"*")\
+			CLASS_MEMBER_PROPERTY_REFERENCETEMPLATE(NAME, get_##NAME, set_##NAME, L"$This->$Name.value")\
+
+			IMPL_TYPE_INFO_RENAME(vl::parsing::json::JsonNode, system::JsonNode)
+			IMPL_TYPE_INFO_RENAME(vl::parsing::json::JsonLiteral, system::JsonLiteral)
+			IMPL_TYPE_INFO_RENAME(vl::parsing::json::JsonLiteral::JsonValue, system::JsonLiteral::JsonValue)
+			IMPL_TYPE_INFO_RENAME(vl::parsing::json::JsonString, system::JsonString)
+			IMPL_TYPE_INFO_RENAME(vl::parsing::json::JsonNumber, system::JsonNumber)
+			IMPL_TYPE_INFO_RENAME(vl::parsing::json::JsonArray, system::JsonArray)
+			IMPL_TYPE_INFO_RENAME(vl::parsing::json::JsonObjectField, system::JsonObjectField)
+			IMPL_TYPE_INFO_RENAME(vl::parsing::json::JsonObject, system::JsonObject)
+			IMPL_TYPE_INFO_RENAME(vl::parsing::json::JsonNode::IVisitor, system::JsonNode::IVisitor)
+
+			BEGIN_CLASS_MEMBER(JsonNode)
+				CLASS_MEMBER_METHOD_OVERLOAD(Accept, {L"visitor"}, void(JsonNode::*)(JsonNode::IVisitor* visitor))
+			END_CLASS_MEMBER(JsonNode)
+
+			BEGIN_CLASS_MEMBER(JsonLiteral)
+				CLASS_MEMBER_BASE(JsonNode)
+
+				CLASS_MEMBER_CONSTRUCTOR(vl::Ptr<JsonLiteral>(), NO_PARAMETER)
+
+				CLASS_MEMBER_FIELD(value)
+			END_CLASS_MEMBER(JsonLiteral)
+
+			BEGIN_ENUM_ITEM(JsonLiteral::JsonValue)
+				ENUM_ITEM_NAMESPACE(JsonLiteral::JsonValue)
+				ENUM_NAMESPACE_ITEM(True)
+				ENUM_NAMESPACE_ITEM(False)
+				ENUM_NAMESPACE_ITEM(Null)
+			END_ENUM_ITEM(JsonLiteral::JsonValue)
+
+			BEGIN_CLASS_MEMBER(JsonString)
+				CLASS_MEMBER_BASE(JsonNode)
+
+				CLASS_MEMBER_CONSTRUCTOR(vl::Ptr<JsonString>(), NO_PARAMETER)
+
+				PARSING_TOKEN_FIELD(content)
+			END_CLASS_MEMBER(JsonString)
+
+			BEGIN_CLASS_MEMBER(JsonNumber)
+				CLASS_MEMBER_BASE(JsonNode)
+
+				CLASS_MEMBER_CONSTRUCTOR(vl::Ptr<JsonNumber>(), NO_PARAMETER)
+
+				PARSING_TOKEN_FIELD(content)
+			END_CLASS_MEMBER(JsonNumber)
+
+			BEGIN_CLASS_MEMBER(JsonArray)
+				CLASS_MEMBER_BASE(JsonNode)
+
+				CLASS_MEMBER_CONSTRUCTOR(vl::Ptr<JsonArray>(), NO_PARAMETER)
+
+				CLASS_MEMBER_FIELD(items)
+			END_CLASS_MEMBER(JsonArray)
+
+			BEGIN_CLASS_MEMBER(JsonObjectField)
+				CLASS_MEMBER_BASE(JsonNode)
+
+				CLASS_MEMBER_CONSTRUCTOR(vl::Ptr<JsonObjectField>(), NO_PARAMETER)
+
+				PARSING_TOKEN_FIELD(name)
+				CLASS_MEMBER_FIELD(value)
+			END_CLASS_MEMBER(JsonObjectField)
+
+			BEGIN_CLASS_MEMBER(JsonObject)
+				CLASS_MEMBER_BASE(JsonNode)
+
+				CLASS_MEMBER_CONSTRUCTOR(vl::Ptr<JsonObject>(), NO_PARAMETER)
+
+				CLASS_MEMBER_FIELD(fields)
+			END_CLASS_MEMBER(JsonObject)
+
+			BEGIN_INTERFACE_MEMBER(JsonNode::IVisitor)
+				CLASS_MEMBER_METHOD_OVERLOAD(Visit, {L"node"}, void(JsonNode::IVisitor::*)(JsonLiteral* node))
+				CLASS_MEMBER_METHOD_OVERLOAD(Visit, {L"node"}, void(JsonNode::IVisitor::*)(JsonString* node))
+				CLASS_MEMBER_METHOD_OVERLOAD(Visit, {L"node"}, void(JsonNode::IVisitor::*)(JsonNumber* node))
+				CLASS_MEMBER_METHOD_OVERLOAD(Visit, {L"node"}, void(JsonNode::IVisitor::*)(JsonArray* node))
+				CLASS_MEMBER_METHOD_OVERLOAD(Visit, {L"node"}, void(JsonNode::IVisitor::*)(JsonObjectField* node))
+				CLASS_MEMBER_METHOD_OVERLOAD(Visit, {L"node"}, void(JsonNode::IVisitor::*)(JsonObject* node))
+			END_INTERFACE_MEMBER(JsonNode)
+
+#undef PARSING_TOKEN_FIELD
+
+			class JsonTypeLoader : public vl::Object, public ITypeLoader
+			{
+			public:
+				void Load(ITypeManager* manager)
+				{
+					ADD_TYPE_INFO(vl::parsing::json::JsonNode)
+					ADD_TYPE_INFO(vl::parsing::json::JsonLiteral)
+					ADD_TYPE_INFO(vl::parsing::json::JsonLiteral::JsonValue)
+					ADD_TYPE_INFO(vl::parsing::json::JsonString)
+					ADD_TYPE_INFO(vl::parsing::json::JsonNumber)
+					ADD_TYPE_INFO(vl::parsing::json::JsonArray)
+					ADD_TYPE_INFO(vl::parsing::json::JsonObjectField)
+					ADD_TYPE_INFO(vl::parsing::json::JsonObject)
+					ADD_TYPE_INFO(vl::parsing::json::JsonNode::IVisitor)
+				}
+
+				void Unload(ITypeManager* manager)
+				{
+				}
+			};
+#endif
+
+			bool JsonLoadTypes()
+			{
+#ifndef VCZH_DEBUG_NO_REFLECTION
+				ITypeManager* manager=GetGlobalTypeManager();
+				if(manager)
+				{
+					Ptr<ITypeLoader> loader=new JsonTypeLoader;
+					return manager->AddTypeLoader(loader);
+				}
+#endif
+				return false;
+			}
+		}
+	}
+}
+
+
+/***********************************************************************
+.\PARSING\JSON\PARSINGJSON_PARSER.CPP
+***********************************************************************/
+/***********************************************************************
+Vczh Library++ 3.0
+Developer: Zihan Chen(vczh)
+Parser::ParsingJson.parser.txt
+
+This file is generated by: Vczh Parser Generator
+***********************************************************************/
+
+
+namespace vl
+{
+	namespace parsing
+	{
+		namespace json
+		{
+/***********************************************************************
+ParserText
+***********************************************************************/
+
+const wchar_t* const parserTextBuffer[] = {
+  L"" L"\r\n"
+, L"//////////////////////////////////////////////////////////////////" L"\r\n"
+, L"// AST" L"\r\n"
+, L"//////////////////////////////////////////////////////////////////" L"\r\n"
+, L"" L"\r\n"
+, L"class Node" L"\r\n"
+, L"{" L"\r\n"
+, L"}" L"\r\n"
+, L"" L"\r\n"
+, L"class Literal:Node" L"\r\n"
+, L"{" L"\r\n"
+, L"\tenum Value" L"\r\n"
+, L"\t{" L"\r\n"
+, L"\t\tTrue," L"\r\n"
+, L"\t\tFalse," L"\r\n"
+, L"\t\tNull," L"\r\n"
+, L"\t}" L"\r\n"
+, L"" L"\r\n"
+, L"\tValue value;" L"\r\n"
+, L"}" L"\r\n"
+, L"" L"\r\n"
+, L"class String:Node" L"\r\n"
+, L"{" L"\r\n"
+, L"\ttoken content(JsonUnescapingString)\t\t\t\t@Color(\"String\");" L"\r\n"
+, L"}" L"\r\n"
+, L"" L"\r\n"
+, L"class Number:Node" L"\r\n"
+, L"{" L"\r\n"
+, L"\ttoken content;" L"\r\n"
+, L"}" L"\r\n"
+, L"" L"\r\n"
+, L"class Array:Node" L"\r\n"
+, L"{" L"\r\n"
+, L"\tNode[] items;" L"\r\n"
+, L"}" L"\r\n"
+, L"" L"\r\n"
+, L"class ObjectField:Node" L"\r\n"
+, L"{" L"\r\n"
+, L"\ttoken name(JsonUnescapingString)\t\t\t\t@Color(\"AttName\");" L"\r\n"
+, L"\tNode value;" L"\r\n"
+, L"}" L"\r\n"
+, L"" L"\r\n"
+, L"class Object:Node" L"\r\n"
+, L"{" L"\r\n"
+, L"\tObjectField[] fields;" L"\r\n"
+, L"}" L"\r\n"
+, L"" L"\r\n"
+, L"//////////////////////////////////////////////////////////////////" L"\r\n"
+, L"// Lexer" L"\r\n"
+, L"//////////////////////////////////////////////////////////////////" L"\r\n"
+, L"" L"\r\n"
+, L"token TRUEVALUE = \"true\"\t\t\t\t\t\t\t@Color(\"Keyword\");" L"\r\n"
+, L"token FALSEVALUE = \"false\"\t\t\t\t\t\t\t@Color(\"Keyword\");" L"\r\n"
+, L"token NULLVALUE = \"null\"\t\t\t\t\t\t\t@Color(\"Keyword\");" L"\r\n"
+, L"token OBJOPEN = \"\\{\"\t\t\t\t\t\t\t\t@Color(\"Boundary\");" L"\r\n"
+, L"token OBJCLOSE = \"\\}\"\t\t\t\t\t\t\t\t@Color(\"Boundary\");" L"\r\n"
+, L"token ARROPEN = \"\\[\"\t\t\t\t\t\t\t\t@Color(\"Boundary\");" L"\r\n"
+, L"token ARRCLOSE = \"\\]\"\t\t\t\t\t\t\t\t@Color(\"Boundary\");" L"\r\n"
+, L"token COMMA = \",\";" L"\r\n"
+, L"token COLON = \":\";" L"\r\n"
+, L"token NUMBER = \"[\\-]?\\d+(.\\d+)?([eE][+\\-]?\\d+)?\"\t@Color(\"Number\");" L"\r\n"
+, L"token STRING = \"\"\"([^\\\\\"\"]|\\\\[^u]|\\\\u\\d{4})*\"\"\"\t\t@ContextColor();" L"\r\n"
+, L"" L"\r\n"
+, L"discardtoken SPACE = \"\\s+\";" L"\r\n"
+, L"" L"\r\n"
+, L"//////////////////////////////////////////////////////////////////" L"\r\n"
+, L"// Rules" L"\r\n"
+, L"//////////////////////////////////////////////////////////////////" L"\r\n"
+, L"" L"\r\n"
+, L"rule Node JLiteral" L"\r\n"
+, L"\t= STRING:content as String" L"\r\n"
+, L"\t= NUMBER:content as Number" L"\r\n"
+, L"\t= \"true\" as Literal with {value = \"True\"}" L"\r\n"
+, L"\t= \"false\" as Literal with {value = \"False\"}" L"\r\n"
+, L"\t= \"null\" as Literal with {value = \"Null\"}" L"\r\n"
+, L"\t;" L"\r\n"
+, L"" L"\r\n"
+, L"rule ObjectField JField" L"\r\n"
+, L"\t= STRING:name \":\" JValue:value as ObjectField" L"\r\n"
+, L"\t;" L"\r\n"
+, L"" L"\r\n"
+, L"rule Object JObject" L"\r\n"
+, L"\t= \"{\" [JField:fields {\",\" JField:fields} ] \"}\" as Object" L"\r\n"
+, L"\t;" L"\r\n"
+, L"" L"\r\n"
+, L"rule Array JArray" L"\r\n"
+, L"\t= \"[\" [JValue:items {\",\" JValue:items} ] \"]\" as Array" L"\r\n"
+, L"\t;" L"\r\n"
+, L"" L"\r\n"
+, L"rule Node JValue" L"\r\n"
+, L"\t= !JLiteral" L"\r\n"
+, L"\t= !JObject" L"\r\n"
+, L"\t= !JArray" L"\r\n"
+, L"\t;" L"\r\n"
+, L"" L"\r\n"
+, L"rule Node JRoot" L"\r\n"
+, L"\t= !JObject" L"\r\n"
+, L"\t= !JArray" L"\r\n"
+, L"\t;" L"\r\n"
+};
+const vint lengthTextBuffer[] = {
+  2, 68, 8, 68, 2, 12, 3, 3, 2, 20, 3, 13, 4, 9, 10, 9, 4, 2, 15, 3, 2, 19, 3, 59, 3, 2, 19, 3, 17, 3, 2, 18
+, 3, 16, 3, 2, 24, 3, 57, 14, 3, 2, 19, 3, 24, 3, 2, 68, 10, 68, 2, 51, 53, 51, 49, 50, 49, 50, 20, 20, 68, 67, 2, 29
+, 2, 68, 10, 68, 2, 20, 29, 29, 44, 46, 44, 4, 2, 25, 48, 4, 2, 21, 59, 4, 2, 19, 56, 4, 2, 18, 14, 13, 12, 4, 2, 17
+, 13, 12, 4
+};
+const vint lengthTextBufferTotal = 2018;
+
+			vl::WString JsonGetParserTextBuffer()
+			{
+				vl::collections::Array<wchar_t> textBuffer(lengthTextBufferTotal + 1);
+				wchar_t* reading = &textBuffer[0];
+				for(vint i = 0; i < sizeof(parserTextBuffer) / sizeof(*parserTextBuffer); i++)
+				{
+					memcpy(reading, parserTextBuffer[i], lengthTextBuffer[i] * sizeof(wchar_t));
+					reading += lengthTextBuffer[i];
+				}
+				*reading = 0;
+				return &textBuffer[0];
+			}
+
+/***********************************************************************
+SerializedTable
+***********************************************************************/
+
+const vint parserBufferLength = 3809; // 17748 bytes before compressing
+const vint parserBufferBlock = 1024;
+const vint parserBufferRemain = 737;
+const vint parserBufferRows = 4;
+const char* const parserBuffer[] = {
+"\x00\x0B\x00\x02\x83\x80\x07\x7D\x00\x82\x03\xFF\x45\x08\x82\x83\x86\x81\x21\x6F\x6C\x2F\x32\x37\x84\x86\x02\x86\x00\x17\x82\x93\x24\x3A\x39\x34\x37\x67\x06\x98\x8A\x88\x8E\x84\x00\x88\x12\x94\x98\x87\x0B\x93\x81\x20\x3A\x74\x4E\x21\x2D\x35\x32\x90\x86\x92\x0C\xA6\xA8\x93\x85\x88\x84\x96\x86\x3F\x80\x0B\x25\x39\x3F\x3B\x88\x32\x36\x88\xB8\x88\x8A\x99\x88\x9F\x96\x40\x83\x83\xA5\xA7\xA1\xA4\x83\xA5\x04\xCD\xA9\x9D\x94\x81\xA1\xAE\xA9\x44\xC6\xB2\x28\xAC\xA9\x86\x93\xAC\x03\xBB\xAA\x8C\x88\x00\x8D\xB6\x81\x42\x6F\x35\x2E\x34\x31\x32\x39\x3C\x56\xE6\xA5\x89\xBE\xA3\xB4\x85\xB7\x7F\x83\xB1\xB3\xB5\xBF\xB9\xBC\x81\x58\x83\x9A\xAF\xAC\xB6\xB6\xC0\xB9\x74\xF6\xB8\xA5\xB8\xC7\xB2\xC4\xBE\x5B\x8E\xCD\xD0\xB0\xCD\xC3\xC9\x91\x96\x8D\x98\xCC\xC8\x82\x8D\xD3\x81\x4E\x75\x2D\x22\x35\x32\x3B\xC3\x82\x0C\x18\xB1\xCF\x8F\x36\x34\x3B\x32\x78\x74\x2A\xB8\x80\x06\xAF\xCB\x9C\x2E\xF2\x32\x21\x38\xBF\x7E\xE3\xE3\xFF\x3E\xC2\x81\xAC\x21\x37\xDB\xE1\x6C\x48\xC8\xE4\x08\x8C\xEA\x80\x27\x6F\x64\x35\x92\xE6\xE6\xD0\x82\xD3\xA9\xAB\xED\xDC\xED\xE8\x8E\xD3\x27\x62\x6A\x25\x23\x34\x3C\xF3\x7F\x80\x0C\xF0\xC0\x08\xFA\xF4\xF6\x23\x34\x65\x6C\x08\xA4\xFE\xEB\x82\xD2\x8E\x1E\x60\x4E\x7A\x72\x00\x21\x65\x81\x70\xC3\x79\x16\x82\x49\xCE\x65\x1D\x1B\x1C\x03\x90\x50\x01\x73\xCF\x61\x1C\x1B\x82\x03\x76\x16\x85\x1D\xDB\x5C\x7D\x7E\x40\xE0\x6A\x6C\x6A\x1C\x04\x81\x53\x19\x6D\xB7\x76\x6E\x7B\x87\x19\x43\x44\x7F\x7A\x74\x2C\x86\x6A\x19\xF8\x7A\x70\x84\x79\xF2\x44\x42\x7F\x8B\xF6\x75\x84\x1A\x75\x08\x40\x9E\x1B\x4C\x65\x14\x60\x40\x46\x3B\xA9\x70\x8F\x7D\xF9\x64\x18\x86\x40\x1A\xAC\x1C\x87\x8A\xE6\x43\x40\x83\x47\x67\x25\x83\x43\x89\xB6\x65\x16\x6C\x6F\x0F\x18\x44\x08\x46\x61\xBC\x66\x9A\x52\xEE\x64\x77\x9B\x4D\x69\x9C\x7B\x98\x9A\x6D\x88\x7F\x9B\x55\x71\x88\x79\x00\x46\x77\x82\x44\x16\x14\x55\x05\x16\x15\x10\x4C\x3D\x90\x90\x41\x40\x9D\x4C\x84\x6F\x02\x18\x4A\x02\xA2\x03\x46\x10\xA3\x14\x7E\x80\xAD\x9F\x93\x00\x26\x16\x87\x1C\x45\x98\x43\x00\x9E\x9C\x97\x75\x14\x13\x4C\x3F\x91\xA1\x11\x83\x83\x42\x91\x1D\x6C\x2C\x19\xA0\x43\xA5\x8B\x72\x87\x13\x42\x0A\x1F\x10\x14\x45\x0E\x1B\xA8\x42\xB7\x9C\x1B\x1F\xA6\xC0\x5B\x61\x62\x40\xB0\x8A\x13\x10\x13\x4F\x10\xA7\xAC\x41\xB9\xBD\x1D\xA9\x8B\x51\x4D\xB0\x01\x10\x52\x12\x13\xAD\xAD\xC7\x83\x49\xAF\x16\x06\x84\x80\x60\x41\x80\x50\xB2\x17\xB0\xC5\x85\x15\xB6\x40\xB9\x9D\x1C\x8B\xB6\xBF\x4C\x59\x5B\x13\x4D\x0D\x11\x12\x91\x3D\x6C\x04\x82\x7B\x94\x83\x1F\x10\xB1\x4E\x30\xB3\x42\x0E\xE8\x88\x6C\x7D\x95\x9E\x8D\x12\x11\x11\x52\x1F\x08\x46\xC1\x02\x5B\x1C\x15\x0B\x5D\x3F\x0C\x14\x19\x2B\x28\x0E\x0B\xC3\x2B\x29\x0F\x0C\x0A\x5B\x25\x15\x11\x17\x5B\x2B\x0B\xC1\xC3\x14\xD6\xC9\x9C\x42\x23\xDF\x70\xC0\x00\x53\x3B\x99\x12\x13\x47\x1B\x08\x46\xCB\x02\x62\x08\xC6\x17\x5C\x1C\x12\x09\x17\x7C\x35\xCB\x16\x17\x75\x38\xC5\xCD\x1D\x0F\xFB\x14\x0D\x1F\x29\x2A\x02\x0B\xA2\x0C\x48\xD8\x42\x91\x94\x93\x10\x15\x10\x43\x05\x1C\xAC\x42\x53\xDC\x13\x1F\x0A\x39\x89\x44\x7B\x98\xBE\x9C\xB3\x42\x12\x14\xAD\x66\x86\x04\x18\x64\xD2\x40\xD8\x0D\x90\x7E\x0A\x14\x6F\x2F\x14\x1C\x47\x76\x74\x1D\x00\x46\x73\xC2\x40\x10\x08\x24\x3C\x08\xD9\x85\x6C\x3E\x0D\xBC\x00\x80\x7B\xD2\xD8\x1B\x0E\x18\x45\xE3\xD9\x61\xEA\xD0\xDE\x1C\x74\x33\x68\x42\xE3\x77\xFA\xD9\xE2\x85\x7E\xDA\x60\x02\xE0\xD0\x4A\xD4\x42\xD2\x98\xD6\x8E\x09\x0C\xFA\x18\x41\xEA\x40\x92\xE9\xD4\xE6\x0E\x20\x29\xC2\x17\xCA\x47\x20\x08\xE8\x97\x29\xB4\x10\x09\x18\x73\x29\xED\x44\x96\x40\x0D\x0A\x01\xE9\x7C\xFE\x08\xEA\x13\x55\x02\xC4\xC2\xEB\x20\x30\xEE\x96\xEC\xB4\xE0\x01\x7B\x88\xB9\xFB\xED\xE5\xDF\xA8\xE2\x06\xA1\x19\x22\x33\xE5\xEF\xE4\x6C\x37\xD7\x1E\x73\x68\x20\x0B\x1C\x08\x51\x9C\x80\x09\x0F\x20\x22\x04\x16\x1C\x1C\x95\xFD\x1E\xEE\xBC\xC3\xEE\xED\xF9\x96\xAC\x18\xA5\xF5\xC9\xD8\xFA\xF4\xF7\xDE\xE0\xFB\x85\x19\xE3\xE5\xF6\x13\xA5\xD4\x60\x07\xFA\x4E\x78\x7B\xF7\x62\x06\x0D\xA8\x4C\x0C\xFD\x57\x76\x75\xEC\x60\x03\x7B\x74\x1D\x7B\xF7\x61\x7C\x7E\xF2\x62\x01\x35\xA9\x4A\x7F\xDF\x01\x78\x7A\x08\x18\x26\x83\x88\x6D\x83\xDA\x6D\x64\x0F\x22\x34\x2D\x6E\x08\x28\x85\xDE\x4F\x7E\x06\x10\x00\x0A\x46\x5F\x76\x0B\xFE\x1B\x81\x87\xFD\x5F\x75\x07\x18\x38\x84\xE9\x4A\x02\x86\x29\x65\x0F\x7D\x21\x0F\x79\xF3\x7A\x6D\x86",
+"\x0E\x40\x8A\x56\x4A\x4C\x3F\x10\xBC\x8B\x7F\x23\x81\x0A\x38\xC4\x2F\x87\xC9\x4A\x0C\x48\xFD\x34\x87\x6C\x55\x84\x0E\x0B\x33\x0A\x06\x8C\x1D\x8B\x87\x59\x8F\x7E\xEA\x2C\x74\x79\x21\x74\x25\x7C\x3A\x15\x78\x13\xBE\x84\x78\x0A\x96\x78\x04\x3C\x54\x0D\x16\xD2\x86\x23\xAF\x4F\x89\x41\x57\x97\x73\x1D\xC4\x3E\x04\x19\x0C\x10\x23\x7F\x9B\x87\x1E\xF9\x06\x81\x2D\x15\x7B\x0B\x20\x0B\x8E\xF8\x28\x7D\x41\x07\x77\x6F\x7B\x22\x0C\x06\x1A\xC5\x8C\x7E\x46\xB7\x37\x41\x02\x80\x05\x17\x65\x7D\x0B\x05\xA0\x03\x90\xEC\x6A\x0B\x20\x85\x97\x91\x44\x94\x94\x78\x8D\x95\x74\x10\x10\x92\x92\x53\xBB\x78\x95\x97\x95\x75\x1F\x1A\x9C\x92\x4F\x83\x90\x86\x67\x74\x93\xE1\x08\x2B\x96\x45\xA5\x0B\x84\x6E\x66\x84\x19\x59\x62\x20\xF9\x2B\x84\x92\x2D\x94\x8F\x69\x58\x8E\x47\x5D\x84\x25\x97\x59\x80\x99\x09\xF4\x24\x99\x23\x42\x23\x85\x61\x8E\x86\x96\x67\x61\x8F\x92\x43\x23\x64\x48\x95\x3C\x1D\x7D\x84\x12\x8C\x25\x9B\x87\x71\x86\x83\x1E\x25\x94\x8A\x1F\x44\x7C\x46\x4D\x53\x0F\x23\xE5\x7D\x95\x76\x8D\x4F\x9D\x3E\x52\x94\x2D\xA2\x0D\x0E\x4F\xB1\x89\x94\xE9\x91\x7B\x3A\xA0\x08\x90\x7B\xBA\x38\x9F\xF1\x8E\x84\x2B\xEA\x89\x8A\x84\xB6\x41\x93\x9B\x9C\x9E\x3F\xC9\x81\x47\x29\x83\x91\x8F\xA2\x90\x89\x1E\x5B\x85\x08\x8C\x1D\xA2\x90\x1A\xA4\x94\x41\xAE\x9C\x8C\x4B\x8E\x45\x76\x0B\xA4\xA7\x22\xA0\x09\x94\x88\xB5\x97\x8D\x83\x8A\x9A\xC9\x67\x67\xA2\xCB\x59\xA1\x41\x2E\x14\x07\x47\x88\x2B\xA6\xBD\x63\x91\x7A\x86\x83\xA6\x2F\xB0\x97\xA5\xFC\x51\x92\x04\x77\x63\xAA\x49\x98\x93\x97\x88\x9D\x90\xA6\x1A\xBB\x9B\xE5\x5D\x9D\x53\xA9\x94\xA1\xA7\x49\x18\x21\x56\xE8\x94\xA2\x75\xAC\x9D\xA1\xA8\x70\x9F\x43\x8B\xA9\xA8\xB0\xA0\x02\xAC\x64\x1A\x9D\x44\xFD\x9F\x8D\x38\x92\xA9\x9C\x30\x5E\x9A\x40\x60\x91\x8F\x2D\x9B\xA8\x21\x77\xBA\x6D\x40\xE5\x73\xA1\x82\xA6\xA8\xAD\x28\xB4\x9C\x43\xEE\x91\xAD\x7C\xAE\xA2\xA2\x6D\xB4\xA2\x4C\xFE\x36\x8E\x8D\x8E\x9B\x20\xBD\x83\x92\x34\xC2\x95\x9A\x63\xBE\xA1\xA4\x2E\x94\x52\x12\x6C\x6E\x6D\xB7\x9C\xB3\x9C\x31\x05\x04\x46\x22\xBB\x87\xCF\x87\x89\x8E\x4B\x86\xB4\xEA\x41\x81\xA7\xB7\x94\xAC\x21\x74\xB7\xA9\x0C\x77\xA4\x21\xBC\xB0\xAC\x3D\x5E\xB7\x6E\x5F\x84\xB7\xAC\xC3\xA9\xA6\xA0\x64\x0E\xA1\x5A\x87\xBC\xAD\xE4\x71\x88\x97\x7A\x9A\xA0\x46\x92\xB1\x07\x9D\x84\x25\xA7\x37\xA4\x38\x29\xBA\xBA\xA5\x4A\xAC\xA1\x96\x46\xB5\x9F\x29\xCB\xAA\xAD\x97\x89\x7F\x96\x53\x99\x88\x46\xD1\x91\x07\x2F\x88\x26\xBC\x7A\x61\x8C\xEA\x63\x8C\x65\x32\x84\x4F\x6E\x22\x09\x8D\x75\xED\x8F\x94\xE3\x94\xA1\x8B\xAE\xB4\xA1\x99\x08\x2B\xBF\xDB\xA3\x9F\xB3\xC2\x8E\x70\x41\x0E\x7B\x85\x74\x99\xB3\x2F\x67\x7F\xB0\x0A\x84\x28\x85\xCD\xA4\x83\xB2\x74\x3A\x73\x40\x4A\x6B\x84\xD3\xAE\x80\xB9\xC0\xA3\xBE\x8F\x7D\x86\xBC\x82\x28\xB8\xB8\x62\x8A\x65\x7B\xA8\x76\x8C\xFE\x71\xB8\xA9\xF3\xA8\x76\x1B\xF6\xB2\x9D\x2C\x98\xC1\x8B\x20\x88\x21\x8C\xC0\xB2\x9B\xC5\x74\x0D\xB2\x03\x37\x6C\x36\xBE\x4E\x07\x17\xFE\x42\xC0\x03\x2E\x70\x8D\xB6\xC2\xC2\x81\x0A\x69\x72\x20\xD9\xBE\x38\x91\x08\x22\x26\xDC\x9F\xAA\x9F\xB6\xC4\x90\x82\x20\x72\xBC\x7A\xAD\xAB\x4A\xD0\x47\x82\x83\x2D\xC1\xBA\xB6\xC0\xC7\x76\x60\x07\x95\xE2\x9D\xC6\x8B\x9A\xA1\xC6\x04\x33\xC6\x64\xD1\xC4\x0F\xB8\x60\xC8\x00\x3A\xD7\xB1\x82\x65\xC5\x8E\x9A\x9A\xA3\xCA\x00\x02\xCA\x64\xC4\xCC\x51\x30\xF2\xCA\xBA\x18\xD4\x90\x9A\x83\x23\xC6\x4A\xB5\xC5\xCD\x8C\x6F\xCD\x9C\xBE\x94\xCF\x65\x97\x74\x92\x78\xC2\xCA\xA1\xFC\xC9\x69\x1C\xE2\xCC\xD1\x9A\xBF\xB3\x7E\x84\x2D\xBF\xCF\x87\xD1\x6E\x45\xC0\x03\x91\xD6\xCE\xC0\xB7\x7E\x01\xD3\x24\x8F\xCD\xA9\xE3\x96\xC6\xB9\x80\x03\x64\x48\xC6\xB4\x46\xD8\x71\xD4\xCE\x58\x7D\x8F\xA3\x68\x21\xAE\xED\x70\x3B\x10\xEB\x73\xC4\xC5\x68\x47\xF1\x6F\x87\x4A\x90\x0B\x8D\x80\xBF\x61\x7B\xC0\x52\x04\x78\xE3\x76\x37\x8D\xCB\x6D\x37\xB1\x8D\x86\x81\xE9\x5E\x90\x7B\x0F\x98\x7F\x04\xAF\x96\x83\xF3\x69\x7A\x80\xD3\xDD\x75\xF4\x71\x73\x7F\x37\x98\xD8\x82\x12\x9A\x7C\x1B\x96\x8F\x7E\xF9\x41\x85\x0F\xE1\xCE\x7D\xF4\x08\x89\x82\x73\xCD\x81\xDB\x11\x99\x7E\x1B\x96\x88\x82\x05\xA0\xDE\xC7\x4D\x5A\xC1\x93\x39\xAD\xC3\x7D\x43\x21\xBD\x3C\xCB\xBE\x88\xAD\x74\xC4\x22\x68\x8B\x92\xAF\x8A\xC5\x7D\xB5\x71\x8F\x39\x99\xCC\x3D\xAE\xD1\xB6\x38\xAE\x05\x06\xDA\x83\x26\xB6\x7B\xA2\x05\x5F\x89\x9F\xAE\xDF\x82\xB4\xE4\xBC\xA0\xB0\x71\x93\xA2\x9D\xC5",
+"\xA0\x45\xB1\x78\x96\xA6\x64\xB5\x0E\xB9\x81\x10\xBF\xA7\xE5\x61\xA9\x41\xDB\xB7\xBB\xA2\xBF\xB4\xE7\x2D\xAD\xAA\x77\xB5\x71\xA7\x73\x76\xA0\x7B\xCB\x40\x48\x76\x5A\x33\x4E\xAD\x5E\x41\xBC\x3E\x4F\xCD\xC5\xBE\x4C\x36\x0B\x23\x24\x3C\x17\xF5\xA1\x9D\xF3\x34\xA2\xDE\x18\x07\xEA\x4F\xFB\xE9\x74\x8A\x48\xC1\x67\x5A\xA4\x37\x1A\x00\xEE\x74\x01\xDB\x7F\xA4\xE8\x31\x3B\x65\x1C\x34\x07\x6A\xE8\x38\x54\xEE\x6E\xED\xD7\x30\xEC\x6F\x1E\x04\xEF\xE3\x1C\x03\x5C\xAF\x3F\x1C\x6F\x46\x4D\xE9\xC2\xF3\x49\xF0\xCB\x43\x5E\xE1\x80\x0A\xF1\x65\x7C\x34\x52\x14\x98\xEC\x00\x5E\xD5\x0D\x59\xCD\x86\xF0\x52\xB8\x78\x6F\x16\xFC\x6F\xC0\xC6\x42\xF1\x86\xED\xF1\xE1\x90\xFB\x7E\x4A\x6D\xD8\x53\x9C\xE3\x70\xE6\x92\x4A\xF2\xCB\x5E\x69\x84\x9D\xE6\x4B\x3F\x2C\x40\xF5\xC2\xE2\xF5\xE9\xA4\xFE\x86\xE4\xFD\xD9\xF4\xE8\x2B\xF6\x59\xAD\xFD\x6B\x40\x1C\x87\xF2\xA5\x32\xF3\xCB\xE4\x4B\xF0\x43\x0A\xF4\xF0\x09\x5F\x2A\x20\xCE\xD4\x0F\xE6\xC7\xE5\xF9\xA6\xC8\xB9\xDA\x72\x13\xFA\xAF\x4F\x71\xF1\xC7\x89\xFA\xF9\xC8\x58\x21\xF3\xCE\x5F\xF8\x00\x11\xFA\xFB\xBF\x57\x71\xF0\xF3\x48\xB9\x62\xE7\x08\xFD\xAF\xEA\xFF\xE5\x81\xF6\x49\xA9\x60\xFE\x4C\x81\xF7\xF7\x9C\x46\x4D\x02\x8C\x0A\xF4\x45\xFD\x77\x7F\x02\x1D\x7B\x16\x26\x7F\x02\x8B\x75\x33\x5F\x68\xFB\x37\x80\x37\x12\x7B\x46\x24\x20\x0C\x85\x10\x06\x88\x18\x8A\x76\x20\x83\x78\x11\x15\x0E\x7F\x27\x34\x10\x19\x87\x80\x6C\x7E\x43\xE3\x7A\x2E\xBD\x20\x00\x14\x4C\x1B\x00\x7A\x1F\xFF\x0F\x7F\x85\x76\x24\x4E\x68\x2B\x1B\x83\x10\x2D\x87\x7F\x1F\x8C\x21\xB5\x73\x82\x68\x12\x10\xA9\x46\x82\x66\x69\x20\x29\x8F\x82\x67\x26\x24\xD5\x4A\x82\xF1\x1C\x80\x33\x85\x06\x35\x82\x82\x48\x89\x83\x3E\x8C\x2C\xC9\x59\x20\x87\x7E\x80\xAE\x70\x7E\x21\x8F\x26\x52\x77\x5F\x54\x7B\x84\xA6\x10\x5C\x3D\x87\x13\x8A\x7E\x6A\x17\x8C\x10\x83\x62\x10\x13\x8B\x78\x55\x8D\x62\x57\x88\x80\x8C\x5C\x4C\x4D\x2C\x22\x61\x8B\x78\x27\x84\x06\x47\x89\x80\x09\x80\x58\xBC\x19\x75\x5B\x84\x32\x2B\x82\x1B\x9A\x2C\x80\x65\x8B\x24\x67\x8E\x68\x09\x80\x5C\x2C\x28\x67\x86\x7F\x86\x71\x89\x86\x8E\x64\x87\xCE\x73\x10\x41\x1E\x5F\x07\x81\x78\xB5\x61\x81\x23\x12\x7B\x6F\x62\x89\x96\x8A\x7C\x81\x7F\x37\xC8\x77\x89\x81\x75\x4D\x84\x8C\x89\x50\x8C\x10\xDE\x7B\x78\x53\x8B\x26\x94\x23\x48\x3A\x82\x76\x83\x47\x87\x57\x1A\x78\x9B\x6B\x26\x46\x28\x30\x54\x3C\x80\xA7\x87\x76\x58\x80\x73\xC4\x1C\x22\xB2\x82\x83\x3B\x84\x1C\x63\x81\x81\x76\x7D\x1E\xFA\x7F\x26\xFC\x7B\x87\x07\x85\x8B\x4E\x87\x8B\x76\x69\x20\x00\x84\x84\xBD\x89\x07\xBF\x8E\x8C\x62\x74\x49\x86\x78\x78\x1A\x87\x80\xCB\x26\x20\xD5\x45\x88\xCF\x86\x20\x01\x82\x80\x45\x8E\x78\x65\x77\x83\x24\x8D\x76\xD5\x13\x10\x94\x74\x80\x6C\x0F\x7B\x3E\x13\x10\xEB\x71\x7F\xF1\x7C\x7D\xB2\x7F\x79\x0C\x89\x8D\x48\x22\x8D\x8E\x63\x76\xDE\x88\x8F\x81\x84\x49\xE2\x86\x83\xE9\x24\x41\xA6\x70\x40\xEA\x8C\x8E\xE5\x7F\x8E\xC3\x74\x7D\xB1\x73\x12\xB4\x75\x8F\xE3\x83\x10\xDB\x85\x78\x18\x63\x48\xFB\x8E\x81\x53\x4E\x8F\xA3\x75\x76\x91\x77\x8E\xD7\x19\x40\x05\x95\x78\x99\x75\x7D\xE9\x71\x8F\xD8\x31\x78\x04\x2D\x86\xA1\x7F\x90\xC5\x4C\x8F\x88\x8A\x8F\x18\x1F\x8D\xBC\x83\x8D\x0B\x81\x78\xAE\x61\x83\xE0\x75\x81\xF7\x86\x91\xAA\x8A\x51\x15\x90\x8E\x17\x9B\x80\x88\x17\x7C\xD7\x82\x80\xF6\x83\x84\x3A\x99\x8F\x14\x9F\x92\x2C\x9F\x72\xB9\x4B\x3F\xA5\x8E\x2A\xCE\x27\x7E\x51\x83\x80\x5F\x38\x90\x67\x27\x7D\x22\x2D\x1A\xF0\x79\x90\xB0\x73\x38\xDD\x73\x94\xF7\x75\x94\x08\x11\x91\xD6\x7D\x8D\x4A\x97\x94\xFD\x8E\x94\x20\x92\x21\x52\x92\x7C\x54\x9D\x95\xBE\x72\x91\x27\x3E\x7E\x5B\x9F\x96\xF2\x7C\x37\x4D\x7F\x95\x0C\x16\x36\x02\x88\x93\x0C\x1F\x89\x4D\x79\x75\x4F\x90\x00\x92\x75\x62\xA9\x89\x8F\x59\x45\x10\xA1\x88\x10\x13\x0C\x80\x83\x97\x98\x09\x81\x47\x75\x82\x21\xFE\x5C\x8A\x09\x1E\x8A\x79\x8C\x10\xBB\x83\x10\xD1\x85\x96\x5B\x72\x99\x8B\x80\x95\x56\x52\x4E\xBA\x8C\x80\x59\x7D\x99\x02\x81\x8C\x96\x92\x10\xFF\x8B\x34\x67\x93\x8B\x68\x98\x88\xA0\x94\x7E\x8C\x8F\x35\xC7\x5F\x9A\xF7\x77\x9A\x97\x82\x87\x2D\x94\x8D\xA0\x83\x89\x18\x14\x01\xBB\x91\x81\x99\x84\x37\xC3\x90\x9C\x37\x13\x8A\x7C\x97\x7F\x7E\x92\x63\xA6\x94\x99\x71\x43\x98\x85\x94\x24\x90\x9D\x92\x89\x99\x10\xB2\x79\x78\x0E\x90\x90\x02\x16\x93\xCA\x73\x91\x3C\x98\x9B\xE0\x71\x8E\x19\x93\x82\x1B\x9C\x2A\xE8\x88\x3E",
+"\x95\x7A\x90\xAA\x7B\x96\xC0\x72\x92\xF0\x8C\x95\x77\x9E\x95\xF3\x80\x96\xE0\x72\x96\x04\x1E\x9D\x6E\x86\x96\x0C\x10\x93\xE3\x9F\x93\xBA\x75\x9E\x48\x82\x90\x65\x77\x7A\xEB\x9B\x7D\x56\x96\x26\x21\x98\x97\x53\x90\x38\x55\x9D\x40\x81\x7D\x90\xD8\x8A\x92\x00\x0A\x9F\xDC\x8B\x93\x09\x2D\x93\x31\x99\x8F\x18\x98\x7B\x1A\x96\x8E\xE8\x9D\x91\xA9\x2F\x91\x81\x9C\x7A\xF0\x92\x9F\x24\x90\xA1\xB2\x77\x92\x0C\x8D\x9C\xF9\x9B\x94\x4C\x8E\x92\xFD\x90\xA3\x59\x84\x8D\x34\x9D\x64\x2D\xA4\xA1\x16\xA2\x97\x18\xA4\x1C\x1A\xAF\x9F\x32\x9E\x43\x90\x8D\x67\xC7\x9A\x98\x23\x1B\x89\x87\x87\x26\xF8\x90\x83\x34\xA8\x8B\x64\x73\xA3\xB1\x9C\x94\x0A\x80\x82\xEE\x9D\x8E\xD0\x72\x6C\x5F\x2D\xA0\xC4\x7C\xA0\x9E\x9E\x68\xD8\x75\x97\x0E\xA0\x97\x16\x2A\x97\x2E\x83\xA1\xDC\x95\xA1\x4D\xAB\x8C\x3E\xA2\x9E\xDF\x90\xA0\x1C\x23\x98\x52\x5D\x96\x23\x92\x9F\xCF\x37\xA1\x8E\x64\x97\x5A\xAF\xA0\x5C\xA8\x7F\xB2\x78\x67\x1D\x85\xA4\x80\xA1\x94\x23\x1A\x9D\x66\xA8\x84\x1C\x89\xA6\x97\x39\x45\x3F\xAD\xA6\x41\xAC\x21\xAD\x94\x8E\xE4\x87\x9E\x41\x29\x9E\x1C\x24\xA2\x73\x2B\xA0\xED\x9E\x96\x61\xA3\x9F\xD0\x1E\x79\xF6\x9A\x7C\x4B\xA2\x10\x7F\xAB\xA1\x81\x8A\xA8\x6C\xAB\x9F\x8D\xA5\x06\x8F\xA9\x2E\x91\xA5\x7A\x05\xA4\x90\xEC\x91\x97\x25\xAF\x9E\x7B\xA1\x9F\x76\x92\x8F\x0C\x9F\xA9\x8B\x71\xAA\x00\x03\xAA\x40\xA8\x98\x3E\x2B\xA8\xA8\xAC\xA1\x20\xA3\x27\xB9\x7E\xA8\x1C\x90\x00\xBC\x71\xAB\x16\x26\x90\xB5\x92\x10\x09\xAA\x8E\x26\x9F\x41\x39\xA7\xA6\xBE\xAC\xA8\xC0\xAD\x24\xC2\xA6\xA7\x69\x9E\x43\x46\xA7\x13\x35\x95\xAD\x86\xA3\x10\xD7\xA3\xAC\xA5\xA1\xAC\xA7\xAC\xAD\xBD\x90\x94\xDF\xAA\x14\x48\xAB\x9D\xE3\xA2\xAA\x88\xA0\x5C\xDB\xAC\xA3\xC4\xA4\xA5\xB3\xA6\xA5\xE6\x78\xA5\xD2\x79\xA7\x62\xAB\x8E\xF6\xA9\x80\x5F\xAE\xAF\x9C\xA3\xA6\xB2\x73\x8A\x49\xA6\x26\xBC\xA5\xAE\xEA\xA2\xA5\xF4\xA9\xAE\x01\xBB\xAE\xF8\xA7\xA9\x6C\x9C\xAF\x60\xAB\xA5\x99\xAC\x7E\x73\x97\x3B\x20\x17\xB1\x7A\xA4\x9F\x23\x1C\x1B\x17\x01\xA8\x96\x84\xA6\x04\x1B\x9C\x52\x82\x7E\x85\x73\x9D\x34\x15\x9D\x0E\xB9\x45\x81\x7C\x1B\x19\x04\xB2\x98\x8B\xA2\xD4\xA4\xB3\x82\xA7\x13\xBC\x10\x33\x38\xB5\x8D\xB2\x71\xAE\x34\xB1\xB3\x10\xBD\xB3\xD8\x93\xA8\xBA\xA6\x78\x63\x85\xAF\x5D\xAD\xAD\xC8\xAE\xA1\xE6\x95\xAC\x84\x24\xA9\x07\xA9\x7E\x75\xA5\xA5\x07\x97\xA2\x76\x99\xA2\x0B\x97\x13\xF4\x87\x80\x49\xB3\xB4\x1A\xB9\xAA\xAB\xA2\x1A\x4F\xBE\x43\x03\x9E\x6E\x96\xAF\x26\x98\xA2\xAB\x73\xA7\xAB\x25\x92\x7B\x12\xA2\x80\x5F\xB0\xA5\x3E\x92\xB6\x02\xAD\xAA\x01\xA1\xA2\xCA\xAE\x91\xCC\xA0\xB0\xF9\xA7\xB5\xB5\xA8\xA2\x74\xAF\xB6\x23\x1C\xA2\x07\x8C\x34\x60\xBF\x26\x45\x8D\xAE\x57\x10\xB4\x02\x88\xB8\x74\xB4\xAA\x12\xB7\x28\x39\xBE\xAE\x47\xB5\x78\x73\xB8\x10\xFE\x98\xAD\x4C\xB9\x29\x7F\xBF\xAC\xFB\xAD\x25\x59\xAA\xA9\x18\xBC\xB6\x8A\xB7\x32\x03\xB4\xBA\x1F\xBD\xA9\x07\xB7\xB9\x4D\x79\xB9\x04\x1B\xB9\xE6\xA3\xB9\x9E\xB4\xB1\x51\x96\xB1\x04\xB5\xB5\x4B\xB8\x88\x78\xAA\xBA\xFF\xA2\xB4\x9A\x94\xB4\x79\x96\xB3\x60\x8E\x98\x14\xAB\x99\xCA\x71\x8C\x8C\xB9\x10\x8E\xB7\x7F\x90\xB8\x10\xC8\xBB\x78\xCA\xB2\xBC\x92\x80",
+};
+
+			void JsonGetParserBuffer(vl::stream::MemoryStream& stream)
+			{
+				vl::stream::MemoryStream compressedStream;
+				for (vint i = 0; i < parserBufferRows; i++)
+				{
+					vint size = i == parserBufferRows - 1 ? parserBufferRemain : parserBufferBlock;
+					compressedStream.Write((void*)parserBuffer[i], size);
+				}
+				compressedStream.SeekFromBegin(0);
+				vl::stream::LzwDecoder decoder;
+				vl::stream::DecoderStream decoderStream(compressedStream, decoder);
+				vl::collections::Array<vl::vuint8_t> buffer(65536);
+				while (true)
+				{
+					vl::vint size = decoderStream.Read(&buffer[0], 65536);
+					if (size == 0) break;
+					stream.Write(&buffer[0], size);
+				}
+				stream.SeekFromBegin(0);
+			}
+/***********************************************************************
+Unescaping Function Foward Declarations
+***********************************************************************/
+
+			extern void JsonUnescapingString(vl::parsing::ParsingToken& value, const vl::collections::List<vl::regex::RegexToken>& tokens);
+
+/***********************************************************************
+Parsing Tree Conversion Driver Implementation
+***********************************************************************/
+
+			class JsonTreeConverter : public vl::parsing::ParsingTreeConverter
+			{
+			public:
+				using vl::parsing::ParsingTreeConverter::SetMember;
+
+				bool SetMember(JsonLiteral::JsonValue& member, vl::Ptr<vl::parsing::ParsingTreeNode> node, const TokenList& tokens)
+				{
+					vl::Ptr<vl::parsing::ParsingTreeToken> token=node.Cast<vl::parsing::ParsingTreeToken>();
+					if(token)
+					{
+						if(token->GetValue()==L"True") { member=JsonLiteral::JsonValue::True; return true; }
+						else if(token->GetValue()==L"False") { member=JsonLiteral::JsonValue::False; return true; }
+						else if(token->GetValue()==L"Null") { member=JsonLiteral::JsonValue::Null; return true; }
+						else { member=JsonLiteral::JsonValue::True; return false; }
+					}
+					member=JsonLiteral::JsonValue::True;
+					return false;
+				}
+
+				void Fill(vl::Ptr<JsonNode> tree, vl::Ptr<vl::parsing::ParsingTreeObject> obj, const TokenList& tokens)
+				{
+				}
+
+				void Fill(vl::Ptr<JsonLiteral> tree, vl::Ptr<vl::parsing::ParsingTreeObject> obj, const TokenList& tokens)
+				{
+					SetMember(tree->value, obj->GetMember(L"value"), tokens);
+				}
+
+				void Fill(vl::Ptr<JsonString> tree, vl::Ptr<vl::parsing::ParsingTreeObject> obj, const TokenList& tokens)
+				{
+					if(SetMember(tree->content, obj->GetMember(L"content"), tokens))
+					{
+						JsonUnescapingString(tree->content, tokens);
+					}
+				}
+
+				void Fill(vl::Ptr<JsonNumber> tree, vl::Ptr<vl::parsing::ParsingTreeObject> obj, const TokenList& tokens)
+				{
+					SetMember(tree->content, obj->GetMember(L"content"), tokens);
+				}
+
+				void Fill(vl::Ptr<JsonArray> tree, vl::Ptr<vl::parsing::ParsingTreeObject> obj, const TokenList& tokens)
+				{
+					SetMember(tree->items, obj->GetMember(L"items"), tokens);
+				}
+
+				void Fill(vl::Ptr<JsonObjectField> tree, vl::Ptr<vl::parsing::ParsingTreeObject> obj, const TokenList& tokens)
+				{
+					if(SetMember(tree->name, obj->GetMember(L"name"), tokens))
+					{
+						JsonUnescapingString(tree->name, tokens);
+					}
+					SetMember(tree->value, obj->GetMember(L"value"), tokens);
+				}
+
+				void Fill(vl::Ptr<JsonObject> tree, vl::Ptr<vl::parsing::ParsingTreeObject> obj, const TokenList& tokens)
+				{
+					SetMember(tree->fields, obj->GetMember(L"fields"), tokens);
+				}
+
+				vl::Ptr<vl::parsing::ParsingTreeCustomBase> ConvertClass(vl::Ptr<vl::parsing::ParsingTreeObject> obj, const TokenList& tokens)override
+				{
+					if(obj->GetType()==L"Literal")
+					{
+						vl::Ptr<JsonLiteral> tree = new JsonLiteral;
+						vl::collections::CopyFrom(tree->creatorRules, obj->GetCreatorRules());
+						Fill(tree, obj, tokens);
+						Fill(tree.Cast<JsonNode>(), obj, tokens);
+						return tree;
+					}
+					else if(obj->GetType()==L"String")
+					{
+						vl::Ptr<JsonString> tree = new JsonString;
+						vl::collections::CopyFrom(tree->creatorRules, obj->GetCreatorRules());
+						Fill(tree, obj, tokens);
+						Fill(tree.Cast<JsonNode>(), obj, tokens);
+						return tree;
+					}
+					else if(obj->GetType()==L"Number")
+					{
+						vl::Ptr<JsonNumber> tree = new JsonNumber;
+						vl::collections::CopyFrom(tree->creatorRules, obj->GetCreatorRules());
+						Fill(tree, obj, tokens);
+						Fill(tree.Cast<JsonNode>(), obj, tokens);
+						return tree;
+					}
+					else if(obj->GetType()==L"Array")
+					{
+						vl::Ptr<JsonArray> tree = new JsonArray;
+						vl::collections::CopyFrom(tree->creatorRules, obj->GetCreatorRules());
+						Fill(tree, obj, tokens);
+						Fill(tree.Cast<JsonNode>(), obj, tokens);
+						return tree;
+					}
+					else if(obj->GetType()==L"ObjectField")
+					{
+						vl::Ptr<JsonObjectField> tree = new JsonObjectField;
+						vl::collections::CopyFrom(tree->creatorRules, obj->GetCreatorRules());
+						Fill(tree, obj, tokens);
+						Fill(tree.Cast<JsonNode>(), obj, tokens);
+						return tree;
+					}
+					else if(obj->GetType()==L"Object")
+					{
+						vl::Ptr<JsonObject> tree = new JsonObject;
+						vl::collections::CopyFrom(tree->creatorRules, obj->GetCreatorRules());
+						Fill(tree, obj, tokens);
+						Fill(tree.Cast<JsonNode>(), obj, tokens);
+						return tree;
+					}
+					else 
+						return 0;
+				}
+			};
+
+			vl::Ptr<vl::parsing::ParsingTreeCustomBase> JsonConvertParsingTreeNode(vl::Ptr<vl::parsing::ParsingTreeNode> node, const vl::collections::List<vl::regex::RegexToken>& tokens)
+			{
+				JsonTreeConverter converter;
+				vl::Ptr<vl::parsing::ParsingTreeCustomBase> tree;
+				converter.SetMember(tree, node, tokens);
+				return tree;
+			}
+
+/***********************************************************************
+Parsing Tree Conversion Implementation
+***********************************************************************/
+
+			vl::Ptr<JsonLiteral> JsonLiteral::Convert(vl::Ptr<vl::parsing::ParsingTreeNode> node, const vl::collections::List<vl::regex::RegexToken>& tokens)
+			{
+				return JsonConvertParsingTreeNode(node, tokens).Cast<JsonLiteral>();
+			}
+
+			vl::Ptr<JsonString> JsonString::Convert(vl::Ptr<vl::parsing::ParsingTreeNode> node, const vl::collections::List<vl::regex::RegexToken>& tokens)
+			{
+				return JsonConvertParsingTreeNode(node, tokens).Cast<JsonString>();
+			}
+
+			vl::Ptr<JsonNumber> JsonNumber::Convert(vl::Ptr<vl::parsing::ParsingTreeNode> node, const vl::collections::List<vl::regex::RegexToken>& tokens)
+			{
+				return JsonConvertParsingTreeNode(node, tokens).Cast<JsonNumber>();
+			}
+
+			vl::Ptr<JsonArray> JsonArray::Convert(vl::Ptr<vl::parsing::ParsingTreeNode> node, const vl::collections::List<vl::regex::RegexToken>& tokens)
+			{
+				return JsonConvertParsingTreeNode(node, tokens).Cast<JsonArray>();
+			}
+
+			vl::Ptr<JsonObjectField> JsonObjectField::Convert(vl::Ptr<vl::parsing::ParsingTreeNode> node, const vl::collections::List<vl::regex::RegexToken>& tokens)
+			{
+				return JsonConvertParsingTreeNode(node, tokens).Cast<JsonObjectField>();
+			}
+
+			vl::Ptr<JsonObject> JsonObject::Convert(vl::Ptr<vl::parsing::ParsingTreeNode> node, const vl::collections::List<vl::regex::RegexToken>& tokens)
+			{
+				return JsonConvertParsingTreeNode(node, tokens).Cast<JsonObject>();
+			}
+
+/***********************************************************************
+Parser Function
+***********************************************************************/
+
+			vl::Ptr<vl::parsing::ParsingTreeNode> JsonParseAsParsingTreeNode(const vl::WString& input, vl::Ptr<vl::parsing::tabling::ParsingTable> table, vl::collections::List<vl::Ptr<vl::parsing::ParsingError>>& errors, vl::vint codeIndex)
+			{
+				vl::parsing::tabling::ParsingState state(input, table, codeIndex);
+				state.Reset(L"JRoot");
+				vl::Ptr<vl::parsing::tabling::ParsingGeneralParser> parser=vl::parsing::tabling::CreateStrictParser(table);
+				vl::Ptr<vl::parsing::ParsingTreeNode> node=parser->Parse(state, errors);
+				return node;
+			}
+
+			vl::Ptr<vl::parsing::ParsingTreeNode> JsonParseAsParsingTreeNode(const vl::WString& input, vl::Ptr<vl::parsing::tabling::ParsingTable> table, vl::vint codeIndex)
+			{
+				vl::collections::List<vl::Ptr<vl::parsing::ParsingError>> errors;
+				return JsonParseAsParsingTreeNode(input, table, errors, codeIndex);
+			}
+
+			vl::Ptr<JsonNode> JsonParse(const vl::WString& input, vl::Ptr<vl::parsing::tabling::ParsingTable> table, vl::collections::List<vl::Ptr<vl::parsing::ParsingError>>& errors, vl::vint codeIndex)
+			{
+				vl::parsing::tabling::ParsingState state(input, table, codeIndex);
+				state.Reset(L"JRoot");
+				vl::Ptr<vl::parsing::tabling::ParsingGeneralParser> parser=vl::parsing::tabling::CreateStrictParser(table);
+				vl::Ptr<vl::parsing::ParsingTreeNode> node=parser->Parse(state, errors);
+				if(node && errors.Count()==0)
+				{
+					return JsonConvertParsingTreeNode(node, state.GetTokens()).Cast<JsonNode>();
+				}
+				return 0;
+			}
+
+			vl::Ptr<JsonNode> JsonParse(const vl::WString& input, vl::Ptr<vl::parsing::tabling::ParsingTable> table, vl::vint codeIndex)
+			{
+				vl::collections::List<vl::Ptr<vl::parsing::ParsingError>> errors;
+				return JsonParse(input, table, errors, codeIndex);
+			}
+
+/***********************************************************************
+Table Generation
+***********************************************************************/
+
+			vl::Ptr<vl::parsing::tabling::ParsingTable> JsonLoadTable()
+			{
+				vl::stream::MemoryStream stream;
+				JsonGetParserBuffer(stream);
+				vl::Ptr<vl::parsing::tabling::ParsingTable> table=new vl::parsing::tabling::ParsingTable(stream);
+				table->Initialize();
+				return table;
+			}
+
+		}
+	}
+}
+
+
+/***********************************************************************
+.\PARSING\XML\PARSINGXML.CPP
+***********************************************************************/
+
+namespace vl
+{
+	namespace parsing
+	{
+		namespace xml
+		{
+			using namespace stream;
+			using namespace collections;
+			using namespace regex;
+
+/***********************************************************************
+Unescaping Function Foward Declarations
+***********************************************************************/
+
+			void XmlMergeTextFragment(vl::collections::List<vl::Ptr<XmlNode>>& value, const vl::collections::List<vl::regex::RegexToken>& tokens)
+			{
+				vint begin=-1;
+				vint end=-1;
+				for(vint i=value.Count()-1;i>=-1;i--)
+				{
+					if(i==-1)
+					{
+						if(end!=-1) begin=0;
+					}
+					else if(value[i].Cast<XmlText>())
+					{
+						if(end==-1) end=i;
+					}
+					else
+					{
+						if(end!=-1) begin=i+1;
+					}
+					if(begin!=-1 && end!=-1)
+					{
+						vint tokenBegin=value[begin].Cast<XmlText>()->content.tokenIndex;
+						vint tokenEnd=value[end].Cast<XmlText>()->content.tokenIndex;
+						while(tokenBegin>0)
+						{
+							if(tokens.Get(tokenBegin-1).token==(vint)XmlParserTokenIndex::SPACE || tokens.Get(tokenBegin-1).token==-1)
+							{
+								tokenBegin--;
+							}
+							else
+							{
+								break;
+							}
+						}
+						while(tokenEnd<tokens.Count()-1)
+						{
+							if(tokens.Get(tokenEnd+1).token==(vint)XmlParserTokenIndex::SPACE || tokens.Get(tokenEnd+1).token==-1)
+							{
+								tokenEnd++;
+							}
+							else
+							{
+								break;
+							}
+						}
+
+						const RegexToken& beginToken=tokens.Get(tokenBegin);
+						const RegexToken& endToken=tokens.Get(tokenEnd);
+						const wchar_t* textBegin=beginToken.reading;
+						const wchar_t* textEnd=endToken.reading+endToken.length;
+						WString text(textBegin, vint(textEnd-textBegin));
+						ParsingTextRange range(&beginToken, &endToken);
+
+						Ptr<XmlText> xmlText=new XmlText;
+						xmlText->codeRange=range;
+						xmlText->content.codeRange=range;
+						xmlText->content.value=XmlUnescapeValue(text);
+
+						value.RemoveRange(begin, end-begin+1);
+						value.Insert(begin, xmlText);
+
+						begin=-1;
+						end=-1;
+					}
+				}
+			}
+
+			void XmlUnescapeAttributeValue(vl::parsing::ParsingToken& value, const vl::collections::List<vl::regex::RegexToken>& tokens)
+			{
+				value.value=XmlUnescapeValue(value.value.Sub(1, value.value.Length()-2));
+			}
+
+			void XmlUnescapeCData(vl::parsing::ParsingToken& value, const vl::collections::List<vl::regex::RegexToken>& tokens)
+			{
+				value.value=XmlUnescapeCData(value.value);
+			}
+
+			void XmlUnescapeComment(vl::parsing::ParsingToken& value, const vl::collections::List<vl::regex::RegexToken>& tokens)
+			{
+				value.value=XmlUnescapeComment(value.value);
+			}
+
+/***********************************************************************
+XmlPrintVisitor
+***********************************************************************/
+
+			class XmlPrintVisitor : public Object, public XmlNode::IVisitor
+			{
+			public:
+				TextWriter&					writer;
+
+				XmlPrintVisitor(TextWriter& _writer)
+					:writer(_writer)
+				{
+				}
+
+				void Visit(XmlText* node)
+				{
+					writer.WriteString(XmlEscapeValue(node->content.value));
+				}
+
+				void Visit(XmlCData* node)
+				{
+					writer.WriteString(XmlEscapeCData(node->content.value));
+				}
+
+				void Visit(XmlAttribute* node)
+				{
+					writer.WriteString(node->name.value);
+					writer.WriteString(L"=\"");
+					writer.WriteString(XmlEscapeValue(node->value.value));
+					writer.WriteString(L"\"");
+				}
+
+				void Visit(XmlComment* node)
+				{
+					writer.WriteString(XmlEscapeComment(node->content.value));
+				}
+
+				void Visit(XmlElement* node)
+				{
+					writer.WriteChar(L'<');
+					writer.WriteString(node->name.value);
+					FOREACH(Ptr<XmlAttribute>, att, node->attributes)
+					{
+						writer.WriteChar(L' ');
+						att->Accept(this);
+					}
+					if(node->subNodes.Count()==0)
+					{
+						writer.WriteString(L"/>");
+					}
+					else
+					{
+						writer.WriteChar(L'>');
+						FOREACH(Ptr<XmlNode>, subNode, node->subNodes)
+						{
+							subNode->Accept(this);
+						}
+						writer.WriteString(L"</");
+						writer.WriteString(node->name.value);
+						writer.WriteChar(L'>');
+					}
+				}
+
+				void Visit(XmlInstruction* node)
+				{
+					writer.WriteString(L"<?");
+					writer.WriteString(node->name.value);
+					FOREACH(Ptr<XmlAttribute>, att, node->attributes)
+					{
+						writer.WriteChar(L' ');
+						att->Accept(this);
+					}
+					writer.WriteString(L"?>");
+				}
+
+				void Visit(XmlDocument* node)
+				{
+					FOREACH(Ptr<XmlNode>, prolog, node->prologs)
+					{
+						prolog->Accept(this);
+					}
+					node->rootElement->Accept(this);
+				}
+			};
+
+/***********************************************************************
+API
+***********************************************************************/
+
+			WString XmlEscapeValue(const WString& value)
+			{
+				WString result;
+				const wchar_t* reading=value.Buffer();
+				while(wchar_t c=*reading++)
+				{
+					switch(c)
+					{
+					case L'<':
+						result+=L"&lt;";
+						break;
+					case L'>':
+						result+=L"&gt;";
+						break;
+					case L'&':
+						result+=L"&amp;";
+						break;
+					case L'\'':
+						result+=L"&apos;";
+						break;
+					case L'\"':
+						result+=L"&quot;";
+						break;
+					default:
+						result+=c;
+					}
+				}
+				return result;
+			}
+
+			WString XmlUnescapeValue(const WString& value)
+			{
+				WString result;
+				const wchar_t* reading=value.Buffer();
+				while(*reading)
+				{
+					if(wcsncmp(reading, L"&lt;", 4)==0)
+					{
+						result+=L'<';
+						reading+=4;
+					}
+					else if(wcsncmp(reading, L"&gt;", 4)==0)
+					{
+						result+=L'>';
+						reading+=4;
+					}
+					else if(wcsncmp(reading, L"&amp;", 5)==0)
+					{
+						result+=L'&';
+						reading+=5;
+					}
+					else if(wcsncmp(reading, L"&apos;", 6)==0)
+					{
+						result+=L'\'';
+						reading+=6;
+					}
+					else if(wcsncmp(reading, L"&quot;", 6)==0)
+					{
+						result+=L'\"';
+						reading+=6;
+					}
+					else
+					{
+						result+=*reading++;
+					}
+				}
+				return result;
+			}
+
+			WString XmlEscapeCData(const WString& value)
+			{
+				return L"<![CDATA["+value+L"]]>";
+			}
+
+			WString XmlUnescapeCData(const WString& value)
+			{
+				return value.Sub(9, value.Length()-12);
+			}
+
+			WString XmlEscapeComment(const WString& value)
+			{
+				return L"<!--"+value+L"-->";
+			}
+
+			WString XmlUnescapeComment(const WString& value)
+			{
+				return value.Sub(4, value.Length()-7);
+			}
+
+			void XmlPrint(Ptr<XmlNode> node, stream::TextWriter& writer)
+			{
+				XmlPrintVisitor visitor(writer);
+				node->Accept(&visitor);
+			}
+
+			void XmlPrintContent(Ptr<XmlElement> element, stream::TextWriter& writer)
+			{
+				XmlPrintVisitor visitor(writer);
+				FOREACH(Ptr<XmlNode>, node, element->subNodes)
+				{
+					node->Accept(&visitor);
+				}
+			}
+
+			WString XmlToString(Ptr<XmlNode> node)
+			{
+				return GenerateToStream([&](StreamWriter& writer)
+				{
+					XmlPrint(node, writer);
+				});
+			}
+
+/***********************************************************************
+Linq To Xml
+***********************************************************************/
+
+			Ptr<XmlAttribute> XmlGetAttribute(Ptr<XmlElement> element, const WString& name)
+			{
+				return XmlGetAttribute(element.Obj(), name);
+			}
+
+			Ptr<XmlElement> XmlGetElement(Ptr<XmlElement> element, const WString& name)
+			{
+				return XmlGetElement(element.Obj(), name);
+			}
+
+			collections::LazyList<Ptr<XmlElement>> XmlGetElements(Ptr<XmlElement> element)
+			{
+				return XmlGetElements(element.Obj());
+			}
+
+			collections::LazyList<Ptr<XmlElement>> XmlGetElements(Ptr<XmlElement> element, const WString& name)
+			{
+				return XmlGetElements(element.Obj(), name);
+			}
+
+			WString XmlGetValue(Ptr<XmlElement> element)
+			{
+				return XmlGetValue(element.Obj());
+			}
+
+			Ptr<XmlAttribute> XmlGetAttribute(XmlElement* element, const WString& name)
+			{
+				FOREACH(Ptr<XmlAttribute>, att, element->attributes)
+				{
+					if(att->name.value==name)
+					{
+						return att;
+					}
+				}
+				return 0;
+			}
+
+			Ptr<XmlElement> XmlGetElement(XmlElement* element, const WString& name)
+			{
+				FOREACH(Ptr<XmlNode>, node, element->subNodes)
+				{
+					Ptr<XmlElement> subElement=node.Cast<XmlElement>();
+					if(subElement && subElement->name.value==name)
+					{
+						return subElement;
+					}
+				}
+				return 0;
+			}
+
+			collections::LazyList<Ptr<XmlElement>> XmlGetElements(XmlElement* element)
+			{
+				return From(element->subNodes)
+					.FindType<XmlElement>();
+			}
+
+			collections::LazyList<Ptr<XmlElement>> XmlGetElements(XmlElement* element, const WString& name)
+			{
+				return From(element->subNodes)
+					.FindType<XmlElement>()
+					.Where([name](Ptr<XmlElement> e){return e->name.value==name;});
+			}
+
+			WString XmlGetValue(XmlElement* element)
+			{
+				WString result;
+				FOREACH(Ptr<XmlNode>, node, element->subNodes)
+				{
+					if(Ptr<XmlText> text=node.Cast<XmlText>())
+					{
+						result+=text->content.value;
+					}
+					else if(Ptr<XmlCData> text=node.Cast<XmlCData>())
+					{
+						result+=text->content.value;
+					}
+				}
+				return result;
+			}
+
+/***********************************************************************
+XmlElementWriter
+***********************************************************************/
+
+			XmlElementWriter::XmlElementWriter(Ptr<XmlElement> _element, const XmlElementWriter* _previousWriter)
+				:element(_element)
+				,previousWriter(_previousWriter)
+			{
+			}
+
+			XmlElementWriter::~XmlElementWriter()
+			{
+			}
+
+			const XmlElementWriter& XmlElementWriter::Attribute(const WString& name, const WString& value)const
+			{
+				Ptr<XmlAttribute> node=new XmlAttribute;
+				node->name.value=name;
+				node->value.value=value;
+				element->attributes.Add(node);
+				return *this;
+			}
+
+			XmlElementWriter XmlElementWriter::Element(const WString& name)const
+			{
+				Ptr<XmlElement> node=new XmlElement;
+				node->name.value=name;
+				element->subNodes.Add(node);
+				return XmlElementWriter(node, this);
+			}
+
+			const XmlElementWriter& XmlElementWriter::End()const
+			{
+				return *previousWriter;
+			}
+
+			const XmlElementWriter& XmlElementWriter::Text(const WString& value)const
+			{
+				Ptr<XmlText> node=new XmlText;
+				node->content.value=value;
+				element->subNodes.Add(node);
+				return *this;
+			}
+
+			const XmlElementWriter& XmlElementWriter::CData(const WString& value)const
+			{
+				Ptr<XmlCData> node=new XmlCData;
+				node->content.value=value;
+				element->subNodes.Add(node);
+				return *this;
+			}
+
+			const XmlElementWriter& XmlElementWriter::Comment(const WString& value)const
+			{
+				Ptr<XmlComment> node=new XmlComment;
+				node->content.value=value;
+				element->subNodes.Add(node);
+				return *this;
+			}
+		}
+	}
+}
+
+
+/***********************************************************************
+.\PARSING\XML\PARSINGXML_AST.CPP
+***********************************************************************/
+/***********************************************************************
+Vczh Library++ 3.0
+Developer: Zihan Chen(vczh)
+Parser::ParsingXml.parser.txt
+
+This file is generated by: Vczh Parser Generator
+***********************************************************************/
+
+
+namespace vl
+{
+	namespace parsing
+	{
+		namespace xml
+		{
+/***********************************************************************
+Visitor Pattern Implementation
+***********************************************************************/
+
+			void XmlText::Accept(XmlNode::IVisitor* visitor)
+			{
+				visitor->Visit(this);
+			}
+
+			void XmlCData::Accept(XmlNode::IVisitor* visitor)
+			{
+				visitor->Visit(this);
+			}
+
+			void XmlAttribute::Accept(XmlNode::IVisitor* visitor)
+			{
+				visitor->Visit(this);
+			}
+
+			void XmlComment::Accept(XmlNode::IVisitor* visitor)
+			{
+				visitor->Visit(this);
+			}
+
+			void XmlElement::Accept(XmlNode::IVisitor* visitor)
+			{
+				visitor->Visit(this);
+			}
+
+			void XmlInstruction::Accept(XmlNode::IVisitor* visitor)
+			{
+				visitor->Visit(this);
+			}
+
+			void XmlDocument::Accept(XmlNode::IVisitor* visitor)
+			{
+				visitor->Visit(this);
+			}
+
+		}
+	}
+}
+namespace vl
+{
+	namespace reflection
+	{
+		namespace description
+		{
+#ifndef VCZH_DEBUG_NO_REFLECTION
+			using namespace vl::parsing::xml;
+
+#define PARSING_TOKEN_FIELD(NAME)\
+			CLASS_MEMBER_EXTERNALMETHOD_TEMPLATE(get_##NAME, NO_PARAMETER, vl::WString(ClassType::*)(), [](ClassType* node) { return node->NAME.value; }, L"*", L"*")\
+			CLASS_MEMBER_EXTERNALMETHOD_TEMPLATE(set_##NAME, { L"value" }, void(ClassType::*)(const vl::WString&), [](ClassType* node, const vl::WString& value) { node->NAME.value = value; }, L"*", L"*")\
+			CLASS_MEMBER_PROPERTY_REFERENCETEMPLATE(NAME, get_##NAME, set_##NAME, L"$This->$Name.value")\
+
+			IMPL_TYPE_INFO_RENAME(vl::parsing::xml::XmlNode, system::XmlNode)
+			IMPL_TYPE_INFO_RENAME(vl::parsing::xml::XmlText, system::XmlText)
+			IMPL_TYPE_INFO_RENAME(vl::parsing::xml::XmlCData, system::XmlCData)
+			IMPL_TYPE_INFO_RENAME(vl::parsing::xml::XmlAttribute, system::XmlAttribute)
+			IMPL_TYPE_INFO_RENAME(vl::parsing::xml::XmlComment, system::XmlComment)
+			IMPL_TYPE_INFO_RENAME(vl::parsing::xml::XmlElement, system::XmlElement)
+			IMPL_TYPE_INFO_RENAME(vl::parsing::xml::XmlInstruction, system::XmlInstruction)
+			IMPL_TYPE_INFO_RENAME(vl::parsing::xml::XmlDocument, system::XmlDocument)
+			IMPL_TYPE_INFO_RENAME(vl::parsing::xml::XmlNode::IVisitor, system::XmlNode::IVisitor)
+
+			BEGIN_CLASS_MEMBER(XmlNode)
+				CLASS_MEMBER_METHOD_OVERLOAD(Accept, {L"visitor"}, void(XmlNode::*)(XmlNode::IVisitor* visitor))
+			END_CLASS_MEMBER(XmlNode)
+
+			BEGIN_CLASS_MEMBER(XmlText)
+				CLASS_MEMBER_BASE(XmlNode)
+
+				CLASS_MEMBER_CONSTRUCTOR(vl::Ptr<XmlText>(), NO_PARAMETER)
+
+				PARSING_TOKEN_FIELD(content)
+			END_CLASS_MEMBER(XmlText)
+
+			BEGIN_CLASS_MEMBER(XmlCData)
+				CLASS_MEMBER_BASE(XmlNode)
+
+				CLASS_MEMBER_CONSTRUCTOR(vl::Ptr<XmlCData>(), NO_PARAMETER)
+
+				PARSING_TOKEN_FIELD(content)
+			END_CLASS_MEMBER(XmlCData)
+
+			BEGIN_CLASS_MEMBER(XmlAttribute)
+				CLASS_MEMBER_BASE(XmlNode)
+
+				CLASS_MEMBER_CONSTRUCTOR(vl::Ptr<XmlAttribute>(), NO_PARAMETER)
+
+				PARSING_TOKEN_FIELD(name)
+				PARSING_TOKEN_FIELD(value)
+			END_CLASS_MEMBER(XmlAttribute)
+
+			BEGIN_CLASS_MEMBER(XmlComment)
+				CLASS_MEMBER_BASE(XmlNode)
+
+				CLASS_MEMBER_CONSTRUCTOR(vl::Ptr<XmlComment>(), NO_PARAMETER)
+
+				PARSING_TOKEN_FIELD(content)
+			END_CLASS_MEMBER(XmlComment)
+
+			BEGIN_CLASS_MEMBER(XmlElement)
+				CLASS_MEMBER_BASE(XmlNode)
+
+				CLASS_MEMBER_CONSTRUCTOR(vl::Ptr<XmlElement>(), NO_PARAMETER)
+
+				PARSING_TOKEN_FIELD(name)
+				PARSING_TOKEN_FIELD(closingName)
+				CLASS_MEMBER_FIELD(attributes)
+				CLASS_MEMBER_FIELD(subNodes)
+			END_CLASS_MEMBER(XmlElement)
+
+			BEGIN_CLASS_MEMBER(XmlInstruction)
+				CLASS_MEMBER_BASE(XmlNode)
+
+				CLASS_MEMBER_CONSTRUCTOR(vl::Ptr<XmlInstruction>(), NO_PARAMETER)
+
+				PARSING_TOKEN_FIELD(name)
+				CLASS_MEMBER_FIELD(attributes)
+			END_CLASS_MEMBER(XmlInstruction)
+
+			BEGIN_CLASS_MEMBER(XmlDocument)
+				CLASS_MEMBER_BASE(XmlNode)
+
+				CLASS_MEMBER_CONSTRUCTOR(vl::Ptr<XmlDocument>(), NO_PARAMETER)
+
+				CLASS_MEMBER_FIELD(prologs)
+				CLASS_MEMBER_FIELD(rootElement)
+			END_CLASS_MEMBER(XmlDocument)
+
+			BEGIN_INTERFACE_MEMBER(XmlNode::IVisitor)
+				CLASS_MEMBER_METHOD_OVERLOAD(Visit, {L"node"}, void(XmlNode::IVisitor::*)(XmlText* node))
+				CLASS_MEMBER_METHOD_OVERLOAD(Visit, {L"node"}, void(XmlNode::IVisitor::*)(XmlCData* node))
+				CLASS_MEMBER_METHOD_OVERLOAD(Visit, {L"node"}, void(XmlNode::IVisitor::*)(XmlAttribute* node))
+				CLASS_MEMBER_METHOD_OVERLOAD(Visit, {L"node"}, void(XmlNode::IVisitor::*)(XmlComment* node))
+				CLASS_MEMBER_METHOD_OVERLOAD(Visit, {L"node"}, void(XmlNode::IVisitor::*)(XmlElement* node))
+				CLASS_MEMBER_METHOD_OVERLOAD(Visit, {L"node"}, void(XmlNode::IVisitor::*)(XmlInstruction* node))
+				CLASS_MEMBER_METHOD_OVERLOAD(Visit, {L"node"}, void(XmlNode::IVisitor::*)(XmlDocument* node))
+			END_INTERFACE_MEMBER(XmlNode)
+
+#undef PARSING_TOKEN_FIELD
+
+			class XmlTypeLoader : public vl::Object, public ITypeLoader
+			{
+			public:
+				void Load(ITypeManager* manager)
+				{
+					ADD_TYPE_INFO(vl::parsing::xml::XmlNode)
+					ADD_TYPE_INFO(vl::parsing::xml::XmlText)
+					ADD_TYPE_INFO(vl::parsing::xml::XmlCData)
+					ADD_TYPE_INFO(vl::parsing::xml::XmlAttribute)
+					ADD_TYPE_INFO(vl::parsing::xml::XmlComment)
+					ADD_TYPE_INFO(vl::parsing::xml::XmlElement)
+					ADD_TYPE_INFO(vl::parsing::xml::XmlInstruction)
+					ADD_TYPE_INFO(vl::parsing::xml::XmlDocument)
+					ADD_TYPE_INFO(vl::parsing::xml::XmlNode::IVisitor)
+				}
+
+				void Unload(ITypeManager* manager)
+				{
+				}
+			};
+#endif
+
+			bool XmlLoadTypes()
+			{
+#ifndef VCZH_DEBUG_NO_REFLECTION
+				ITypeManager* manager=GetGlobalTypeManager();
+				if(manager)
+				{
+					Ptr<ITypeLoader> loader=new XmlTypeLoader;
+					return manager->AddTypeLoader(loader);
+				}
+#endif
+				return false;
+			}
+		}
+	}
+}
+
+
+/***********************************************************************
+.\PARSING\XML\PARSINGXML_PARSER.CPP
+***********************************************************************/
+/***********************************************************************
+Vczh Library++ 3.0
+Developer: Zihan Chen(vczh)
+Parser::ParsingXml.parser.txt
+
+This file is generated by: Vczh Parser Generator
+***********************************************************************/
+
+
+namespace vl
+{
+	namespace parsing
+	{
+		namespace xml
+		{
+/***********************************************************************
+ParserText
+***********************************************************************/
+
+const wchar_t* const parserTextBuffer[] = {
+  L"" L"\r\n"
+, L"//////////////////////////////////////////////////////////////////" L"\r\n"
+, L"// AST" L"\r\n"
+, L"//////////////////////////////////////////////////////////////////" L"\r\n"
+, L"" L"\r\n"
+, L"class Node" L"\r\n"
+, L"{" L"\r\n"
+, L"}" L"\r\n"
+, L"" L"\r\n"
+, L"class Text : Node" L"\r\n"
+, L"{" L"\r\n"
+, L"\ttoken content;" L"\r\n"
+, L"}" L"\r\n"
+, L"" L"\r\n"
+, L"class CData : Node" L"\r\n"
+, L"{" L"\r\n"
+, L"\ttoken content (XmlUnescapeCData);" L"\r\n"
+, L"}" L"\r\n"
+, L"" L"\r\n"
+, L"class Attribute : Node" L"\r\n"
+, L"{" L"\r\n"
+, L"\ttoken name\t\t\t\t\t\t\t\t\t@Color(\"AttName\");" L"\r\n"
+, L"\ttoken value (XmlUnescapeAttributeValue)\t\t@Color(\"AttValue\");" L"\r\n"
+, L"}" L"\r\n"
+, L"" L"\r\n"
+, L"class Comment : Node" L"\r\n"
+, L"{" L"\r\n"
+, L"\ttoken content (XmlUnescapeComment);" L"\r\n"
+, L"}" L"\r\n"
+, L"" L"\r\n"
+, L"class Element : Node" L"\r\n"
+, L"{" L"\r\n"
+, L"\ttoken name\t\t\t\t\t\t\t\t\t@Color(\"TagName\");" L"\r\n"
+, L"\ttoken closingName\t\t\t\t\t\t\t@Color(\"TagName\");" L"\r\n"
+, L"\tAttribute[] attributes;" L"\r\n"
+, L"\tNode[] subNodes (XmlMergeTextFragment);" L"\r\n"
+, L"}" L"\r\n"
+, L"" L"\r\n"
+, L"class Instruction : Node" L"\r\n"
+, L"{" L"\r\n"
+, L"\ttoken name\t\t\t\t\t\t\t\t\t@Color(\"TagName\");" L"\r\n"
+, L"\tAttribute[] attributes;" L"\r\n"
+, L"}" L"\r\n"
+, L"" L"\r\n"
+, L"class Document : Node" L"\r\n"
+, L"{" L"\r\n"
+, L"\tNode[] prologs;" L"\r\n"
+, L"\tElement rootElement;" L"\r\n"
+, L"}" L"\r\n"
+, L"" L"\r\n"
+, L"//////////////////////////////////////////////////////////////////" L"\r\n"
+, L"// Lexer" L"\r\n"
+, L"//////////////////////////////////////////////////////////////////" L"\r\n"
+, L"" L"\r\n"
+, L"token INSTRUCTION_OPEN = \"/</?\"\t\t\t@Color(\"Boundary\");" L"\r\n"
+, L"token INSTRUCTION_CLOSE = \"/?/>\"\t\t@Color(\"Boundary\");" L"\r\n"
+, L"token COMPLEX_ELEMENT_OPEN = \"/<//\"\t\t@Color(\"Boundary\");" L"\r\n"
+, L"token SINGLE_ELEMENT_CLOSE = \"///>\"\t\t@Color(\"Boundary\");" L"\r\n"
+, L"token ELEMENT_OPEN = \"/<\"\t\t\t\t@Color(\"Boundary\");" L"\r\n"
+, L"token ELEMENT_CLOSE = \"/>\"\t\t\t\t@Color(\"Boundary\");" L"\r\n"
+, L"token EQUAL = \"/=\";" L"\r\n"
+, L"" L"\r\n"
+, L"token NAME = \"[a-zA-Z0-9:._/-]+\"\t\t\t\t\t\t\t\t@ContextColor();" L"\r\n"
+, L"token ATTVALUE = \"\"\"[^<>\"\"]*\"\"|\'[^<>\']*\'\"\t\t\t\t\t\t@ContextColor();" L"\r\n"
+, L"token COMMENT = \"/</!--([^/->]|-[^/->]|--[^>])*--/>\"\t\t\t@Color(\"Comment\");" L"\r\n"
+, L"token CDATA = \"/</!/[CDATA/[([^/]]|/][^/]]|/]/][^>])*/]/]/>\";" L"\r\n"
+, L"token TEXT = \"([^<>=\"\"\' /r/n/ta-zA-Z0-9:._/-])+|\"\"|\'\";" L"\r\n"
+, L"" L"\r\n"
+, L"discardtoken SPACE = \"/s+\";" L"\r\n"
+, L"" L"\r\n"
+, L"//////////////////////////////////////////////////////////////////" L"\r\n"
+, L"// Rules" L"\r\n"
+, L"//////////////////////////////////////////////////////////////////" L"\r\n"
+, L"" L"\r\n"
+, L"rule Attribute XAttribute = NAME:name \"=\" ATTVALUE:value as Attribute;" L"\r\n"
+, L"rule Text XText = (NAME:content | EQUAL:content | ATTVALUE:content | TEXT:content) as Text;" L"\r\n"
+, L"rule CData XCData = CDATA:content as CData;" L"\r\n"
+, L"rule Comment XComment = COMMENT:content as Comment;" L"\r\n"
+, L"rule Element XElement = \"<\" NAME:name {XAttribute:attributes} (\"/>\" | \">\" {XSubNode:subNodes} \"</\" NAME:closingName \">\") as Element;" L"\r\n"
+, L"rule Node XSubNode = !XText | !XCData | !XComment | !XElement;" L"\r\n"
+, L"rule Instruction XInstruction = \"<?\" NAME:name {XAttribute:attributes} \"?>\" as Instruction;" L"\r\n"
+, L"rule Document XDocument = {XInstruction:prologs | XComment:prologs} XElement:rootElement as Document;" L"\r\n"
+};
+const vint lengthTextBuffer[] = {
+  2, 68, 8, 68, 2, 12, 3, 3, 2, 19, 3, 17, 3, 2, 20, 3, 36, 3, 2, 24, 3, 40, 63, 3, 2, 22, 3, 38, 3, 2, 22, 3
+, 40, 45, 26, 42, 3, 2, 26, 3, 40, 26, 3, 2, 23, 3, 18, 23, 3, 2, 68, 10, 68, 2, 55, 55, 58, 58, 50, 51, 21, 2, 58, 65
+, 75, 63, 56, 2, 29, 2, 68, 10, 68, 2, 72, 93, 45, 53, 134, 64, 93, 103
+};
+const vint lengthTextBufferTotal = 2487;
+
+			vl::WString XmlGetParserTextBuffer()
+			{
+				vl::collections::Array<wchar_t> textBuffer(lengthTextBufferTotal + 1);
+				wchar_t* reading = &textBuffer[0];
+				for(vint i = 0; i < sizeof(parserTextBuffer) / sizeof(*parserTextBuffer); i++)
+				{
+					memcpy(reading, parserTextBuffer[i], lengthTextBuffer[i] * sizeof(wchar_t));
+					reading += lengthTextBuffer[i];
+				}
+				*reading = 0;
+				return &textBuffer[0];
+			}
+
+/***********************************************************************
+SerializedTable
+***********************************************************************/
+
+const vint parserBufferLength = 4440; // 18926 bytes before compressing
+const vint parserBufferBlock = 1024;
+const vint parserBufferRemain = 344;
+const vint parserBufferRows = 5;
+const char* const parserBuffer[] = {
+"\x00\x0E\x00\x02\x83\x80\x07\x7D\x00\x82\x03\xFF\x45\x08\x82\x83\x86\x81\x21\x6F\x6C\x2F\x32\x37\x84\x87\x02\x86\x00\x17\x82\x81\x24\x3C\x3A\x27\x30\x6D\x65\x06\x98\x8A\x80\x8E\x86\x00\x10\x92\x94\x98\x88\x04\x97\x80\x8E\x74\x56\x21\x2C\x35\x3A\x91\x8A\x84\x25\x8C\xA7\x89\x93\x8F\x98\x82\x8D\x08\xC0\x94\x21\x37\x37\x8D\x91\x91\x0C\xB9\x88\x9B\x91\x8D\x9C\x8C\xA0\x3F\x83\x83\xA5\xA0\x96\x98\x93\x93\x04\xCC\xAA\x9E\x93\x80\xA9\xAE\xA9\x44\xC6\x96\xA9\xA8\xAB\x82\xAC\xA7\x0C\xAD\xA9\xA3\x82\x27\x35\x3A\x37\x64\x61\x32\x39\x38\xA0\x9D\xB3\x86\x03\xBC\xAB\x8B\xBC\xB8\x01\xB7\xB7\x71\xF3\xB5\xA4\x8A\xA1\xAD\xBD\xA6\x7B\x88\xAA\xAA\xCC\xB6\xB4\xB8\xB9\x74\xDC\x82\x85\xC6\xB7\xC3\xAC\x97\x7D\xFF\x8F\xC2\xC2\xCD\x83\xBA\x00\x67\x89\xC4\x8B\xC3\xD5\xC4\xC0\xC8\x83\x89\x9F\xC1\xDD\xCC\xD3\x81\xC5\x9A\x81\xD1\xC4\x9C\x00\x8D\xDB\x87\x6F\x6E\x34\x25\x38\x3C\x3A\xBC\x8C\x05\x9D\xFF\x77\xD8\x84\xE0\x88\xDD\xBC\xBE\xC8\xC0\xE9\xD3\xCB\xD4\xCB\x68\xC1\x8F\xA7\xCD\x31\x92\xDC\xD7\x02\x89\x18\x9A\xEB\x8D\x8E\x39\x34\x62\x75\x3B\xDF\x74\xF5\xF0\xF3\xE7\x0F\xC4\x21\x34\x31\x36\xF2\xF2\xAF\x02\xC0\x90\x95\xE5\x32\xDE\xF7\xF2\xD8\x80\x0B\xC4\x2F\x33\x31\x3A\xEB\x74\x37\x74\x78\x7C\x19\x43\x45\x10\x1B\x65\x00\x82\x83\x3F\x0B\x18\x4D\x82\x40\x49\x2E\x13\x1C\x1D\x72\x35\x13\x18\x1D\x69\x39\x6B\x80\x01\x18\x5C\x82\x42\x13\x6F\x24\x12\x4A\x80\x1E\x88\x45\x88\x15\xC9\x4B\x8D\x03\x76\x2C\x9D\x74\x84\x78\xE2\x65\x15\x88\x41\x25\xAE\x15\x54\x70\xDC\x48\x49\x8C\x4C\xDF\x61\x7B\x6C\x7A\x00\x36\x13\x4D\x4D\x9D\x40\x93\x12\x7A\xEC\x44\x80\x53\x18\xB9\x7B\x66\x7E\x80\x4A\x94\x70\x81\x94\x02\x4C\x98\x73\x93\xF7\x79\x7B\x7D\x7F\xFF\x75\x74\x1C\x95\x00\x30\x12\x1D\x53\x67\x33\x1B\x82\x96\x03\x7C\x7E\x7C\x80\x0F\x88\x4D\x9B\x98\x6F\x34\x17\x81\x82\x5E\x8B\x80\x9B\x9C\x00\x8A\x08\x46\x9E\x02\x6B\x7F\x8A\x8F\x65\x26\x90\x97\x74\x02\x78\x9E\x95\x9B\x04\x6D\x93\x1A\x44\x73\x29\x1E\x18\x55\x21\x43\x04\xA2\x74\x85\x88\x80\x83\x8C\x03\x75\x85\x56\x00\x93\x91\x55\xA4\x9D\xD7\x58\x60\x03\x1C\x75\x22\x10\x8A\x88\x82\xB7\x78\xA3\x40\x6D\x91\x83\x85\x85\x17\x99\x8E\x18\x9F\x08\x74\xAE\x9D\x8F\x31\xA9\xAE\x7B\xAA\x02\x6D\xA2\x84\x85\x16\x98\x89\x6C\xA6\x02\x5A\xA1\x48\xB1\x00\x08\xB7\x89\x72\x60\x96\x9E\x91\x80\x02\x90\x08\x45\x0C\x18\x52\xB0\x73\xB5\x38\x4B\x82\x80\xB6\x49\x5A\xB7\x7C\xB7\xD9\x9E\xB6\x78\xB8\x84\x62\xB6\x7A\xB5\x08\x68\xB9\x12\x13\x53\x14\x12\x15\x15\x43\x14\x19\x13\x13\x4E\x1F\x1F\x10\x14\x45\x0E\x1A\xB3\x40\x2F\x3C\x0F\x0B\x0F\xC0\x5F\x61\x04\x46\x03\xD0\x8C\xBA\xBB\xF0\xB2\xB4\xBF\x17\x43\x0C\x1F\x13\x14\x45\x3B\xB2\x43\xBF\x2F\x3E\x0D\x66\x01\x18\x54\x09\xC5\x5E\x4F\x0D\x10\x14\x13\x45\x18\x1F\x15\x11\x20\xCD\x19\xBC\x15\xF6\xB8\xBA\xBD\x87\xFC\xBE\xBF\x08\xA7\x16\x5B\xCC\x42\xC6\x02\x53\x1B\xBB\x11\x20\xE3\xC5\xCB\xC9\x0C\xCE\xC0\xC6\xC4\x00\x2F\x02\xD2\x0F\x92\xBD\x54\x40\x71\x47\xC6\x8B\xCE\x13\x28\xF7\xB9\xBC\xCC\x08\x50\xDD\xBC\xB2\x39\x84\x4B\x88\x43\x57\xC0\x04\xC9\x11\x26\xCC\xDD\xCF\xC3\x45\x10\xD4\x42\xD4\x3E\x1F\x64\xAE\x61\x3A\x46\x81\x15\x15\x41\x0C\x12\xDB\x40\x52\xFD\x08\xC5\xB7\xF7\x40\xDE\x11\x10\x26\xC5\xC8\x42\xDE\x5B\x21\x1D\x0A\x1E\x41\x2D\x0A\x14\x0C\x2D\x39\x0A\x0E\x0B\x5F\x2F\x0D\x09\x17\x2B\x04\x8C\xAE\x7E\xA2\x81\x14\x14\x15\x56\x2D\xD5\x15\x11\x13\x18\x49\xE6\x40\x22\x1B\x1E\x14\x0F\x3E\x22\x0D\x16\x0A\x22\x3C\x17\x0A\xE7\xA0\xE7\x03\xEB\x09\xF9\x48\xDF\x55\xCC\x0F\x5D\xCD\xD4\x15\x22\x18\x45\xEF\xC4\xFE\xA1\x0D\x09\x0B\x28\x1E\xEA\xE2\x0F\x5D\x3C\x1D\x0A\xEF\x2D\x00\xF2\xF3\xF0\x5E\x00\xF9\x0A\x0A\xBB\xD5\xC5\xD7\x40\x59\xE8\xDB\x51\x5E\x44\x12\xE1\x10\x0B\x18\x58\xF8\xEF\x0B\x21\x2F\x0B\x17\x91\xD6\xDE\xFD\xEE\x17\x2F\x1D\x11\xF1\xF9\xBE\xE6\xFC\x1D\xF9\xE8\xC9\xFD\x17\xF2\xEC\xDD\x15\xC7\xD9\x09\x64\x8C\xCA\x40\x54\x21\xC4\x14\x09\x18\x7C\xF2\x43\xF8\xA0\x7D\x06\x08\x27\x00\x05\x17\x32\x0F\x05\x6E\x0F\x04\x7B\x7F\x61\x71\xC1\x45\x77\x70\x89\x6B\x71\x0A\x2B\x0C\x0F\xD2\x67\x07\x71\x0B\x45\x4A\x49\x03\x23\x0A\x28\x01\x0B\x08\x45\x05\x68\x42\x22\x8F\x05\x39\x2B\x06\x75\x93\x22\x40\xB5\x0C\x24\x7E\x81\x34\x50\x0B\x3C\x50\x47\x6E\x34\x68\x20\x1A\xB0\x86\x3B\x32\x85\x0E\x0B\x52\x0F\x0D\x38\x53\x0C\x3D\x72\x14\x0F\x03\x18\x23\x88",
+"\x81\x00\x08\x04\x24\x1C\x07\x0D\xFF\x41\x46\x1F\x2D\x80\x00\x2F\x91\x84\xA0\x68\x54\x20\x74\x4B\x88\x57\xBB\x2E\x07\x0F\xF2\x24\x0F\x80\x0C\x26\x8B\x00\x07\x8A\x12\xD2\x8D\x89\x27\x91\x88\x87\x80\x48\x84\x00\x44\x37\x8B\x1C\xAE\x01\x06\x3C\x18\x21\x1C\x82\x23\x8C\x34\x8D\x8A\x07\x20\x17\x6E\xC9\x20\x08\x8E\x1B\x61\x27\x88\x22\x02\x80\x08\x12\x74\x72\xCB\x45\x0C\x8F\x20\x02\x48\x4D\x65\x00\x05\x30\x33\x0B\x90\x76\x9B\x36\x19\x83\x2D\x8D\x34\xB6\x34\x92\x64\x99\x8A\x0C\x73\x88\x20\x4E\xB5\x8C\x89\xBB\x3E\x04\x1E\xFA\x87\x91\x3E\x95\x28\x04\x81\x82\x07\x11\x84\x95\x72\x26\x17\x70\x91\x8A\x95\x25\x23\x8F\x99\x93\x32\x13\x92\x20\x95\x91\x46\x1A\xEC\x85\x96\x17\x33\x04\x93\x04\x3E\x91\x2E\xA1\x93\x94\xBC\x65\x90\x04\x7E\x8C\x91\x2A\x83\x93\x73\x56\xAF\x90\x8F\xB1\x8C\x92\x23\x90\x90\x95\x32\x00\x0F\x96\x00\x03\x99\x19\x12\x08\x22\x6E\xB8\x95\x97\x3C\x91\x4D\x11\x70\x25\x88\x84\x25\x99\x89\xDA\x9E\x04\x08\x40\x08\x4C\x5C\x86\x52\x37\xD8\x98\x0B\x3B\xF4\x0E\x04\x19\x0E\x02\x32\xF7\x94\x8E\x3C\x96\x5E\x4A\x51\xA8\x94\x07\x22\x19\x8E\x31\x88\x99\x99\x23\xBB\x08\x04\xDA\x88\x93\xAD\x39\x8F\x91\x3E\x20\x00\x05\xA8\x95\x61\x40\xFC\x08\x95\xD0\x60\x07\xA0\x58\x13\x09\xA9\x27\x5C\x90\x3C\xA4\x56\x54\x21\x41\x50\x08\x0E\xA2\x04\x7F\x41\xA4\x94\x88\x8B\x53\x1B\x0D\x5F\x50\xB1\x15\xA1\xA0\x29\x13\x94\x08\x73\x9D\x00\x05\x0A\x8B\x9E\xFE\x85\xA7\x49\x83\xA6\x95\x90\x2B\x98\xA3\xB5\x8A\xA1\x24\xA2\xAE\xA0\x88\xA2\x02\xA2\x20\x14\xA2\x08\x16\xA8\xA2\x8D\xA0\xA2\x44\x88\x9F\xA0\x47\x8D\xAF\x9F\x17\x3B\xA3\x8F\x78\x8A\xA4\x4B\x90\x5A\x98\x8B\xB1\xA3\x9A\xF3\x9B\x94\x25\xAE\x50\x59\x58\x79\x30\x8C\x04\x20\x8C\x16\x64\xA0\x56\x61\x6E\x0D\x9E\xA4\x18\x21\x5C\xFA\x9C\xAD\x60\x72\x51\xA7\x3C\x1F\x07\x55\xC7\x95\xA1\x8B\x88\xA1\xA8\x78\x8B\xA0\xA0\x54\xA2\x05\x1F\x16\xA3\x9A\x75\xA6\xAE\x1B\x35\xAA\x89\xC4\xAE\xA8\xAF\x7A\xA2\xA0\x56\xC8\x97\x94\x20\x00\xAB\xA8\x42\xB5\x98\x61\x86\xB1\xA0\xC4\xBF\x55\xAD\xB2\x4D\x9D\x36\xF3\x91\x9F\x79\xAE\x04\x06\xF9\x88\x21\x6A\xB7\xAC\x9E\xDD\x38\xAB\xAF\x04\xA7\x97\x65\xD5\x99\xB2\x2C\x84\xAF\xA1\x11\xB6\xA2\x52\xA1\x76\xA0\x84\x8E\xAC\xA3\x51\xBB\xA1\x48\x84\xB6\xA4\xC9\x87\x9A\xAB\x8E\x5C\xAB\x4B\xA0\x0F\xAB\x47\xB4\xA6\xA6\xFB\x80\x54\x1D\x2F\xB6\xB9\xD8\xBE\xA3\xB6\xB6\xB5\xB4\x43\xA3\xA8\xB7\xA3\xBA\xB3\xB9\x96\xBE\xB6\x70\xD0\xAE\xA3\xF1\xB7\xB5\xA4\x56\xB5\xB9\x56\x8C\x59\xB8\x97\x8B\xA8\xA6\x32\xB3\x9E\x68\xD1\xB9\x4F\x3D\x54\x96\xB4\x33\x06\x10\x46\x7A\xBA\x9E\x9C\xB8\x8A\xA7\xEA\xB4\xB3\x75\xFF\xA8\xB3\xC0\x83\xAC\xAA\x46\xA8\xAB\x6E\x81\xAD\xA8\xF3\x81\xBF\xA9\xE7\xA5\xB8\x4A\xEB\xBB\xA5\xF6\xA7\x97\xBD\xCC\xB1\xBD\x6B\xF4\x00\x08\xB1\xB8\x96\xB1\xB2\x48\xAF\x40\x6A\xA0\xC5\xDC\x3E\x91\x0A\x18\x28\xC4\x5D\x9F\xB6\xAF\xDC\x10\xB0\xB6\x3D\xAC\x90\x76\xB9\x8A\xBB\xC1\x9C\xBD\xB0\x87\xAF\x91\x89\xEE\x0C\x9C\x51\x74\xBE\x4B\xA5\xBB\xC2\x0B\x36\x0C\xBE\x84\x05\xCC\xB5\xD2\xB4\xBB\x84\x82\xC2\xC6\x02\xF4\xB6\xC0\x9A\xBC\xB9\x82\xDF\xB8\xC3\x06\xD0\xC7\xC1\x53\xB7\xC6\x49\xC7\x8B\xC8\xE4\xAD\xA7\xC2\x5E\xBA\xC2\x74\xC0\x48\x0A\x14\x7D\x30\x4C\x65\xC9\x3B\x1B\xD8\x08\x22\x36\xFA\x9E\xCC\xD3\xA5\x9B\x64\xCE\x5E\x4B\xA4\xB3\xA3\x6D\x6D\x69\xA5\x93\x75\xC4\xA2\x56\x86\x92\xCF\x57\x54\x0E\x9D\xF9\x75\xCC\x40\xCF\x5A\xA6\x70\xC0\x0B\xDC\x08\x2B\xD0\x2C\x07\x4B\x3D\x61\x13\xBF\xA3\xEC\x3F\x8D\x11\x18\x26\xD2\xFA\x93\xD1\x18\x7E\x90\x7C\x2A\x01\x0E\xD0\x75\xD3\x9A\xA6\xBD\xCD\x2E\x47\xEF\x0C\x3E\xF0\x96\xBC\x2E\xF3\x30\x41\x37\xA9\x00\x23\xAF\xD9\xD3\xA9\x80\x4C\xD2\xD9\x67\x60\xD4\xBA\x32\xA4\xAB\xDE\x44\xD4\xC6\x2E\x9B\xC3\x41\xD2\xBB\x1B\xC5\xC4\x21\x23\xFF\xC6\xB5\xFF\xA0\xA0\x97\xBC\xAC\xC8\xBF\x89\xA0\xCA\xB6\xA8\xC1\x6E\x93\xAB\xB8\x2B\xC0\xBD\xBC\x10\xC4\xB9\x7A\xDD\xCC\xBD\x2F\xFE\xA0\xC3\xCD\xB3\xA7\x86\xF3\xB3\x9E\x2A\x83\x26\x8A\xA6\xA1\x9E\x9C\x70\x21\x7A\xE8\x43\x20\x9D\x38\xAB\x9F\x7C\xBF\xB1\xA5\x78\xB4\xDA\x44\x6F\x95\x04\x46\x7A\xDA\x9F\x7B\xE5\x0E\x9F\x21\x09\xCD\x6F\x76\xC1\xE0\x4D\xC4\xE6\xD4\xA8\xC2\xD0\x45\x81\xE3\x9E\x20\x0F\x79\x3B\x94\x8A\x4D\x97\x3A\x3F\x71\x36\x58\x0A\xE2\xAD\xD1\x04\x18\x18\x2B\xE2\x7D\x98\xE5\x9F\x78\x98\xA3\x8E\x88\x92\x4C\x32\x4F\x94\xA2\x08\xE0\x40\xC9\xE3\x42\x23\x32",
+"\x5C\xBF\xD8\x82\xD8\x8C\x9C\x72\x4B\xC2\x99\x9F\xE2\x37\x1D\xD7\x93\x87\xAC\xCA\xB0\x1A\x84\x26\x86\x3B\xDB\x85\x0F\xEB\xD4\x0C\xBD\x44\x22\x6F\xE8\x9B\xC6\x3A\x8E\xED\x45\x6C\xB7\xE4\x0E\x15\xF1\xE0\x97\x2D\xD2\x07\x8E\xC8\x26\xEA\x4A\x8F\xEA\x3F\xE1\xBB\xAC\x9E\xEE\xAB\xE5\x26\xF6\xCD\xCA\xF5\xC8\x8F\x92\xED\xE4\xAA\x30\xE8\x93\xCC\xF3\x96\xE7\xA9\xDE\x4C\xDC\xC0\xCA\xD7\x68\xC2\xC7\x06\x62\xC3\x26\xD8\xFE\xBF\x9C\x8C\xCD\xD3\xC6\x40\x75\xC1\x57\x52\xD3\xDA\x9D\xD5\xC2\xBD\x2B\xD8\xD9\xCB\x24\xB2\xC0\xB3\xDE\xCC\xAA\x40\xA1\xC8\xAC\x1B\xC4\xCC\x9C\xED\xD2\x21\xAC\x42\xE4\x9E\xEA\xC3\x9C\x19\x58\x98\x9C\x38\xCB\xEB\xD1\x04\x2D\xD2\xA6\xA2\xC2\x20\xB5\x9A\xD2\xE8\xE2\x90\x2D\xD4\x82\x28\x9C\x4D\xCB\xEA\xD2\xB3\xDE\x4A\xB9\x82\x26\x8B\x5D\xFA\x30\xF5\x44\xF4\xF0\x00\x59\x6D\xF5\xD8\xEE\xB2\xDE\x3E\xDE\xDF\xEC\x80\x06\x8A\x7F\xF8\xF2\xF3\xBA\xFC\xF6\x12\xFE\xDB\xE9\x87\xC0\x01\x47\x17\xEE\xEE\x6E\x46\xE3\x20\xBD\x51\xFB\x4D\x5E\x47\xF8\x5C\x24\xF0\x21\x77\xD9\xEA\xFA\xD3\xAB\x9E\x87\xD9\x9B\xC6\xEE\xE4\xC6\xEB\xB2\x4F\x8E\x8A\x88\x2B\xFD\xC6\xA8\xFE\xC5\xC9\xDA\xAF\xB2\x93\xB9\x98\x67\xC0\xB5\x91\x07\xD7\xC4\x67\xB2\xAB\xC6\xC9\xC9\x3D\x9C\x04\x15\x4E\x97\x78\x7B\x5B\x41\x44\xD8\x47\x44\x9D\x79\x1C\x65\x3B\x41\xB8\x40\x67\xAB\x79\x4D\x70\x6A\x45\x40\x44\x07\xCE\x79\x23\x62\x47\x79\x3E\x00\x7A\x03\x12\x7A\x48\x21\x06\xC3\x75\x7B\x1D\x84\x80\x13\x8F\x80\x08\x8A\x44\xAE\x7A\x81\x02\x1C\x81\x90\x63\x7E\x8E\x61\x82\x05\x84\x07\x07\x80\x02\x26\x8D\x81\x3E\x00\x7B\x09\x7E\x4D\x08\x18\x83\x63\x77\x7B\xEA\x6F\x82\xC9\x73\x10\x25\x8B\x83\xD3\x56\x83\x00\x26\x7E\x94\x46\x7B\xF4\x4F\x82\xE3\x77\x81\x48\x85\x83\x3E\x63\x4F\x38\x84\x10\x3A\x89\x6E\x43\x7E\x83\x18\x19\x35\x41\x88\x53\x70\x72\x5D\x46\x8F\x6B\xC2\x6A\x84\x3A\x71\x46\x32\x80\x73\x4E\x85\x6A\xFE\x61\x85\x03\x1A\x83\xC6\x7D\x83\x13\x8F\x83\x46\x48\x44\xCB\x76\x5E\x65\x8E\x6B\xD9\x4E\x6F\x5D\x85\x87\xE6\x52\x81\x5C\x4B\x84\x63\x8C\x7C\x2C\x8B\x63\x16\x08\x11\x81\x8B\x73\xAF\x2D\x62\x6F\x5C\x86\x5C\x44\x7D\x02\x1A\x37\x41\x8A\x74\x7F\x8F\x7E\x6E\x08\x86\x02\x1A\x83\x41\x7F\x82\x1F\x80\x84\x63\x8A\x74\x15\x82\x75\xD8\x7A\x1B\x9B\x38\x10\x9F\x87\x7D\x13\x78\x79\x55\x83\x81\x77\x81\x84\x5A\x7B\x89\xB8\x4F\x74\x00\x83\x10\x02\x8F\x74\x7A\x81\x44\x6E\x82\x86\xDF\x7D\x89\xD3\x51\x4F\xB5\x4C\x82\xBD\x44\x03\xC0\x43\x10\xC2\x45\x4B\xFE\x4B\x64\xF5\x7B\x4C\x7E\x6E\x4A\xC7\x41\x4D\x32\x55\x4B\x40\x0E\x7F\x67\x63\x29\x03\x82\x03\x6E\x68\x10\xD1\x8A\x44\x9E\x72\x67\xC7\x5B\x67\xB9\x64\x51\x45\x08\x67\x4C\x08\x6B\x0A\x7C\x4C\x85\x46\x8C\xDE\x83\x68\xFA\x33\x8E\xD3\x49\x68\x28\x80\x00\x2A\x8C\x1E\x92\x61\x82\x32\x08\x69\x08\x10\x8F\x33\x80\x69\x9C\x65\x3D\x9E\x66\x8E\x8F\x43\x6A\x44\x80\x64\x72\x72\x84\xF5\x41\x6B\x08\x10\x90\x26\x8E\x7B\x71\x60\x02\x43\x06\x6B\x4C\x38\x8F\x06\x94\x90\xBD\x65\x1A\x5E\x85\x5F\x2C\x47\x5F\x42\x65\x03\x76\x72\x10\x78\x7B\x61\x4A\x6C\x6C\xF5\x7D\x77\x31\x2F\x77\xBB\x12\x6D\xDE\x54\x6D\x84\x79\x51\x0E\x67\x78\xC3\x5A\x65\xDB\x6B\x78\xDD\x6A\x5C\xE0\x62\x66\x00\x29\x73\x0C\x1C\x46\xE5\x78\x11\xE7\x75\x88\x8A\x57\x5A\xEB\x74\x10\xED\x7D\x75\x36\x9F\x58\xF1\x7B\x77\x1B\x9E\x64\xD9\x50\x6D\xDB\x54\x52\xFB\x7E\x59\x3D\x92\x2B\x4C\x7C\x10\xD0\x7F\x74\x0F\x82\x8A\xAD\x63\x03\x56\x74\x10\x58\x70\x95\x20\x7E\x6C\x23\x75\x76\x2C\x7F\x06\x2E\x78\x72\x48\x80\x76\x67\x7F\x72\x6C\x72\x73\x43\x7C\x76\xD3\x4F\x74\x0D\x93\x10\xB8\x83\x54\xAA\x80\x00\xB5\x44\x2E\xF5\x37\x1F\xCC\x84\x07\x40\x30\x67\xC0\x1C\x01\x24\x12\x20\xE9\x8B\x8E\x61\x06\x24\x1D\x80\x1C\x1E\x09\x97\x59\x2E\x63\x48\x80\x26\x48\x80\x1C\x20\x02\x98\xEE\x1B\x85\x53\x23\x29\xF3\x40\x1C\xB7\x31\x2E\x8B\x91\x7C\xE6\x56\x37\x21\x50\x1C\xFE\x32\x99\xE6\x1F\x88\x49\x99\x1B\x0F\x8B\x63\xC0\x16\x02\x8A\x96\x1E\x6D\x96\x95\xA1\x2D\x17\x4F\x70\x1C\x28\x03\x9A\xE5\x10\x01\x22\x49\x10\xC2\x10\x1C\x9D\x10\x97\xB4\x95\x9B\x38\x12\x1C\x8F\x3F\x36\xB6\x90\x00\x9D\x13\x9B\xF7\x36\x22\x03\x19\x4C\xC0\x1B\x96\xD5\x40\x97\xCD\x15\x10\x4F\x4F\x9A\xBB\x9B\x9C\x24\x12\x1C\x6A\x48\x2C\xB5\x9D\x9B\xB4\x90\x24\xD1\x43\x9C\xFD\x8F\x96\xB0\x9D\x9C\x0C\x8C\x9C\xBC\x9C\x9D\x10\x7C\x94\x2F\x13\x54\xD6\x91\x91\xDF\x43\x54\xFF\x0A\x9B\x05\x18\x9E",
+"\x04\x22\x9B\x9D\x23\x10\xCA\x9B\x9B\x6D\x98\x9D\xE4\x95\x2B\x98\x43\x54\xE9\x8B\x9E\xB4\x94\x9C\xB6\x58\x9E\xE3\x94\x9F\x7D\x27\x60\xC0\x1C\x99\x65\x5E\x56\xE7\x98\x11\xE9\x8C\x9E\x0C\x19\x8E\xEF\x96\x9B\xF1\x92\x9E\x72\x74\x10\x67\x45\x4D\x7B\x9E\x9D\x50\x47\x9D\x43\x5C\x9F\x0F\xAA\x96\x03\x12\x58\xB9\x20\x1C\x8C\x9E\x25\x14\xA4\x2E\xC7\x9F\x0F\x04\x2E\x7C\x21\xA1\x1C\x24\x1E\x7C\xF9\x17\xA2\x23\xA9\x9B\x14\xA8\x9E\x9F\x17\xA0\xB4\x9F\xA1\xBA\x1E\x9B\x0C\x10\x34\xC2\x99\xA1\x2E\x45\x9F\xC5\x9C\x1C\xC2\x16\x36\x27\xAC\x2D\x2D\xA8\x11\x18\xA0\x97\x30\xAD\x9E\xBB\x92\xA0\xA0\x59\x1B\x36\xA0\x9C\x37\xA1\x9C\x37\x2A\xA3\x15\xA5\x9E\x3D\xAE\xA3\x24\x19\x8E\x8F\x3C\xA2\xC2\x19\x1F\xAD\x8B\x9B\x47\xA6\x34\xCB\x94\xA3\x74\x0F\x19\x25\x04\xA1\xF3\x66\x5E\x28\xA9\x14\x4F\x4A\x46\xB5\x9B\xA0\x9F\x1B\xA2\x33\xAF\x84\x91\x78\x11\x65\xAE\x9D\x67\xA0\x61\x4D\xAE\x29\x94\x20\x00\x74\x6A\x1B\x01\x3B\x9D\x97\x73\xA4\x31\x94\xA1\x6E\xA2\x2A\xCC\x92\xA6\x64\xA6\xA6\x94\x98\xA7\xB4\x9D\x2C\xD8\x84\x07\x7F\xA9\x36\x0D\x89\x22\xCE\x91\x86\xCC\x95\xA8\x60\xAB\x9B\x88\xA4\xA7\x8A\xA6\x86\xE6\x59\xA7\xAF\x3B\xA7\x7D\xA0\xA9\xDB\x92\x3D\x81\xA2\x1C\xBA\x7C\x7D\x6D\xA5\xAA\xAF\x1D\xA9\x74\x80\x73\x89\xA6\xA7\x8B\xAC\x51\xA0\xA1\x1F\x93\x23\xAA\x1E\xA4\x98\x04\x93\xA2\xDC\x7A\x7B\xAB\xA2\xA9\x74\x87\xA8\x72\xA3\x66\x9C\xA2\xAB\x9E\xAC\xA8\x70\x9E\xA8\x81\x60\x1C\x13\xAB\x6A\x1D\x83\xA2\x5D\xAB\x46\x84\xAC\xAA\x02\x10\xA7\x70\x9B\xA9\x0C\x15\xA7\xDC\x97\xA7\xB4\xAD\xA8\xB7\xAF\xA8\x91\xA3\x3D\x93\xAD\x1B\x69\xA7\x9B\xD5\x24\xA1\xB5\xA7\x2D\x77\x2B\x61\xB9\xA5\x6A\xF3\x4F\x0F\x0B\xA5\xA0\x0C\x12\x89\xD7\x2D\x19\x00\x94\x10\x0B\xA5\x9B\xEB\xA2\x5D\xED\xAF\xAA\xF3\x49\x8E\xF7\xA1\xA6\xC3\xA0\x20\xE9\xAF\x80\x6B\x7C\xAE\x4D\x74\x10\x4D\x90\x7E\xF2\xAB\x37\xB4\x9D\x19\xDA\xA8\xAF\x14\xAB\xAF\x00\x2D\xAF\x0E\x93\x77\xD2\x59\x8E\x11\xB2\xB0\xEE\xAB\x61\xF9\xAE\xAA\x17\xB4\x92\x10\x6D\xB0\x52\x8F\xB0\x32\x33\x42\x13\xBE\x98\x08\xB9\xA9\x90\x3F\x90\x5E\x29\x8E\x3E\x7C\xB1\xFE\xAB\x61\x05\xBE\x20\x03\x17\xB0\xFC\xA9\xB0\x03\x1B\xB0\xB6\x86\x9C\xC2\x1D\x19\x9F\x8C\x9C\xE9\xA0\x1C\x9F\x90\x89\x01\xA1\x86\x3C\x93\xA0\xB2\x24\xB2\x09\x18\x9E\x31\xB8\x2D\xF6\xA8\x11\x1F\xB0\x97\x45\xBD\x99\x6E\x07\xB4\x83\xA4\x88\x4A\xB9\x1B\x00\xB4\xA1\x4A\xA6\x88\x45\xAB\xA7\x7A\xA6\x76\x5C\x93\x07\x38\x2D\x74\xA6\x91\x20\x4E\xB6\xB2\x33\x32\xB5\x14\xA5\xB5\x5B\xB7\xB5\x96\xA3\x10\x32\x90\x89\x30\xBE\xB5\x48\xBB\x63\x61\xBA\xA7\x63\xBB\x95\x65\x27\xB6\xE0\x9B\x8A\xE0\x71\xA2\x82\xA8\x10\x15\x08\xAE\x18\x15\xB3\x0C\x1A\x28\x2B\x92\x16\x16\xBD\xAA\x2E\xBE\xA7\x84\x1F\xB3\x82\x88\xB8\xDE\x95\x97\xC9\x11\xAE\xA6\xA0\x67\x23\xA8\x9E\x8A\x85\xAF\xC5\xA8\xB2\x97\xBF\x9B\x76\x94\xAD\xA0\x14\x49\x70\x6A\xB1\x14\xA3\x97\x53\xBB\xAD\xB3\xA7\x99\x22\xA4\xB9\x0C\x17\x01\x96\xBC\x9D\x7E\x90\x69\xCC\xA6\xA0\x47\x8F\xAC\xC2\x1E\xB9\x6C\xB8\x10\x1B\xB2\x10\xAD\xB0\x2E\xB7\xBC\x1E\xB9\xB9\xA0\xBB\xB0\x69\xAA\xBE\x9D\xCD\xA9\x4D\x9A\x63\xBC\x32\xB1\xB2\xFE\x6E\xB3\xDA\x9C\x10\x18\x05\xBB\xCC\x96\x98\x04\x9F\xB8\xD5\xA7\x84\xBB\xA1\xAF\x6B\xB0\x97\x51\xBC\x10\xD0\xB8\x2D\xDA\xB9\x70\xDC\xBD\xB2\xCE\xB4\x90\x5D\xB6\xAC\xAF\xA8\x84\x7B\xB1\xAA\x7D\xB6\x72\x80\xBA\x23\x9C\x83\x8A\x4C\xBB\x88\xBF\xB4\x10\xC1\xB0\x00\xE5\xBA\xAE\x93\x27\x98\x86\xA0\xB9\xEB\xB9\x70\xCB\xBE\xBA\xA5\x68\x84\xFF\xB5\x9B\xDC\xA1\x52\xF9\xB0\x00\x4F\xB0\xBA\x6D\xB4\xBE\x29\xB0\x3B\x28\x1B\xBD\x03\xCD\xBD\xAB\x6C\xBE\x27\xB2\xAC\x09\xC4\x90\xF1\xB6\xAB\x16\xC4\xB6\x7F\xBA\xB3\xDF\x9E\x74\x83\xB4\xA1\x85\xB1\x7A\xD8\xB3\x10\xE9\xA8\xA3\x51\xAC\xB2\x8B\x10\x73\xDC\x93\xA2\x9D\x19\x01\x41\xA6\xAE\x49\x18\x9E\xD6\xA8\x10\xAD\x14\xA4\xBA\xBC\xB2\x0C\xCF\xBA\x22\x21\xC2\xEA\xB7\xB1\x52\x53\x5C\xE9\xB3\xC3\x8F\x91\xBB\xD5\xB8\x10\x1A\x0D\xC2\x9A\xA2\x2A\xA9\x96\xC2\xCF\x77\xBF\x15\xB9\xC3\x49\x12\x1C\xC8\x2B\x01\x52\xC7\xBA\x13\xCC\x9D\xA5\x95\xC5\xE5\xA4\x18\x5C\xAF\xC5\x9F\x11\xC1\xB5\x93\xC6\x29\xC3\x19\xA8\xA4\x93\x2F\xA6\xBA\x6A\xC4\x9B\x6C\xC6\x8B\xE9\xAA\xAC\xCF\x2B\xC4\xDE\xB8\xBE\xD8\x23\xA2\x6D\x9A\xC5\x80\xC1\xC8\x82\xCF\xC4\x84\x1F\x38\xF8\x92\xBE\x89\xB4\x9B\x30\xC1\x12\x58\xB5\x1C\x63\x56\xB4\xD9\x99\x14\xC0\x1D\x01\x83",
+"\xC4\xB8\xC2\x1B\xA6\x5F\xC7\xC7\xDF\xAB\xAC\xA6\xB7\x12\xA7\xA4\x12\x8F\x3C\xA6\xFB\xBE\xC2\xDE\xA6\xC1\xB8\xAD\xC9\xA8\xB4\xA9\xB4\x13\xB7\xBB\x92\x9D\xC9\xAB\xC9\x79\xC8\xCA\xE3\xA4\xAA\xD0\xAC\xCA\xB6\x9E\xCA\xE4\x28\xC7\x20\xA2\xCB\x10\x8A\xCA\x92\xC8\x11\x1F\x05\xC9\x39\xCC\xAB\x57\x89\xC9\xA5\xC2\xAA\xE0\xA1\xC4\x8C\x69\xBC\xC6\xB3\xA2\xC0\x11\x02\xC2\xCA\xA5\x24\x19\xAA\xC6\xCF\xCA\xA6\xC9\xCC\x32\xCB\xC7\x59\xCE\xCC\x97\x61\xCD\xCB\x93\xA2\x67\xCE\xCD\x65\xC9\x10\xC0\x1D\xBF\xE2\xCD\xC7\x5B\xA4\x44\x68\xC1\xBA\x1E\xCF\xAA\xD3\xB3\xA2\x98\xCE\x9D\x5F\xA0\xBC\x20\xB4\xC0\x22\xBD\xAD\xD6\xC8\xCC\x9C\xC0\xAC\x9B\xBE\xCB\x38\x11\xCA\x71\xCC\xCF\x03\x16\xCE\x71\xA7\xAC\xF8\xC9\xCB\xB0\xCB\xCB\x02\xD8\x17\xB3\xC3\xA2\xE3\x7C\x9C\xF3\xCC\xBF\xF5\xCA\xC1\x78\x88\xAC\x08\xD7\xCD\xFB\xC2\xAE\x1A\xDF\xC9\x49\x14\xCD\xF2\xC6\xBA\x04\xD7\xAD\x44\xC5\x06\x9A\xC8\xD1\xB1\xC9\xCD\x1B\xC9\x70\xC4\xC8\x35\x01\xDA\xD1\x12\xDE\xBE\xD2\xBF\xA9\xC7\xCA\xA7\xA7\xC8\xBC\x36\xDE\xBC\xBC\xB4\x12\xD1\xA2\xCA\x46\xA0\xD2\x13\xDA\xBE\xF7\xC1\x52\x25\xDA\xCF\x27\xDE\xD2\x95\x1D\xD0\xB1\x98\x11\x27\x07\xCE\xE0\x23\xA2\x5D\xCC\xD4\x91\xC8\x13\xC0\x11\xB0\x50\xDA\xC3\x38\x1F\xD4\xDE\x9A\x41\x0C\x14\xD5\x0C\xA8\xB6\x64\xC0\xCE\xEA\xC9\xD5\xA6\xBC\xD5\x6B\xCE\xD5\x6D\xC3\xCE\x93\x1E\xD1\xDC\x91\xD1\x03\x14\xD6\x74\xC6\xD6\x76\xC3\xD3\xA1\xA5\xD3\xC1\xA6\xCF\x02\xC5\xD5\x78\xD0\xC8",
+};
+
+			void XmlGetParserBuffer(vl::stream::MemoryStream& stream)
+			{
+				vl::stream::MemoryStream compressedStream;
+				for (vint i = 0; i < parserBufferRows; i++)
+				{
+					vint size = i == parserBufferRows - 1 ? parserBufferRemain : parserBufferBlock;
+					compressedStream.Write((void*)parserBuffer[i], size);
+				}
+				compressedStream.SeekFromBegin(0);
+				vl::stream::LzwDecoder decoder;
+				vl::stream::DecoderStream decoderStream(compressedStream, decoder);
+				vl::collections::Array<vl::vuint8_t> buffer(65536);
+				while (true)
+				{
+					vl::vint size = decoderStream.Read(&buffer[0], 65536);
+					if (size == 0) break;
+					stream.Write(&buffer[0], size);
+				}
+				stream.SeekFromBegin(0);
+			}
+/***********************************************************************
+Unescaping Function Foward Declarations
+***********************************************************************/
+
+			extern void XmlMergeTextFragment(vl::collections::List<vl::Ptr<XmlNode>>& value, const vl::collections::List<vl::regex::RegexToken>& tokens);
+			extern void XmlUnescapeAttributeValue(vl::parsing::ParsingToken& value, const vl::collections::List<vl::regex::RegexToken>& tokens);
+			extern void XmlUnescapeCData(vl::parsing::ParsingToken& value, const vl::collections::List<vl::regex::RegexToken>& tokens);
+			extern void XmlUnescapeComment(vl::parsing::ParsingToken& value, const vl::collections::List<vl::regex::RegexToken>& tokens);
+
+/***********************************************************************
+Parsing Tree Conversion Driver Implementation
+***********************************************************************/
+
+			class XmlTreeConverter : public vl::parsing::ParsingTreeConverter
+			{
+			public:
+				using vl::parsing::ParsingTreeConverter::SetMember;
+
+				void Fill(vl::Ptr<XmlNode> tree, vl::Ptr<vl::parsing::ParsingTreeObject> obj, const TokenList& tokens)
+				{
+				}
+
+				void Fill(vl::Ptr<XmlText> tree, vl::Ptr<vl::parsing::ParsingTreeObject> obj, const TokenList& tokens)
+				{
+					SetMember(tree->content, obj->GetMember(L"content"), tokens);
+				}
+
+				void Fill(vl::Ptr<XmlCData> tree, vl::Ptr<vl::parsing::ParsingTreeObject> obj, const TokenList& tokens)
+				{
+					if(SetMember(tree->content, obj->GetMember(L"content"), tokens))
+					{
+						XmlUnescapeCData(tree->content, tokens);
+					}
+				}
+
+				void Fill(vl::Ptr<XmlAttribute> tree, vl::Ptr<vl::parsing::ParsingTreeObject> obj, const TokenList& tokens)
+				{
+					SetMember(tree->name, obj->GetMember(L"name"), tokens);
+					if(SetMember(tree->value, obj->GetMember(L"value"), tokens))
+					{
+						XmlUnescapeAttributeValue(tree->value, tokens);
+					}
+				}
+
+				void Fill(vl::Ptr<XmlComment> tree, vl::Ptr<vl::parsing::ParsingTreeObject> obj, const TokenList& tokens)
+				{
+					if(SetMember(tree->content, obj->GetMember(L"content"), tokens))
+					{
+						XmlUnescapeComment(tree->content, tokens);
+					}
+				}
+
+				void Fill(vl::Ptr<XmlElement> tree, vl::Ptr<vl::parsing::ParsingTreeObject> obj, const TokenList& tokens)
+				{
+					SetMember(tree->name, obj->GetMember(L"name"), tokens);
+					SetMember(tree->closingName, obj->GetMember(L"closingName"), tokens);
+					SetMember(tree->attributes, obj->GetMember(L"attributes"), tokens);
+					if(SetMember(tree->subNodes, obj->GetMember(L"subNodes"), tokens))
+					{
+						XmlMergeTextFragment(tree->subNodes, tokens);
+					}
+				}
+
+				void Fill(vl::Ptr<XmlInstruction> tree, vl::Ptr<vl::parsing::ParsingTreeObject> obj, const TokenList& tokens)
+				{
+					SetMember(tree->name, obj->GetMember(L"name"), tokens);
+					SetMember(tree->attributes, obj->GetMember(L"attributes"), tokens);
+				}
+
+				void Fill(vl::Ptr<XmlDocument> tree, vl::Ptr<vl::parsing::ParsingTreeObject> obj, const TokenList& tokens)
+				{
+					SetMember(tree->prologs, obj->GetMember(L"prologs"), tokens);
+					SetMember(tree->rootElement, obj->GetMember(L"rootElement"), tokens);
+				}
+
+				vl::Ptr<vl::parsing::ParsingTreeCustomBase> ConvertClass(vl::Ptr<vl::parsing::ParsingTreeObject> obj, const TokenList& tokens)override
+				{
+					if(obj->GetType()==L"Text")
+					{
+						vl::Ptr<XmlText> tree = new XmlText;
+						vl::collections::CopyFrom(tree->creatorRules, obj->GetCreatorRules());
+						Fill(tree, obj, tokens);
+						Fill(tree.Cast<XmlNode>(), obj, tokens);
+						return tree;
+					}
+					else if(obj->GetType()==L"CData")
+					{
+						vl::Ptr<XmlCData> tree = new XmlCData;
+						vl::collections::CopyFrom(tree->creatorRules, obj->GetCreatorRules());
+						Fill(tree, obj, tokens);
+						Fill(tree.Cast<XmlNode>(), obj, tokens);
+						return tree;
+					}
+					else if(obj->GetType()==L"Attribute")
+					{
+						vl::Ptr<XmlAttribute> tree = new XmlAttribute;
+						vl::collections::CopyFrom(tree->creatorRules, obj->GetCreatorRules());
+						Fill(tree, obj, tokens);
+						Fill(tree.Cast<XmlNode>(), obj, tokens);
+						return tree;
+					}
+					else if(obj->GetType()==L"Comment")
+					{
+						vl::Ptr<XmlComment> tree = new XmlComment;
+						vl::collections::CopyFrom(tree->creatorRules, obj->GetCreatorRules());
+						Fill(tree, obj, tokens);
+						Fill(tree.Cast<XmlNode>(), obj, tokens);
+						return tree;
+					}
+					else if(obj->GetType()==L"Element")
+					{
+						vl::Ptr<XmlElement> tree = new XmlElement;
+						vl::collections::CopyFrom(tree->creatorRules, obj->GetCreatorRules());
+						Fill(tree, obj, tokens);
+						Fill(tree.Cast<XmlNode>(), obj, tokens);
+						return tree;
+					}
+					else if(obj->GetType()==L"Instruction")
+					{
+						vl::Ptr<XmlInstruction> tree = new XmlInstruction;
+						vl::collections::CopyFrom(tree->creatorRules, obj->GetCreatorRules());
+						Fill(tree, obj, tokens);
+						Fill(tree.Cast<XmlNode>(), obj, tokens);
+						return tree;
+					}
+					else if(obj->GetType()==L"Document")
+					{
+						vl::Ptr<XmlDocument> tree = new XmlDocument;
+						vl::collections::CopyFrom(tree->creatorRules, obj->GetCreatorRules());
+						Fill(tree, obj, tokens);
+						Fill(tree.Cast<XmlNode>(), obj, tokens);
+						return tree;
+					}
+					else 
+						return 0;
+				}
+			};
+
+			vl::Ptr<vl::parsing::ParsingTreeCustomBase> XmlConvertParsingTreeNode(vl::Ptr<vl::parsing::ParsingTreeNode> node, const vl::collections::List<vl::regex::RegexToken>& tokens)
+			{
+				XmlTreeConverter converter;
+				vl::Ptr<vl::parsing::ParsingTreeCustomBase> tree;
+				converter.SetMember(tree, node, tokens);
+				return tree;
+			}
+
+/***********************************************************************
+Parsing Tree Conversion Implementation
+***********************************************************************/
+
+			vl::Ptr<XmlText> XmlText::Convert(vl::Ptr<vl::parsing::ParsingTreeNode> node, const vl::collections::List<vl::regex::RegexToken>& tokens)
+			{
+				return XmlConvertParsingTreeNode(node, tokens).Cast<XmlText>();
+			}
+
+			vl::Ptr<XmlCData> XmlCData::Convert(vl::Ptr<vl::parsing::ParsingTreeNode> node, const vl::collections::List<vl::regex::RegexToken>& tokens)
+			{
+				return XmlConvertParsingTreeNode(node, tokens).Cast<XmlCData>();
+			}
+
+			vl::Ptr<XmlAttribute> XmlAttribute::Convert(vl::Ptr<vl::parsing::ParsingTreeNode> node, const vl::collections::List<vl::regex::RegexToken>& tokens)
+			{
+				return XmlConvertParsingTreeNode(node, tokens).Cast<XmlAttribute>();
+			}
+
+			vl::Ptr<XmlComment> XmlComment::Convert(vl::Ptr<vl::parsing::ParsingTreeNode> node, const vl::collections::List<vl::regex::RegexToken>& tokens)
+			{
+				return XmlConvertParsingTreeNode(node, tokens).Cast<XmlComment>();
+			}
+
+			vl::Ptr<XmlElement> XmlElement::Convert(vl::Ptr<vl::parsing::ParsingTreeNode> node, const vl::collections::List<vl::regex::RegexToken>& tokens)
+			{
+				return XmlConvertParsingTreeNode(node, tokens).Cast<XmlElement>();
+			}
+
+			vl::Ptr<XmlInstruction> XmlInstruction::Convert(vl::Ptr<vl::parsing::ParsingTreeNode> node, const vl::collections::List<vl::regex::RegexToken>& tokens)
+			{
+				return XmlConvertParsingTreeNode(node, tokens).Cast<XmlInstruction>();
+			}
+
+			vl::Ptr<XmlDocument> XmlDocument::Convert(vl::Ptr<vl::parsing::ParsingTreeNode> node, const vl::collections::List<vl::regex::RegexToken>& tokens)
+			{
+				return XmlConvertParsingTreeNode(node, tokens).Cast<XmlDocument>();
+			}
+
+/***********************************************************************
+Parser Function
+***********************************************************************/
+
+			vl::Ptr<vl::parsing::ParsingTreeNode> XmlParseDocumentAsParsingTreeNode(const vl::WString& input, vl::Ptr<vl::parsing::tabling::ParsingTable> table, vl::collections::List<vl::Ptr<vl::parsing::ParsingError>>& errors, vl::vint codeIndex)
+			{
+				vl::parsing::tabling::ParsingState state(input, table, codeIndex);
+				state.Reset(L"XDocument");
+				vl::Ptr<vl::parsing::tabling::ParsingGeneralParser> parser=vl::parsing::tabling::CreateStrictParser(table);
+				vl::Ptr<vl::parsing::ParsingTreeNode> node=parser->Parse(state, errors);
+				return node;
+			}
+
+			vl::Ptr<vl::parsing::ParsingTreeNode> XmlParseDocumentAsParsingTreeNode(const vl::WString& input, vl::Ptr<vl::parsing::tabling::ParsingTable> table, vl::vint codeIndex)
+			{
+				vl::collections::List<vl::Ptr<vl::parsing::ParsingError>> errors;
+				return XmlParseDocumentAsParsingTreeNode(input, table, errors, codeIndex);
+			}
+
+			vl::Ptr<XmlDocument> XmlParseDocument(const vl::WString& input, vl::Ptr<vl::parsing::tabling::ParsingTable> table, vl::collections::List<vl::Ptr<vl::parsing::ParsingError>>& errors, vl::vint codeIndex)
+			{
+				vl::parsing::tabling::ParsingState state(input, table, codeIndex);
+				state.Reset(L"XDocument");
+				vl::Ptr<vl::parsing::tabling::ParsingGeneralParser> parser=vl::parsing::tabling::CreateStrictParser(table);
+				vl::Ptr<vl::parsing::ParsingTreeNode> node=parser->Parse(state, errors);
+				if(node && errors.Count()==0)
+				{
+					return XmlConvertParsingTreeNode(node, state.GetTokens()).Cast<XmlDocument>();
+				}
+				return 0;
+			}
+
+			vl::Ptr<XmlDocument> XmlParseDocument(const vl::WString& input, vl::Ptr<vl::parsing::tabling::ParsingTable> table, vl::vint codeIndex)
+			{
+				vl::collections::List<vl::Ptr<vl::parsing::ParsingError>> errors;
+				return XmlParseDocument(input, table, errors, codeIndex);
+			}
+
+			vl::Ptr<vl::parsing::ParsingTreeNode> XmlParseElementAsParsingTreeNode(const vl::WString& input, vl::Ptr<vl::parsing::tabling::ParsingTable> table, vl::collections::List<vl::Ptr<vl::parsing::ParsingError>>& errors, vl::vint codeIndex)
+			{
+				vl::parsing::tabling::ParsingState state(input, table, codeIndex);
+				state.Reset(L"XElement");
+				vl::Ptr<vl::parsing::tabling::ParsingGeneralParser> parser=vl::parsing::tabling::CreateStrictParser(table);
+				vl::Ptr<vl::parsing::ParsingTreeNode> node=parser->Parse(state, errors);
+				return node;
+			}
+
+			vl::Ptr<vl::parsing::ParsingTreeNode> XmlParseElementAsParsingTreeNode(const vl::WString& input, vl::Ptr<vl::parsing::tabling::ParsingTable> table, vl::vint codeIndex)
+			{
+				vl::collections::List<vl::Ptr<vl::parsing::ParsingError>> errors;
+				return XmlParseElementAsParsingTreeNode(input, table, errors, codeIndex);
+			}
+
+			vl::Ptr<XmlElement> XmlParseElement(const vl::WString& input, vl::Ptr<vl::parsing::tabling::ParsingTable> table, vl::collections::List<vl::Ptr<vl::parsing::ParsingError>>& errors, vl::vint codeIndex)
+			{
+				vl::parsing::tabling::ParsingState state(input, table, codeIndex);
+				state.Reset(L"XElement");
+				vl::Ptr<vl::parsing::tabling::ParsingGeneralParser> parser=vl::parsing::tabling::CreateStrictParser(table);
+				vl::Ptr<vl::parsing::ParsingTreeNode> node=parser->Parse(state, errors);
+				if(node && errors.Count()==0)
+				{
+					return XmlConvertParsingTreeNode(node, state.GetTokens()).Cast<XmlElement>();
+				}
+				return 0;
+			}
+
+			vl::Ptr<XmlElement> XmlParseElement(const vl::WString& input, vl::Ptr<vl::parsing::tabling::ParsingTable> table, vl::vint codeIndex)
+			{
+				vl::collections::List<vl::Ptr<vl::parsing::ParsingError>> errors;
+				return XmlParseElement(input, table, errors, codeIndex);
+			}
+
+/***********************************************************************
+Table Generation
+***********************************************************************/
+
+			vl::Ptr<vl::parsing::tabling::ParsingTable> XmlLoadTable()
+			{
+				vl::stream::MemoryStream stream;
+				XmlGetParserBuffer(stream);
+				vl::Ptr<vl::parsing::tabling::ParsingTable> table=new vl::parsing::tabling::ParsingTable(stream);
+				table->Initialize();
+				return table;
+			}
+
+		}
+	}
+}
+
 
 /***********************************************************************
 .\REFLECTION\GUITYPEDESCRIPTOR.CPP
@@ -9130,6 +16160,10 @@ DescriptableObject
 		{
 		}
 
+#if defined(VCZH_GCC) && defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wexceptions"
+#endif
 		DescriptableObject::~DescriptableObject()
 		{
 #ifndef VCZH_DEBUG_NO_REFLECTION
@@ -9161,6 +16195,9 @@ DescriptableObject
 			}
 #endif
 		}
+#if defined(VCZH_GCC) && defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 #ifndef VCZH_DEBUG_NO_REFLECTION
 
@@ -12702,8360 +19739,1003 @@ LogTypeManager
 
 
 /***********************************************************************
-.\THREADING.CPP
+.\REGEX\REGEX.CPP
 ***********************************************************************/
-#ifdef VCZH_MSVC
 
 namespace vl
 {
-	using namespace threading_internal;
-	using namespace collections;
+	namespace regex
+	{
+		using namespace collections;
+		using namespace regex_internal;
 
 /***********************************************************************
-WaitableObject
+RegexString
 ***********************************************************************/
 
-	namespace threading_internal
-	{
-		struct WaitableData
+		RegexString::RegexString(vint _start)
+			:start(_start)
+			,length(0)
 		{
-			HANDLE			handle;
-
-			WaitableData(HANDLE _handle)
-				:handle(_handle)
-			{
-			}
-		};
-	}
-
-	WaitableObject::WaitableObject()
-		:waitableData(0)
-	{
-	}
-
-	void WaitableObject::SetData(threading_internal::WaitableData* data)
-	{
-		waitableData=data;
-	}
-
-	bool WaitableObject::IsCreated()
-	{
-		return waitableData!=0;
-	}
-
-	bool WaitableObject::Wait()
-	{
-		return WaitForTime(INFINITE);
-	}
-
-	bool WaitableObject::WaitForTime(vint ms)
-	{
-		if(IsCreated())
-		{
-			if(WaitForSingleObject(waitableData->handle, (DWORD)ms)==WAIT_OBJECT_0)
-			{
-				return true;
-			}
 		}
-		return false;
-	}
 
-	bool WaitableObject::WaitAll(WaitableObject** objects, vint count)
-	{
-		Array<HANDLE> handles(count);
-		for(vint i=0;i<count;i++)
+		RegexString::RegexString(const WString& _string, vint _start, vint _length)
+			:value(_length==0?L"":_string.Sub(_start, _length))
+			,start(_start)
+			,length(_length)
 		{
-			handles[i]=objects[i]->waitableData->handle;
 		}
-		DWORD result=WaitForMultipleObjects((DWORD)count, &handles[0], TRUE, INFINITE);
-		return result==WAIT_OBJECT_0 || result==WAIT_ABANDONED_0;
 
-	}
+		vint RegexString::Start()const
+		{
+			return start;
+		}
 
-	bool WaitableObject::WaitAllForTime(WaitableObject** objects, vint count, vint ms)
-	{
-		Array<HANDLE> handles(count);
-		for(vint i=0;i<count;i++)
+		vint RegexString::Length()const
 		{
-			handles[i]=objects[i]->waitableData->handle;
+			return length;
 		}
-		DWORD result=WaitForMultipleObjects((DWORD)count, &handles[0], TRUE, (DWORD)ms);
-		return result==WAIT_OBJECT_0 || result==WAIT_ABANDONED_0;
-	}
 
-	vint WaitableObject::WaitAny(WaitableObject** objects, vint count, bool* abandoned)
-	{
-		Array<HANDLE> handles(count);
-		for(vint i=0;i<count;i++)
+		const WString& RegexString::Value()const
 		{
-			handles[i]=objects[i]->waitableData->handle;
+			return value;
 		}
-		DWORD result=WaitForMultipleObjects((DWORD)count, &handles[0], FALSE, INFINITE);
-		if(WAIT_OBJECT_0 <= result && result<WAIT_OBJECT_0+count)
-		{
-			*abandoned=false;
-			return result-WAIT_OBJECT_0;
-		}
-		else if(WAIT_ABANDONED_0 <= result && result<WAIT_ABANDONED_0+count)
-		{
-			*abandoned=true;
-			return result-WAIT_ABANDONED_0;
-		}
-		else
-		{
-			return -1;
-		}
-	}
 
-	vint WaitableObject::WaitAnyForTime(WaitableObject** objects, vint count, vint ms, bool* abandoned)
-	{
-		Array<HANDLE> handles(count);
-		for(vint i=0;i<count;i++)
+		bool RegexString::operator==(const RegexString& string)const
 		{
-			handles[i]=objects[i]->waitableData->handle;
+			return start==string.start && length==string.length && value==string.value;
 		}
-		DWORD result=WaitForMultipleObjects((DWORD)count, &handles[0], FALSE, (DWORD)ms);
-		if(WAIT_OBJECT_0 <= result && result<WAIT_OBJECT_0+count)
-		{
-			*abandoned=false;
-			return result-WAIT_OBJECT_0;
-		}
-		else if(WAIT_ABANDONED_0 <= result && result<WAIT_ABANDONED_0+count)
-		{
-			*abandoned=true;
-			return result-WAIT_ABANDONED_0;
-		}
-		else
-		{
-			return -1;
-		}
-	}
 
 /***********************************************************************
-Thread
+RegexMatch
+***********************************************************************/
+		
+		RegexMatch::RegexMatch(const WString& _string, PureResult* _result)
+			:success(true)
+			,result(_string, _result->start, _result->length)
+		{
+		}
+
+		RegexMatch::RegexMatch(const WString& _string, RichResult* _result, RichInterpretor* _rich)
+			:success(true)
+			,result(_string, _result->start, _result->length)
+		{
+			for(vint i=0;i<_result->captures.Count();i++)
+			{
+				CaptureRecord& capture=_result->captures[i];
+				if(capture.capture==-1)
+				{
+					captures.Add(RegexString(_string, capture.start, capture.length));
+				}
+				else
+				{
+					groups.Add(_rich->CaptureNames().Get(capture.capture), RegexString(_string, capture.start, capture.length));
+				}
+			}
+		}
+
+		RegexMatch::RegexMatch(const RegexString& _result)
+			:success(false)
+			,result(_result)
+		{
+		}
+			
+		bool RegexMatch::Success()const
+		{
+			return success;
+		}
+
+		const RegexString& RegexMatch::Result()const
+		{
+			return result;
+		}
+
+		const RegexMatch::CaptureList& RegexMatch::Captures()const
+		{
+			return captures;
+		}
+
+		const RegexMatch::CaptureGroup& RegexMatch::Groups()const
+		{
+			return groups;
+		}
+
+/***********************************************************************
+Regex
 ***********************************************************************/
 
-	namespace threading_internal
-	{
-		struct ThreadData : public WaitableData
+		void Regex::Process(const WString& text, bool keepEmpty, bool keepSuccess, bool keepFail, RegexMatch::List& matches)const
 		{
-			DWORD						id;
-
-			ThreadData()
-				:WaitableData(NULL)
+			if(rich)
 			{
-				id=-1;
-			}
-		};
-
-		class ProceduredThread : public Thread
-		{
-		private:
-			Thread::ThreadProcedure		procedure;
-			void*						argument;
-			bool						deleteAfterStopped;
-
-		protected:
-			void Run()
-			{
-				bool deleteAfterStopped = this->deleteAfterStopped;
-				ThreadLocalStorage::FixStorages();
-				try
+				const wchar_t* start=text.Buffer();
+				const wchar_t* input=start;
+				RichResult result;
+				while(rich->Match(input, start, result))
 				{
-					procedure(this, argument);
-					threadState=Thread::Stopped;
-					ThreadLocalStorage::ClearStorages();
+					vint offset=input-start;
+					if(keepFail)
+					{
+						if(result.start>offset || keepEmpty)
+						{
+							matches.Add(new RegexMatch(RegexString(text, offset, result.start-offset)));
+						}
+					}
+					if(keepSuccess)
+					{
+						matches.Add(new RegexMatch(text, &result, rich));
+					}
+					input=start+result.start+result.length;
 				}
-				catch (...)
+				if(keepFail)
 				{
-					ThreadLocalStorage::ClearStorages();
-					throw;
+					vint remain=input-start;
+					vint length=text.Length()-remain;
+					if(length || keepEmpty)
+					{
+						matches.Add(new RegexMatch(RegexString(text, remain, length)));
+					}
 				}
-				if(deleteAfterStopped)
-				{
-					delete this;
-				}
-			}
-		public:
-			ProceduredThread(Thread::ThreadProcedure _procedure, void* _argument, bool _deleteAfterStopped)
-				:procedure(_procedure)
-				,argument(_argument)
-				,deleteAfterStopped(_deleteAfterStopped)
-			{
-			}
-		};
-
-		class LambdaThread : public Thread
-		{
-		private:
-			Func<void()>				procedure;
-			bool						deleteAfterStopped;
-
-		protected:
-			void Run()
-			{
-				bool deleteAfterStopped = this->deleteAfterStopped;
-				ThreadLocalStorage::FixStorages();
-				try
-				{
-					procedure();
-					threadState=Thread::Stopped;
-					ThreadLocalStorage::ClearStorages();
-				}
-				catch (...)
-				{
-					ThreadLocalStorage::ClearStorages();
-					throw;
-				}
-				if(deleteAfterStopped)
-				{
-					delete this;
-				}
-			}
-		public:
-			LambdaThread(const Func<void()>& _procedure, bool _deleteAfterStopped)
-				:procedure(_procedure)
-				,deleteAfterStopped(_deleteAfterStopped)
-			{
-			}
-		};
-	}
-
-	void InternalThreadProc(Thread* thread)
-	{
-		thread->Run();
-	}
-
-	DWORD WINAPI InternalThreadProcWrapper(LPVOID lpParameter)
-	{
-		InternalThreadProc((Thread*)lpParameter);
-		return 0;
-	}
-
-	Thread::Thread()
-	{
-		internalData=new ThreadData;
-		internalData->handle=CreateThread(NULL, 0, InternalThreadProcWrapper, this, CREATE_SUSPENDED, &internalData->id);
-		threadState=Thread::NotStarted;
-		SetData(internalData);
-	}
-
-	Thread::~Thread()
-	{
-		if (internalData)
-		{
-			Stop();
-			CloseHandle(internalData->handle);
-			delete internalData;
-		}
-	}
-
-	Thread* Thread::CreateAndStart(ThreadProcedure procedure, void* argument, bool deleteAfterStopped)
-	{
-		if(procedure)
-		{
-			Thread* thread=new ProceduredThread(procedure, argument, deleteAfterStopped);
-			if(thread->Start())
-			{
-				return thread;
 			}
 			else
 			{
-				delete thread;
+				const wchar_t* start=text.Buffer();
+				const wchar_t* input=start;
+				PureResult result;
+				while(pure->Match(input, start, result))
+				{
+					vint offset=input-start;
+					if(keepFail)
+					{
+						if(result.start>offset || keepEmpty)
+						{
+							matches.Add(new RegexMatch(RegexString(text, offset, result.start-offset)));
+						}
+					}
+					if(keepSuccess)
+					{
+						matches.Add(new RegexMatch(text, &result));
+					}
+					input=start+result.start+result.length;
+				}
+				if(keepFail)
+				{
+					vint remain=input-start;
+					vint length=text.Length()-remain;
+					if(length || keepEmpty)
+					{
+						matches.Add(new RegexMatch(RegexString(text, remain, length)));
+					}
+				}
 			}
 		}
-		return 0;
-	}
-
-	Thread* Thread::CreateAndStart(const Func<void()>& procedure, bool deleteAfterStopped)
-	{
-		Thread* thread=new LambdaThread(procedure, deleteAfterStopped);
-		if(thread->Start())
+		
+		Regex::Regex(const WString& code, bool preferPure)
+			:pure(0)
+			,rich(0)
 		{
-			return thread;
-		}
-		else
-		{
-			delete thread;
-		}
-		return 0;
-	}
+			CharRange::List subsets;
+			RegexExpression::Ref regex=ParseRegexExpression(code);
+			Expression::Ref expression=regex->Merge();
+			expression->NormalizeCharSet(subsets);
 
-	void Thread::Sleep(vint ms)
-	{
-		::Sleep((DWORD)ms);
-	}
-
-	
-	vint Thread::GetCPUCount()
-	{
-		SYSTEM_INFO info;
-		GetSystemInfo(&info);
-		return info.dwNumberOfProcessors;
-	}
-
-	vint Thread::GetCurrentThreadId()
-	{
-		return (vint)::GetCurrentThreadId();
-	}
-
-	bool Thread::Start()
-	{
-		if(threadState==Thread::NotStarted && internalData->handle!=NULL)
-		{
-			if(ResumeThread(internalData->handle)!=-1)
+			bool pureRequired=false;
+			bool richRequired=false;
+			if(preferPure)
 			{
-				threadState=Thread::Running;
-				return true;
+				if(expression->HasNoExtension())
+				{
+					pureRequired=true;
+				}
+				else
+				{
+					if(expression->CanTreatAsPure())
+					{
+						pureRequired=true;
+						richRequired=true;
+					}
+					else
+					{
+						richRequired=true;
+					}
+				}
 			}
-		}
-		return false;
-	}
-
-	bool Thread::Stop()
-	{
-		if(internalData->handle!=NULL)
-		{
-			if (SuspendThread(internalData->handle) != -1)
+			else
 			{
-				threadState=Thread::Stopped;
-				return true;
+				richRequired=true;
 			}
-		}
-		return false;
-	}
 
-	Thread::ThreadState Thread::GetState()
-	{
-		return threadState;
-	}
-
-	void Thread::SetCPU(vint index)
-	{
-		SetThreadAffinityMask(internalData->handle, ((vint)1 << index));
-	}
-
-/***********************************************************************
-Mutex
-***********************************************************************/
-
-	namespace threading_internal
-	{
-		struct MutexData : public WaitableData
-		{
-			MutexData(HANDLE _handle)
-				:WaitableData(_handle)
-			{
-			}
-		};
-	}
-
-	Mutex::Mutex()
-		:internalData(0)
-	{
-	}
-
-	Mutex::~Mutex()
-	{
-		if(internalData)
-		{
-			CloseHandle(internalData->handle);
-			delete internalData;
-		}
-	}
-
-	bool Mutex::Create(bool owned, const WString& name)
-	{
-		if(IsCreated())return false;
-		BOOL aOwned=owned?TRUE:FALSE;
-		LPCTSTR aName=name==L""?NULL:name.Buffer();
-		HANDLE handle=CreateMutex(NULL, aOwned, aName);
-		if(handle)
-		{
-			internalData=new MutexData(handle);
-			SetData(internalData);
-		}
-		return IsCreated();
-	}
-
-	bool Mutex::Open(bool inheritable, const WString& name)
-	{
-		if(IsCreated())return false;
-		BOOL aInteritable=inheritable?TRUE:FALSE;
-		HANDLE handle=OpenMutex(SYNCHRONIZE, aInteritable, name.Buffer());
-		if(handle)
-		{
-			internalData=new MutexData(handle);
-			SetData(internalData);
-		}
-		return IsCreated();
-	}
-
-	bool Mutex::Release()
-	{
-		if(IsCreated())
-		{
-			return ReleaseMutex(internalData->handle)!=0;
-		}
-		return false;
-	}
-
-/***********************************************************************
-Semaphore
-***********************************************************************/
-
-	namespace threading_internal
-	{
-		struct SemaphoreData : public WaitableData
-		{
-			SemaphoreData(HANDLE _handle)
-				:WaitableData(_handle)
-			{
-			}
-		};
-	}
-
-	Semaphore::Semaphore()
-		:internalData(0)
-	{
-	}
-
-	Semaphore::~Semaphore()
-	{
-		if(internalData)
-		{
-			CloseHandle(internalData->handle);
-			delete internalData;
-		}
-	}
-
-	bool Semaphore::Create(vint initialCount, vint maxCount, const WString& name)
-	{
-		if(IsCreated())return false;
-		LONG aInitial=(LONG)initialCount;
-		LONG aMax=(LONG)maxCount;
-		LPCTSTR aName=name==L""?NULL:name.Buffer();
-		HANDLE handle=CreateSemaphore(NULL, aInitial, aMax, aName);
-		if(handle)
-		{
-			internalData=new SemaphoreData(handle);
-			SetData(internalData);
-		}
-		return IsCreated();
-	}
-
-	bool Semaphore::Open(bool inheritable, const WString& name)
-	{
-		if(IsCreated())return false;
-		BOOL aInteritable=inheritable?TRUE:FALSE;
-		HANDLE handle=OpenSemaphore(SYNCHRONIZE, aInteritable, name.Buffer());
-		if(handle)
-		{
-			internalData=new SemaphoreData(handle);
-			SetData(internalData);
-		}
-		return IsCreated();
-	}
-
-	bool Semaphore::Release()
-	{
-		if(IsCreated())
-		{
-			return Release(1)!=-1;
-		}
-		return false;
-	}
-
-	vint Semaphore::Release(vint count)
-	{
-		if(IsCreated())
-		{
-			LONG previous=-1;
-			if(ReleaseSemaphore(internalData->handle, (LONG)count, &previous)!=0)
-			{
-				return (vint)previous;
-			}
-		}
-		return -1;
-	}
-
-/***********************************************************************
-EventObject
-***********************************************************************/
-
-	namespace threading_internal
-	{
-		struct EventData : public WaitableData
-		{
-			EventData(HANDLE _handle)
-				:WaitableData(_handle)
-			{
-			}
-		};
-	}
-
-	EventObject::EventObject()
-		:internalData(0)
-	{
-	}
-
-	EventObject::~EventObject()
-	{
-		if(internalData)
-		{
-			CloseHandle(internalData->handle);
-			delete internalData;
-		}
-	}
-
-	bool EventObject::CreateAutoUnsignal(bool signaled, const WString& name)
-	{
-		if(IsCreated())return false;
-		BOOL aSignaled=signaled?TRUE:FALSE;
-		LPCTSTR aName=name==L""?NULL:name.Buffer();
-		HANDLE handle=CreateEvent(NULL, FALSE, aSignaled, aName);
-		if(handle)
-		{
-			internalData=new EventData(handle);
-			SetData(internalData);
-		}
-		return IsCreated();
-	}
-
-	bool EventObject::CreateManualUnsignal(bool signaled, const WString& name)
-	{
-		if(IsCreated())return false;
-		BOOL aSignaled=signaled?TRUE:FALSE;
-		LPCTSTR aName=name==L""?NULL:name.Buffer();
-		HANDLE handle=CreateEvent(NULL, TRUE, aSignaled, aName);
-		if(handle)
-		{
-			internalData=new EventData(handle);
-			SetData(internalData);
-		}
-		return IsCreated();
-	}
-
-	bool EventObject::Open(bool inheritable, const WString& name)
-	{
-		if(IsCreated())return false;
-		BOOL aInteritable=inheritable?TRUE:FALSE;
-		HANDLE handle=OpenEvent(SYNCHRONIZE, aInteritable, name.Buffer());
-		if(handle)
-		{
-			internalData=new EventData(handle);
-			SetData(internalData);
-		}
-		return IsCreated();
-	}
-
-	bool EventObject::Signal()
-	{
-		if(IsCreated())
-		{
-			return SetEvent(internalData->handle)!=0;
-		}
-		return false;
-	}
-
-	bool EventObject::Unsignal()
-	{
-		if(IsCreated())
-		{
-			return ResetEvent(internalData->handle)!=0;
-		}
-		return false;
-	}
-
-/***********************************************************************
-ThreadPoolLite
-***********************************************************************/
-
-		struct ThreadPoolQueueProcArgument
-		{
-			void(*proc)(void*);
-			void* argument;
-		};
-
-		DWORD WINAPI ThreadPoolQueueProc(void* argument)
-		{
-			Ptr<ThreadPoolQueueProcArgument> proc=(ThreadPoolQueueProcArgument*)argument;
-			ThreadLocalStorage::FixStorages();
 			try
 			{
-				proc->proc(proc->argument);
-				ThreadLocalStorage::ClearStorages();
+				if(pureRequired)
+				{
+					Dictionary<State*, State*> nfaStateMap;
+					Group<State*, State*> dfaStateMap;
+					Automaton::Ref eNfa=expression->GenerateEpsilonNfa();
+					Automaton::Ref nfa=EpsilonNfaToNfa(eNfa, PureEpsilonChecker, nfaStateMap);
+					Automaton::Ref dfa=NfaToDfa(nfa, dfaStateMap);
+					pure=new PureInterpretor(dfa, subsets);
+				}
+				if(richRequired)
+				{
+					Dictionary<State*, State*> nfaStateMap;
+					Group<State*, State*> dfaStateMap;
+					Automaton::Ref eNfa=expression->GenerateEpsilonNfa();
+					Automaton::Ref nfa=EpsilonNfaToNfa(eNfa, RichEpsilonChecker, nfaStateMap);
+					Automaton::Ref dfa=NfaToDfa(nfa, dfaStateMap);
+					rich=new RichInterpretor(dfa);
+				}
 			}
-			catch (...)
+			catch(...)
 			{
-				ThreadLocalStorage::ClearStorages();
+				if(pure)delete pure;
+				if(rich)delete rich;
+				throw;
 			}
-			return 0;
 		}
 
-		DWORD WINAPI ThreadPoolQueueFunc(void* argument)
+		Regex::~Regex()
 		{
-			Ptr<Func<void()>> proc=(Func<void()>*)argument;
-			ThreadLocalStorage::FixStorages();
-			try
-			{
-				(*proc.Obj())();
-				ThreadLocalStorage::ClearStorages();
-			}
-			catch (...)
-			{
-				ThreadLocalStorage::ClearStorages();
-			}
-			return 0;
+			if(pure)delete pure;
+			if(rich)delete rich;
 		}
 
-		ThreadPoolLite::ThreadPoolLite()
+		bool Regex::IsPureMatch()const
 		{
+			return rich?false:true;
 		}
 
-		ThreadPoolLite::~ThreadPoolLite()
+		bool Regex::IsPureTest()const
 		{
+			return pure?true:false;
 		}
 
-		bool ThreadPoolLite::Queue(void(*proc)(void*), void* argument)
+		RegexMatch::Ref Regex::MatchHead(const WString& text)const
 		{
-			ThreadPoolQueueProcArgument* p=new ThreadPoolQueueProcArgument;
-			p->proc=proc;
-			p->argument=argument;
-			if(QueueUserWorkItem(&ThreadPoolQueueProc, p, WT_EXECUTEDEFAULT))
+			if(rich)
 			{
-				return true;
+				RichResult result;
+				if(rich->MatchHead(text.Buffer(), text.Buffer(), result))
+				{
+					return new RegexMatch(text, &result, rich);
+				}
+				else
+				{
+					return 0;
+				}
 			}
 			else
 			{
-				delete p;
-				return false;
+				PureResult result;
+				if(pure->MatchHead(text.Buffer(), text.Buffer(), result))
+				{
+					return new RegexMatch(text, &result);
+				}
+				else
+				{
+					return 0;
+				}
 			}
 		}
 
-		bool ThreadPoolLite::Queue(const Func<void()>& proc)
+		RegexMatch::Ref Regex::Match(const WString& text)const
 		{
-			Func<void()>* p=new Func<void()>(proc);
-			if(QueueUserWorkItem(&ThreadPoolQueueFunc, p, WT_EXECUTEDEFAULT))
+			if(rich)
 			{
-				return true;
+				RichResult result;
+				if(rich->Match(text.Buffer(), text.Buffer(), result))
+				{
+					return new RegexMatch(text, &result, rich);
+				}
+				else
+				{
+					return 0;
+				}
 			}
 			else
 			{
-				delete p;
-				return false;
+				PureResult result;
+				if(pure->Match(text.Buffer(), text.Buffer(), result))
+				{
+					return new RegexMatch(text, &result);
+				}
+				else
+				{
+					return 0;
+				}
 			}
 		}
 
-/***********************************************************************
-CriticalSection
-***********************************************************************/
-
-	namespace threading_internal
-	{
-		struct CriticalSectionData
+		bool Regex::TestHead(const WString& text)const
 		{
-			CRITICAL_SECTION		criticalSection;
-		};
-	}
-
-	CriticalSection::Scope::Scope(CriticalSection& _criticalSection)
-		:criticalSection(&_criticalSection)
-	{
-		criticalSection->Enter();
-	}
-
-	CriticalSection::Scope::~Scope()
-	{
-		criticalSection->Leave();
-	}
-			
-	CriticalSection::CriticalSection()
-	{
-		internalData=new CriticalSectionData;
-		InitializeCriticalSection(&internalData->criticalSection);
-	}
-
-	CriticalSection::~CriticalSection()
-	{
-		DeleteCriticalSection(&internalData->criticalSection);
-		delete internalData;
-	}
-
-	bool CriticalSection::TryEnter()
-	{
-		return TryEnterCriticalSection(&internalData->criticalSection)!=0;
-	}
-
-	void CriticalSection::Enter()
-	{
-		EnterCriticalSection(&internalData->criticalSection);
-	}
-
-	void CriticalSection::Leave()
-	{
-		LeaveCriticalSection(&internalData->criticalSection);
-	}
-
-/***********************************************************************
-ReaderWriterLock
-***********************************************************************/
-
-	namespace threading_internal
-	{
-		struct ReaderWriterLockData
-		{
-			SRWLOCK			lock;
-		};
-	}
-
-	ReaderWriterLock::ReaderScope::ReaderScope(ReaderWriterLock& _lock)
-		:lock(&_lock)
-	{
-		lock->EnterReader();
-	}
-
-	ReaderWriterLock::ReaderScope::~ReaderScope()
-	{
-		lock->LeaveReader();
-	}
-
-	ReaderWriterLock::WriterScope::WriterScope(ReaderWriterLock& _lock)
-		:lock(&_lock)
-	{
-		lock->EnterWriter();
-	}
-
-	ReaderWriterLock::WriterScope::~WriterScope()
-	{
-		lock->LeaveWriter();
-	}
-
-	ReaderWriterLock::ReaderWriterLock()
-		:internalData(new threading_internal::ReaderWriterLockData)
-	{
-		InitializeSRWLock(&internalData->lock);
-	}
-
-	ReaderWriterLock::~ReaderWriterLock()
-	{
-		delete internalData;
-	}
-
-	bool ReaderWriterLock::TryEnterReader()
-	{
-		return TryAcquireSRWLockShared(&internalData->lock)!=0;
-	}
-
-	void ReaderWriterLock::EnterReader()
-	{
-		AcquireSRWLockShared(&internalData->lock);
-	}
-
-	void ReaderWriterLock::LeaveReader()
-	{
-		ReleaseSRWLockShared(&internalData->lock);
-	}
-
-	bool ReaderWriterLock::TryEnterWriter()
-	{
-		return TryAcquireSRWLockExclusive(&internalData->lock)!=0;
-	}
-
-	void ReaderWriterLock::EnterWriter()
-	{
-		AcquireSRWLockExclusive(&internalData->lock);
-	}
-
-	void ReaderWriterLock::LeaveWriter()
-	{
-		ReleaseSRWLockExclusive(&internalData->lock);
-	}
-
-/***********************************************************************
-ConditionVariable
-***********************************************************************/
-
-	namespace threading_internal
-	{
-		struct ConditionVariableData
-		{
-			CONDITION_VARIABLE			variable;
-		};
-	}
-
-	ConditionVariable::ConditionVariable()
-		:internalData(new threading_internal::ConditionVariableData)
-	{
-		InitializeConditionVariable(&internalData->variable);
-	}
-
-	ConditionVariable::~ConditionVariable()
-	{
-		delete internalData;
-	}
-
-	bool ConditionVariable::SleepWith(CriticalSection& cs)
-	{
-		return SleepConditionVariableCS(&internalData->variable, &cs.internalData->criticalSection, INFINITE)!=0;
-	}
-
-	bool ConditionVariable::SleepWithForTime(CriticalSection& cs, vint ms)
-	{
-		return SleepConditionVariableCS(&internalData->variable, &cs.internalData->criticalSection, (DWORD)ms)!=0;
-	}
-
-	bool ConditionVariable::SleepWithReader(ReaderWriterLock& lock)
-	{
-		return SleepConditionVariableSRW(&internalData->variable, &lock.internalData->lock, INFINITE, CONDITION_VARIABLE_LOCKMODE_SHARED)!=0;
-	}
-
-	bool ConditionVariable::SleepWithReaderForTime(ReaderWriterLock& lock, vint ms)
-	{
-		return SleepConditionVariableSRW(&internalData->variable, &lock.internalData->lock, (DWORD)ms, CONDITION_VARIABLE_LOCKMODE_SHARED)!=0;
-	}
-
-	bool ConditionVariable::SleepWithWriter(ReaderWriterLock& lock)
-	{
-		return SleepConditionVariableSRW(&internalData->variable, &lock.internalData->lock, INFINITE, 0)!=0;
-	}
-
-	bool ConditionVariable::SleepWithWriterForTime(ReaderWriterLock& lock, vint ms)
-	{
-		return SleepConditionVariableSRW(&internalData->variable, &lock.internalData->lock, (DWORD)ms, 0)!=0;
-	}
-
-	void ConditionVariable::WakeOnePending()
-	{
-		WakeConditionVariable(&internalData->variable);
-	}
-
-	void ConditionVariable::WakeAllPendings()
-	{
-		WakeAllConditionVariable(&internalData->variable);
-	}
-
-/***********************************************************************
-SpinLock
-***********************************************************************/
-
-	SpinLock::Scope::Scope(SpinLock& _spinLock)
-		:spinLock(&_spinLock)
-	{
-		spinLock->Enter();
-	}
-
-	SpinLock::Scope::~Scope()
-	{
-		spinLock->Leave();
-	}
-			
-	SpinLock::SpinLock()
-		:token(0)
-	{
-	}
-
-	SpinLock::~SpinLock()
-	{
-	}
-
-	bool SpinLock::TryEnter()
-	{
-		return _InterlockedExchange(&token, 1)==0;
-	}
-
-	void SpinLock::Enter()
-	{
-		while(_InterlockedCompareExchange(&token, 1, 0)!=0)
-		{
-			while(token!=0) _mm_pause();
-		}
-	}
-
-	void SpinLock::Leave()
-	{
-		_InterlockedExchange(&token, 0);
-	}
-
-/***********************************************************************
-ThreadLocalStorage
-***********************************************************************/
-
-#define KEY ((DWORD&)key)
-
-	ThreadLocalStorage::ThreadLocalStorage(Destructor _destructor)
-		:destructor(_destructor)
-	{
-		static_assert(sizeof(key) >= sizeof(DWORD), "ThreadLocalStorage's key storage is not large enouth.");
-		PushStorage(this);
-		KEY = TlsAlloc();
-		CHECK_ERROR(KEY != TLS_OUT_OF_INDEXES, L"vl::ThreadLocalStorage::ThreadLocalStorage()#Failed to alloc new thread local storage index.");
-	}
-
-	ThreadLocalStorage::~ThreadLocalStorage()
-	{
-		TlsFree(KEY);
-	}
-
-	void* ThreadLocalStorage::Get()
-	{
-		CHECK_ERROR(!disposed, L"vl::ThreadLocalStorage::Get()#Cannot access a disposed ThreadLocalStorage.");
-		return TlsGetValue(KEY);
-	}
-
-	void ThreadLocalStorage::Set(void* data)
-	{
-		CHECK_ERROR(!disposed, L"vl::ThreadLocalStorage::Set()#Cannot access a disposed ThreadLocalStorage.");
-		TlsSetValue(KEY, data);
-	}
-
-#undef KEY
-}
-#endif
-
-/***********************************************************************
-ThreadLocalStorage Common Implementations
-***********************************************************************/
-
-namespace vl
-{
-	void ThreadLocalStorage::Clear()
-	{
-		CHECK_ERROR(!disposed, L"vl::ThreadLocalStorage::Clear()#Cannot access a disposed ThreadLocalStorage.");
-		if(destructor)
-		{
-			if (auto data = Get())
+			if(pure)
 			{
-				destructor(data);
+				PureResult result;
+				return pure->MatchHead(text.Buffer(), text.Buffer(), result);
+			}
+			else
+			{
+				RichResult result;
+				return rich->MatchHead(text.Buffer(), text.Buffer(), result);
 			}
 		}
-		Set(nullptr);
-	}
 
-	void ThreadLocalStorage::Dispose()
-	{
-		CHECK_ERROR(!disposed, L"vl::ThreadLocalStorage::Dispose()#Cannot access a disposed ThreadLocalStorage.");
-		Clear();
-		disposed = true;
-	}
-
-	struct TlsStorageLink
-	{
-		ThreadLocalStorage*		storage = nullptr;
-		TlsStorageLink*			next = nullptr;
-	};
-
-	volatile bool				tlsFixed = false;
-	TlsStorageLink*				tlsHead = nullptr;
-	TlsStorageLink**			tlsTail = &tlsHead;
-
-	void ThreadLocalStorage::PushStorage(ThreadLocalStorage* storage)
-	{
-		CHECK_ERROR(!tlsFixed, L"vl::ThreadLocalStorage::PushStorage(ThreadLocalStorage*)#Cannot create new ThreadLocalStorage instance after calling ThreadLocalStorage::FixStorages().");
-		auto link = new TlsStorageLink;
-		link->storage = storage;
-		*tlsTail = link;
-		tlsTail = &link->next;
-	}
-
-	void ThreadLocalStorage::FixStorages()
-	{
-		tlsFixed = true;
-	}
-
-	void ThreadLocalStorage::ClearStorages()
-	{
-		FixStorages();
-		auto current = tlsHead;
-		while (current)
+		bool Regex::Test(const WString& text)const
 		{
-			current->storage->Clear();
-			current = current->next;
+			if(pure)
+			{
+				PureResult result;
+				return pure->Match(text.Buffer(), text.Buffer(), result);
+			}
+			else
+			{
+				RichResult result;
+				return rich->Match(text.Buffer(), text.Buffer(), result);
+			}
 		}
-	}
 
-	void ThreadLocalStorage::DisposeStorages()
-	{
-		FixStorages();
-		auto current = tlsHead;
-		tlsHead = nullptr;
-		tlsTail = nullptr;
-		while (current)
+		void Regex::Search(const WString& text, RegexMatch::List& matches)const
 		{
-			current->storage->Dispose();
-
-			auto temp = current;
-			current = current->next;
-			delete temp;
+			Process(text, false, true, false, matches);
 		}
-	}
-}
 
+		void Regex::Split(const WString& text, bool keepEmptyMatch, RegexMatch::List& matches)const
+		{
+			Process(text, keepEmptyMatch, false, true, matches);
+		}
+
+		void Regex::Cut(const WString& text, bool keepEmptyMatch, RegexMatch::List& matches)const
+		{
+			Process(text, keepEmptyMatch, true, true, matches);
+		}
 
 /***********************************************************************
-.\THREADINGLINUX.CPP
-***********************************************************************/
-#ifdef VCZH_GCC
-#include <pthread.h>
-#include <fcntl.h>
-#include <semaphore.h>
-#include <errno.h>
-#if defined(__APPLE__) || defined(__APPLE_CC__)
-#include <CoreFoundation/CoreFoundation.h>
-#endif
-
-
-namespace vl
-{
-	using namespace threading_internal;
-	using namespace collections;
-
-
-/***********************************************************************
-Thread
+RegexTokens
 ***********************************************************************/
 
-	namespace threading_internal
-	{
-		struct ThreadData
+		bool RegexToken::operator==(const RegexToken& _token)const
 		{
-			pthread_t					id;
-			EventObject					ev;
-		};
-
-		class ProceduredThread : public Thread
+			return length==_token.length && token==_token.token && reading==_token.reading;
+		}
+		
+		bool RegexToken::operator==(const wchar_t* _token)const
 		{
-		private:
-			Thread::ThreadProcedure		procedure;
-			void*						argument;
-			bool						deleteAfterStopped;
+			return wcslen(_token)==length && wcsncmp(reading, _token, length)==0;
+		}
 
+		class RegexTokenEnumerator : public Object, public IEnumerator<RegexToken>
+		{
 		protected:
-			void Run()
-			{
-				bool deleteAfterStopped = this->deleteAfterStopped;
-				ThreadLocalStorage::FixStorages();
-				try
-				{
-					procedure(this, argument);
-					threadState=Thread::Stopped;
-					internalData->ev.Signal();
-					ThreadLocalStorage::ClearStorages();
-				}
-				catch (...)
-				{
-					ThreadLocalStorage::ClearStorages();
-					throw;
-				}
-				if(deleteAfterStopped)
-				{
-					delete this;
-				}
-			}
+			RegexToken				token;
+			vint					index = -1;
+
+			PureInterpretor*		pure;
+			const Array<vint>&		stateTokens;
+			const wchar_t*			start;
+			vint					codeIndex;
+			RegexProc				proc;
+
+			const wchar_t*			reading;
+			vint					rowStart = 0;
+			vint					columnStart = 0;
+			bool					cacheAvailable = false;
+			RegexToken				cacheToken;
+
 		public:
-			ProceduredThread(Thread::ThreadProcedure _procedure, void* _argument, bool _deleteAfterStopped)
-				:procedure(_procedure)
-				,argument(_argument)
-				,deleteAfterStopped(_deleteAfterStopped)
+			RegexTokenEnumerator(const RegexTokenEnumerator& enumerator)
+				:token(enumerator.token)
+				, index(enumerator.index)
+				, pure(enumerator.pure)
+				, stateTokens(enumerator.stateTokens)
+				, proc(enumerator.proc)
+				, reading(enumerator.reading)
+				, start(enumerator.start)
+				, rowStart(enumerator.rowStart)
+				, columnStart(enumerator.columnStart)
+				, codeIndex(enumerator.codeIndex)
+				, cacheAvailable(enumerator.cacheAvailable)
+				, cacheToken(enumerator.cacheToken)
 			{
 			}
-		};
 
-		class LambdaThread : public Thread
-		{
-		private:
-			Func<void()>				procedure;
-			bool						deleteAfterStopped;
-
-		protected:
-			void Run()
+			RegexTokenEnumerator(PureInterpretor* _pure, const Array<vint>& _stateTokens, const wchar_t* _start, vint _codeIndex, RegexProc _proc)
+				:index(-1)
+				, pure(_pure)
+				, stateTokens(_stateTokens)
+				, start(_start)
+				, codeIndex(_codeIndex)
+				, proc(_proc)
+				, reading(_start)
 			{
-				bool deleteAfterStopped = this->deleteAfterStopped;
-				ThreadLocalStorage::FixStorages();
-				try
+			}
+
+			IEnumerator<RegexToken>* Clone()const
+			{
+				return new RegexTokenEnumerator(*this);
+			}
+
+			const RegexToken& Current()const
+			{
+				return token;
+			}
+
+			vint Index()const
+			{
+				return index;
+			}
+
+			bool Next()
+			{
+				if (!cacheAvailable && !*reading) return false;
+				if (cacheAvailable)
 				{
-					procedure();
-					threadState=Thread::Stopped;
-					internalData->ev.Signal();
-					ThreadLocalStorage::ClearStorages();
+					token = cacheToken;
+					cacheAvailable = false;
 				}
-				catch (...)
+				else
 				{
-					ThreadLocalStorage::ClearStorages();
-					throw;
+					token.reading = reading;
+					token.start = 0;
+					token.length = 0;
+					token.token = -2;
+					token.completeToken = true;
 				}
-				if(deleteAfterStopped)
+
+				token.rowStart = rowStart;
+				token.columnStart = columnStart;
+				token.rowEnd = rowStart;
+				token.columnEnd = columnStart;
+				token.codeIndex = codeIndex;
+
+				PureResult result;
+				while (*reading)
 				{
-					delete this;
-				}
-			}
-		public:
-			LambdaThread(const Func<void()>& _procedure, bool _deleteAfterStopped)
-				:procedure(_procedure)
-				,deleteAfterStopped(_deleteAfterStopped)
-			{
-			}
-		};
-	}
+					vint id = -1;
+					bool completeToken = true;
+					if (!pure->MatchHead(reading, start, result))
+					{
+						result.start = reading - start;
 
-	void InternalThreadProc(Thread* thread)
-	{
-		thread->Run();
-	}
+						if (id == -1 && result.terminateState != -1)
+						{
+							vint state = pure->GetRelatedFinalState(result.terminateState);
+							if (state != -1)
+							{
+								id = stateTokens[state];
+							}
+						}
 
-	void* InternalThreadProcWrapper(void* lpParameter)
-	{
-		InternalThreadProc((Thread*)lpParameter);
-		return 0;
-	}
+						if (id == -1)
+						{
+							result.length = 1;
+						}
+						else
+						{
+							completeToken = false;
+						}
+					}
+					else
+					{
+						id = stateTokens.Get(result.finalState);
+					}
 
-	Thread::Thread()
-	{
-		internalData=new ThreadData;
-		internalData->ev.CreateManualUnsignal(false);
-		threadState=Thread::NotStarted;
-	}
-
-	Thread::~Thread()
-	{
-		if (internalData)
-		{
-			Stop();
-			if (threadState!=Thread::NotStarted)
-			{
-				pthread_detach(internalData->id);
-			}
-			delete internalData;
-		}
-	}
-
-	Thread* Thread::CreateAndStart(ThreadProcedure procedure, void* argument, bool deleteAfterStopped)
-	{
-		if(procedure)
-		{
-			Thread* thread=new ProceduredThread(procedure, argument, deleteAfterStopped);
-			if(thread->Start())
-			{
-				return thread;
-			}
-			else
-			{
-				delete thread;
-			}
-		}
-		return 0;
-	}
-
-	Thread* Thread::CreateAndStart(const Func<void()>& procedure, bool deleteAfterStopped)
-	{
-		Thread* thread=new LambdaThread(procedure, deleteAfterStopped);
-		if(thread->Start())
-		{
-			return thread;
-		}
-		else
-		{
-			delete thread;
-		}
-		return 0;
-	}
-
-	void Thread::Sleep(vint ms)
-	{
-		if (ms >= 1000)
-		{
-			sleep(ms / 1000);
-		}
-		if (ms % 1000)
-		{
-			usleep((ms % 1000) * 1000);
-		}
-	}
-	
-	vint Thread::GetCPUCount()
-	{
-		return (vint)sysconf(_SC_NPROCESSORS_ONLN);
-	}
-
-	vint Thread::GetCurrentThreadId()
-	{
-		return (vint)::pthread_self();
-	}
-
-	bool Thread::Start()
-	{
-		if(threadState==Thread::NotStarted)
-		{
-			if(pthread_create(&internalData->id, nullptr, &InternalThreadProcWrapper, this)==0)
-			{
-				threadState=Thread::Running;
-				return true;
-			}
-		}
-		return false;
-	}
-
-	bool Thread::Wait()
-	{
-		return internalData->ev.Wait();
-	}
-
-	bool Thread::Stop()
-	{
-		if (threadState==Thread::Running)
-		{
-			if(pthread_cancel(internalData->id)==0)
-			{
-				threadState=Thread::Stopped;
-				internalData->ev.Signal();
-				return true;
-			}
-		}
-		return false;
-	}
-
-	Thread::ThreadState Thread::GetState()
-	{
-		return threadState;
-	}
-
-/***********************************************************************
-Mutex
-***********************************************************************/
-
-	namespace threading_internal
-	{
-		struct MutexData
-		{
-			Semaphore			sem;
-		};
-	};
-
-	Mutex::Mutex()
-	{
-		internalData = new MutexData;
-	}
-
-	Mutex::~Mutex()
-	{
-		delete internalData;
-	}
-
-	bool Mutex::Create(bool owned, const WString& name)
-	{
-		return internalData->sem.Create(owned ? 0 : 1, 1, name);
-	}
-
-	bool Mutex::Open(bool inheritable, const WString& name)
-	{
-		return internalData->sem.Open(inheritable, name);
-	}
-
-	bool Mutex::Release()
-	{
-		return internalData->sem.Release();
-	}
-
-	bool Mutex::Wait()
-	{
-		return internalData->sem.Wait();
-	}
-
-/***********************************************************************
-Semaphore
-***********************************************************************/
-
-	namespace threading_internal
-	{
-		struct SemaphoreData
-		{
-			sem_t			semUnnamed;
-			sem_t*			semNamed = nullptr;
-		};
-	}
-
-	Semaphore::Semaphore()
-		:internalData(0)
-	{
-	}
-
-	Semaphore::~Semaphore()
-	{
-		if (internalData)
-		{
-			if (internalData->semNamed)
-			{
-				sem_close(internalData->semNamed);
-			}
-			else
-			{
-				sem_destroy(&internalData->semUnnamed);
-			}
-			delete internalData;
-		}
-	}
-
-	bool Semaphore::Create(vint initialCount, vint maxCount, const WString& name)
-	{
-		if (internalData) return false;
-		if (initialCount > maxCount) return false;
-
-		internalData = new SemaphoreData;
-#if defined(__APPLE__)
-        
-		AString auuid;
-		if(name.Length() == 0)
-		{
-			CFUUIDRef cfuuid = CFUUIDCreate(kCFAllocatorDefault);
-			CFStringRef cfstr = CFUUIDCreateString(kCFAllocatorDefault, cfuuid);
-			auuid = CFStringGetCStringPtr(cfstr, kCFStringEncodingASCII);
-
-			CFRelease(cfstr);
-			CFRelease(cfuuid);
-		}
-		auuid = auuid.Insert(0, "/");
-		// OSX SEM_NAME_LENGTH = 31
-		if(auuid.Length() >= 30)
-			auuid = auuid.Sub(0, 30);
-        
-		if ((internalData->semNamed = sem_open(auuid.Buffer(), O_CREAT, O_RDWR, initialCount)) == SEM_FAILED)
-		{
-			delete internalData;
-			internalData = 0;
-			return false;
-		}
-        
-#else
-		if (name == L"")
-		{
-			if(sem_init(&internalData->semUnnamed, 0, (int)initialCount) == -1)
-			{
-				delete internalData;
-				internalData = 0;
-				return false;
-			}
-		}
-        	else
-        	{
-			AString astr = wtoa(name);
-            
-			if ((internalData->semNamed = sem_open(astr.Buffer(), O_CREAT, 0777, initialCount)) == SEM_FAILED)
-			{
-				delete internalData;
-				internalData = 0;
-				return false;
-			}
-		}
+					if (id != -1 && proc.extendProc)
+					{
+						RegexProcessingToken token(result.start, result.length, id, completeToken, nullptr);
+						proc.extendProc(proc.argument, reading, -1, true, token);
+#if _DEBUG
+						CHECK_ERROR(token.interTokenState == nullptr, L"RegexTokenEnumerator::Next()#The extendProc is only allowed to create interTokenState in RegexLexerColorizer.");
 #endif
+						result.length = token.length;
+						id = token.token;
+						completeToken = token.completeToken;
+					}
 
-		Release(initialCount);
-		return true;
-	}
+					if (token.token == -2)
+					{
+						token.start = result.start;
+						token.length = result.length;
+						token.token = id;
+						token.completeToken = completeToken;
+					}
+					else if (token.token == id && id == -1)
+					{
+						token.length += result.length;
+					}
+					else
+					{
+						cacheAvailable = true;
+						cacheToken.reading = reading;
+						cacheToken.start = result.start;
+						cacheToken.length = result.length;
+						cacheToken.codeIndex = codeIndex;
+						cacheToken.token = id;
+						cacheToken.completeToken = completeToken;
+					}
+					reading += result.length;
 
-	bool Semaphore::Open(bool inheritable, const WString& name)
-	{
-		if (internalData) return false;
-		if (inheritable) return false;
+					if (cacheAvailable)
+					{
+						break;
+					}
+				}
 
-		internalData = new SemaphoreData;
-		if (!(internalData->semNamed = sem_open(wtoa(name).Buffer(), 0)))
+				index++;
+
+				for (vint i = 0; i < token.length; i++)
+				{
+					token.rowEnd = rowStart;
+					token.columnEnd = columnStart;
+					if (token.reading[i] == L'\n')
+					{
+						rowStart++;
+						columnStart = 0;
+					}
+					else
+					{
+						columnStart++;
+					}
+				}
+				return true;
+			}
+
+			void Reset()
+			{
+				index = -1;
+				reading = start;
+				cacheAvailable = false;
+			}
+
+			void ReadToEnd(List<RegexToken>& tokens, bool(*discard)(vint))
+			{
+				while (Next())
+				{
+					if (!discard(token.token))
+					{
+						tokens.Add(token);
+					}
+				}
+			}
+		};
+
+		RegexTokens::RegexTokens(PureInterpretor* _pure, const Array<vint>& _stateTokens, const WString& _code, vint _codeIndex, RegexProc _proc)
+			:pure(_pure)
+			, stateTokens(_stateTokens)
+			, code(_code)
+			, codeIndex(_codeIndex)
+			, proc(_proc)
 		{
-            delete internalData;
-            internalData = 0;
+		}
+
+		RegexTokens::RegexTokens(const RegexTokens& tokens)
+			:pure(tokens.pure)
+			, stateTokens(tokens.stateTokens)
+			, code(tokens.code)
+			, codeIndex(tokens.codeIndex)
+			, proc(tokens.proc)
+		{
+		}
+
+		IEnumerator<RegexToken>* RegexTokens::CreateEnumerator()const
+		{
+			return new RegexTokenEnumerator(pure, stateTokens, code.Buffer(), codeIndex, proc);
+		}
+
+		bool DefaultDiscard(vint token)
+		{
 			return false;
 		}
 
-		return true;
-	}
-
-	bool Semaphore::Release()
-	{
-		return Release(1);
-	}
-
-	vint Semaphore::Release(vint count)
-	{
-		for (vint i = 0; i < count; i++)
+		void RegexTokens::ReadToEnd(collections::List<RegexToken>& tokens, bool(*discard)(vint))const
 		{
-			if (internalData->semNamed)
+			if(discard==0)
 			{
-				sem_post(internalData->semNamed);
+				discard=&DefaultDiscard;
 			}
-			else
-			{
-				sem_post(&internalData->semUnnamed);
-			}
+			RegexTokenEnumerator(pure, stateTokens, code.Buffer(), codeIndex, proc).ReadToEnd(tokens, discard);
 		}
-		return true;
-	}
-
-	bool Semaphore::Wait()
-	{
-		if (internalData->semNamed)
-		{
-			return sem_wait(internalData->semNamed) == 0;
-		}
-		else
-		{
-			return sem_wait(&internalData->semUnnamed) == 0;
-		}
-	}
 
 /***********************************************************************
-EventObject
+RegexLexerWalker
 ***********************************************************************/
 
-	namespace threading_internal
-	{
-		struct EventData
+		RegexLexerWalker::RegexLexerWalker(PureInterpretor* _pure, const Array<vint>& _stateTokens)
+			:pure(_pure)
+			, stateTokens(_stateTokens)
 		{
-			bool				autoReset;
-			volatile bool		signaled;
-			CriticalSection		mutex;
-			ConditionVariable	cond;
-			volatile vint		counter = 0;
-		};
-	}
-
-	EventObject::EventObject()
-	{
-		internalData = nullptr;
-	}
-
-	EventObject::~EventObject()
-	{
-		if (internalData)
-		{
-			delete internalData;
 		}
-	}
 
-	bool EventObject::CreateAutoUnsignal(bool signaled, const WString& name)
-	{
-		if (name!=L"") return false;
-		if (internalData) return false;
-
-		internalData = new EventData;
-		internalData->autoReset = true;
-		internalData->signaled = signaled;
-		return true;
-	}
-
-	bool EventObject::CreateManualUnsignal(bool signaled, const WString& name)
-	{
-		if (name!=L"") return false;
-		if (internalData) return false;
-
-		internalData = new EventData;
-		internalData->autoReset = false;
-		internalData->signaled = signaled;
-		return true;
-	}
-
-	bool EventObject::Signal()
-	{
-		if (!internalData) return false;
-
-		internalData->mutex.Enter();
-		internalData->signaled = true;
-		if (internalData->counter)
+		RegexLexerWalker::RegexLexerWalker(const RegexLexerWalker& tokens)
+			: pure(tokens.pure)
+			, stateTokens(tokens.stateTokens)
 		{
-			if (internalData->autoReset)
+		}
+
+		RegexLexerWalker::~RegexLexerWalker()
+		{
+		}
+
+		RegexTokens::~RegexTokens()
+		{
+		}
+
+		vint RegexLexerWalker::GetStartState()const
+		{
+			return pure->GetStartState();
+		}
+
+		vint RegexLexerWalker::GetRelatedToken(vint state)const
+		{
+			vint finalState=pure->GetRelatedFinalState(state);
+			return finalState==-1?-1:stateTokens.Get(finalState);
+		}
+
+		void RegexLexerWalker::Walk(wchar_t input, vint& state, vint& token, bool& finalState, bool& previousTokenStop)const
+		{
+			vint previousState=state;
+			token=-1;
+			finalState=false;
+			previousTokenStop=false;
+			if(state==-1)
 			{
-				internalData->cond.WakeOnePending();
-				internalData->signaled = false;
+				state=pure->GetStartState();
+				previousTokenStop=true;
 			}
-			else
+
+			state=pure->Transit(input, state);
+			if(state==-1)
 			{
-				internalData->cond.WakeAllPendings();
-			}
-		}
-		internalData->mutex.Leave();
-		return true;
-	}
-
-	bool EventObject::Unsignal()
-	{
-		if (!internalData) return false;
-
-		internalData->mutex.Enter();
-		internalData->signaled = false;
-		internalData->mutex.Leave();
-		return true;
-	}
-
-	bool EventObject::Wait()
-	{
-		if (!internalData) return false;
-
-		internalData->mutex.Enter();
-		if (internalData->signaled)
-		{
-			if (internalData->autoReset)
-			{
-				internalData->signaled = false;
-			}
-		}
-		else
-		{
-			internalData->counter++;
-			internalData->cond.SleepWith(internalData->mutex);
-			internalData->counter--;
-		}
-		internalData->mutex.Leave();
-		return true;
-	}
-
-/***********************************************************************
-ThreadPoolLite
-***********************************************************************/
-
-	namespace threading_internal
-	{
-		struct ThreadPoolTask
-		{
-			Func<void()>			task;
-			Ptr<ThreadPoolTask>		next;
-		};
-
-		struct ThreadPoolData
-		{
-			Semaphore				semaphore;
-			EventObject				taskFinishEvent;
-			Ptr<ThreadPoolTask>		taskBegin;
-			Ptr<ThreadPoolTask>*	taskEnd = nullptr;
-			volatile bool			stopping = false;
-			List<Thread*>			taskThreads;
-		};
-
-		SpinLock					threadPoolLock;
-		ThreadPoolData*				threadPoolData = nullptr;
-
-		void ThreadPoolProc(Thread* thread, void* argument)
-		{
-			while (true)
-			{
-				Ptr<ThreadPoolTask> task;
-
-				threadPoolData->semaphore.Wait();
-				SPIN_LOCK(threadPoolLock)
+				previousTokenStop=true;
+				if(previousState==-1)
 				{
-					if (threadPoolData->taskBegin)
-					{
-						task = threadPoolData->taskBegin;
-						threadPoolData->taskBegin = task->next;
-					}
-
-					if (!threadPoolData->taskBegin)
-					{
-						threadPoolData->taskEnd = &threadPoolData->taskBegin;
-						threadPoolData->taskFinishEvent.Signal();
-					}
-				}
-
-				if (task)
-				{
-					ThreadLocalStorage::FixStorages();
-					try
-					{
-						task->task();
-						ThreadLocalStorage::ClearStorages();
-					}
-					catch (...)
-					{
-						ThreadLocalStorage::ClearStorages();
-					}
-				}
-				else if (threadPoolData->stopping)
-				{
+					finalState=true;
 					return;
 				}
-			}
-		}
-
-		bool ThreadPoolQueue(const Func<void()>& proc)
-		{
-			SPIN_LOCK(threadPoolLock)
-			{
-				if (!threadPoolData)
+				else if(pure->IsFinalState(previousState))
 				{
-					threadPoolData = new ThreadPoolData;
-					threadPoolData->semaphore.Create(0, 65536);
-					threadPoolData->taskFinishEvent.CreateManualUnsignal(false);
-					threadPoolData->taskEnd = &threadPoolData->taskBegin;
-
-					for (vint i = 0; i < Thread::GetCPUCount() * 4; i++)
-					{
-						threadPoolData->taskThreads.Add(Thread::CreateAndStart(&ThreadPoolProc, nullptr, false));
-					}
-				}
-
-				if (threadPoolData)
-				{
-					if (threadPoolData->stopping)
-					{
-						return false;
-					}
-
-					auto task = MakePtr<ThreadPoolTask>();
-					task->task = proc;
-					*threadPoolData->taskEnd = task;
-					threadPoolData->taskEnd = &task->next;
-					threadPoolData->semaphore.Release();
-					threadPoolData->taskFinishEvent.Unsignal();
+					state=pure->Transit(input, pure->GetStartState());
 				}
 			}
-			return true;
+			if(pure->IsFinalState(state))
+			{
+				token=stateTokens.Get(state);
+				finalState=true;
+				return;
+			}
+			else
+			{
+				finalState=state==-1;
+				return;
+			}
 		}
 
-		bool ThreadPoolStop(bool discardPendingTasks)
+		vint RegexLexerWalker::Walk(wchar_t input, vint state)const
 		{
-			SPIN_LOCK(threadPoolLock)
-			{
-				if (!threadPoolData) return false;
-				if (threadPoolData->stopping) return false;
-
-				threadPoolData->stopping = true;
-				if (discardPendingTasks)
-				{
-					threadPoolData->taskEnd = &threadPoolData->taskBegin;
-					threadPoolData->taskBegin = nullptr;
-				}
-
-				threadPoolData->semaphore.Release(threadPoolData->taskThreads.Count());
-			}
-
-			threadPoolData->taskFinishEvent.Wait();
-			for (vint i = 0; i < threadPoolData->taskThreads.Count(); i++)
-			{
-				auto thread = threadPoolData->taskThreads[i];
-				thread->Wait();
-				delete thread;
-			}
-			threadPoolData->taskThreads.Clear();
-
-			SPIN_LOCK(threadPoolLock)
-			{
-				delete threadPoolData;
-				threadPoolData = nullptr;
-			}
-			return true;
+			vint token=-1;
+			bool finalState=false;
+			bool previousTokenStop=false;
+			Walk(input, state, token, finalState, previousTokenStop);
+			return state;
 		}
-	}
 
-	ThreadPoolLite::ThreadPoolLite()
-	{
-	}
-
-	ThreadPoolLite::~ThreadPoolLite()
-	{
-	}
-
-	bool ThreadPoolLite::Queue(void(*proc)(void*), void* argument)
-	{
-		return ThreadPoolQueue([proc, argument](){proc(argument);});
-	}
-
-	bool ThreadPoolLite::Queue(const Func<void()>& proc)
-	{
-		return ThreadPoolQueue(proc);
-	}
-
-	bool ThreadPoolLite::Stop(bool discardPendingTasks)
-	{
-		return ThreadPoolStop(discardPendingTasks);
-	}
-
-/***********************************************************************
-CriticalSection
-***********************************************************************/
-
-	namespace threading_internal
-	{
-		struct CriticalSectionData
+		bool RegexLexerWalker::IsClosedToken(const wchar_t* input, vint length)const
 		{
-			pthread_mutex_t		mutex;
-		};
-	}
-
-	CriticalSection::CriticalSection()
-	{
-		internalData = new CriticalSectionData;
-		pthread_mutex_init(&internalData->mutex, nullptr);
-	}
-
-	CriticalSection::~CriticalSection()
-	{
-		pthread_mutex_destroy(&internalData->mutex);
-		delete internalData;
-	}
-
-	bool CriticalSection::TryEnter()
-	{
-		return pthread_mutex_trylock(&internalData->mutex) == 0;
-	}
-
-	void CriticalSection::Enter()
-	{
-		pthread_mutex_lock(&internalData->mutex);
-	}
-
-	void CriticalSection::Leave()
-	{
-		pthread_mutex_unlock(&internalData->mutex);
-	}
-
-	CriticalSection::Scope::Scope(CriticalSection& _criticalSection)
-		:criticalSection(&_criticalSection)
-	{
-		criticalSection->Enter();
-	}
-
-	CriticalSection::Scope::~Scope()
-	{
-		criticalSection->Leave();
-	}
-
-/***********************************************************************
-ReaderWriterLock
-***********************************************************************/
-
-	namespace threading_internal
-	{
-		struct ReaderWriterLockData
-		{
-			pthread_rwlock_t			rwlock;
-		};
-	}
-
-	ReaderWriterLock::ReaderWriterLock()
-	{
-		internalData = new ReaderWriterLockData;
-		pthread_rwlock_init(&internalData->rwlock, nullptr);
-	}
-
-	ReaderWriterLock::~ReaderWriterLock()
-	{
-		pthread_rwlock_destroy(&internalData->rwlock);
-		delete internalData;
-	}
-
-	bool ReaderWriterLock::TryEnterReader()
-	{
-		return pthread_rwlock_tryrdlock(&internalData->rwlock) == 0;
-	}
-
-	void ReaderWriterLock::EnterReader()
-	{
-		pthread_rwlock_rdlock(&internalData->rwlock);
-	}
-
-	void ReaderWriterLock::LeaveReader()
-	{
-		pthread_rwlock_unlock(&internalData->rwlock);
-	}
-
-	bool ReaderWriterLock::TryEnterWriter()
-	{
-		return pthread_rwlock_trywrlock(&internalData->rwlock) == 0;
-	}
-
-	void ReaderWriterLock::EnterWriter()
-	{
-		pthread_rwlock_wrlock(&internalData->rwlock);
-	}
-
-	void ReaderWriterLock::LeaveWriter()
-	{
-		pthread_rwlock_unlock(&internalData->rwlock);
-	}
-
-	ReaderWriterLock::ReaderScope::ReaderScope(ReaderWriterLock& _lock)
-		:lock(&_lock)
-	{
-		lock->EnterReader();
-	}
-
-	ReaderWriterLock::ReaderScope::~ReaderScope()
-	{
-		lock->LeaveReader();
-	}
-
-	ReaderWriterLock::WriterScope::WriterScope(ReaderWriterLock& _lock)
-		:lock(&_lock)
-	{
-		lock->EnterWriter();
-	}
-
-	ReaderWriterLock::WriterScope::~WriterScope()
-	{
-		lock->LeaveReader();
-	}
-
-/***********************************************************************
-ConditionVariable
-***********************************************************************/
-
-	namespace threading_internal
-	{
-		struct ConditionVariableData
-		{
-			pthread_cond_t			cond;
-		};
-	}
-
-	ConditionVariable::ConditionVariable()
-	{
-		internalData = new ConditionVariableData;
-		pthread_cond_init(&internalData->cond, nullptr);
-	}
-
-	ConditionVariable::~ConditionVariable()
-	{
-		pthread_cond_destroy(&internalData->cond);
-		delete internalData;
-	}
-
-	bool ConditionVariable::SleepWith(CriticalSection& cs)
-	{
-		return pthread_cond_wait(&internalData->cond, &cs.internalData->mutex) == 0;
-	}
-
-	void ConditionVariable::WakeOnePending()
-	{
-		pthread_cond_signal(&internalData->cond);
-	}
-
-	void ConditionVariable::WakeAllPendings()
-	{
-		pthread_cond_broadcast(&internalData->cond);
-	}
-
-/***********************************************************************
-SpinLock
-***********************************************************************/
-
-	SpinLock::Scope::Scope(SpinLock& _spinLock)
-		:spinLock(&_spinLock)
-	{
-		spinLock->Enter();
-	}
-
-	SpinLock::Scope::~Scope()
-	{
-		spinLock->Leave();
-	}
-			
-	SpinLock::SpinLock()
-		:token(0)
-	{
-	}
-
-	SpinLock::~SpinLock()
-	{
-	}
-
-	bool SpinLock::TryEnter()
-	{
-		return __sync_lock_test_and_set(&token, 1)==0;
-	}
-
-	void SpinLock::Enter()
-	{
-		while(__sync_val_compare_and_swap(&token, 0, 1)!=0)
-		{
-			while(token!=0) _mm_pause();
+			vint state=pure->GetStartState();
+			for(vint i=0;i<length;i++)
+			{
+				state=pure->Transit(input[i], state);
+				if(state==-1) return true;
+				if(pure->IsDeadState(state)) return true;
+			}
+			return false;
 		}
-	}
 
-	void SpinLock::Leave()
-	{
-		__sync_lock_test_and_set(&token, 0);
-	}
+		bool RegexLexerWalker::IsClosedToken(const WString& input)const
+		{
+			return IsClosedToken(input.Buffer(), input.Length());
+		}
 
 /***********************************************************************
-ThreadLocalStorage
+RegexLexerColorizer
 ***********************************************************************/
 
-#define KEY ((pthread_key_t&)key)
+		RegexLexerColorizer::RegexLexerColorizer(const RegexLexerWalker& _walker, RegexProc _proc)
+			:walker(_walker)
+			, proc(_proc)
+		{
+			internalState.currentState = walker.GetStartState();
+		}
 
-	ThreadLocalStorage::ThreadLocalStorage(Destructor _destructor)
-		:destructor(_destructor)
-	{
-		static_assert(sizeof(key) >= sizeof(pthread_key_t), "ThreadLocalStorage's key storage is not large enouth.");
-		PushStorage(this);
-		auto error = pthread_key_create(&KEY, destructor);
-		CHECK_ERROR(error != EAGAIN && error != ENOMEM, L"vl::ThreadLocalStorage::ThreadLocalStorage()#Failed to create a thread local storage index.");
-	}
+		RegexLexerColorizer::RegexLexerColorizer(const RegexLexerColorizer& colorizer)
+			:walker(colorizer.walker)
+			, proc(colorizer.proc)
+			, internalState(colorizer.internalState)
+		{
+		}
 
-	ThreadLocalStorage::~ThreadLocalStorage()
-	{
-		pthread_key_delete(KEY);
-	}
+		RegexLexerColorizer::~RegexLexerColorizer()
+		{
+		}
 
-	void* ThreadLocalStorage::Get()
-	{
-		CHECK_ERROR(!disposed, L"vl::ThreadLocalStorage::Get()#Cannot access a disposed ThreadLocalStorage.");
-		return pthread_getspecific(KEY);
-	}
+		RegexLexerColorizer::InternalState RegexLexerColorizer::GetInternalState()
+		{
+			return internalState;
+		}
+		void RegexLexerColorizer::SetInternalState(InternalState state)
+		{
+			internalState = state;
+		}
 
-	void ThreadLocalStorage::Set(void* data)
-	{
-		CHECK_ERROR(!disposed, L"vl::ThreadLocalStorage::Set()#Cannot access a disposed ThreadLocalStorage.");
-		pthread_setspecific(KEY, data);
-	}
+		void RegexLexerColorizer::Pass(wchar_t input)
+		{
+			WalkOneToken(&input, 1, 0, false);
+		}
 
-#undef KEY
-}
+		vint RegexLexerColorizer::GetStartState()const
+		{
+			return walker.GetStartState();
+		}
+
+		void RegexLexerColorizer::CallExtendProcAndColorizeProc(const wchar_t* input, vint length, RegexProcessingToken& token, bool colorize)
+		{
+			vint oldTokenLength = token.length;
+			proc.extendProc(proc.argument, input + token.start, length - token.start, false, token);
+#if _DEBUG
+			{
+				bool pausedAtTheEnd = token.start + token.length == length && !token.completeToken;
+				CHECK_ERROR(
+					token.completeToken || pausedAtTheEnd,
+					L"RegexLexerColorizer::WalkOneToken(const wchar_t*, vint, vint, bool)#The extendProc is not allowed pause before the end of the input."
+				);
+				CHECK_ERROR(
+					token.completeToken || token.token != -1,
+					L"RegexLexerColorizer::WalkOneToken(const wchar_t*, vint, vint, bool)#The extendProc is not allowed to pause without a valid token id."
+				);
+				CHECK_ERROR(
+					oldTokenLength <= token.length,
+					L"RegexLexerColorizer::WalkOneToken(const wchar_t*, vint, vint, bool)#The extendProc is not allowed to decrease the token length."
+				);
+				CHECK_ERROR(
+					(token.interTokenState == nullptr) == !pausedAtTheEnd,
+					L"RegexLexerColorizer::Colorize(const wchar_t*, vint, void*)#The extendProc should return an inter token state object if and only if a valid token does not end at the end of the input."
+				);
+			}
 #endif
-
-
-/***********************************************************************
-.\PARSING\JSON\PARSINGJSON.CPP
-***********************************************************************/
-
-namespace vl
-{
-	namespace parsing
-	{
-		namespace json
-		{
-			using namespace stream;
-			using namespace collections;
-
-/***********************************************************************
-Unescaping Function Foward Declarations
-***********************************************************************/
-
-			void JsonUnescapingString(vl::parsing::ParsingToken& value, const vl::collections::List<vl::regex::RegexToken>& tokens)
+			if ((internalState.interTokenState = token.interTokenState))
 			{
-				MemoryStream stream;
-				{
-					StreamWriter writer(stream);
-					JsonUnescapeString(value.value.Sub(1, value.value.Length()-2), writer);
-				}
-				stream.SeekFromBegin(0);
-				{
-					StreamReader reader(stream);
-					value.value=reader.ReadToEnd();
-				}
+				internalState.interTokenId = token.token;
+				internalState.currentState = walker.GetStartState();
 			}
-
-/***********************************************************************
-JsonPrintVisitor
-***********************************************************************/
-
-			class JsonPrintVisitor : public Object, public JsonNode::IVisitor
+			if (colorize)
 			{
-			public:
-				TextWriter&					writer;
-
-				JsonPrintVisitor(TextWriter& _writer)
-					:writer(_writer)
-				{
-				}
-
-				void Visit(JsonLiteral* node)
-				{
-					switch(node->value)
-					{
-					case JsonLiteral::JsonValue::True:
-						writer.WriteString(L"true");
-						break;
-					case JsonLiteral::JsonValue::False:
-						writer.WriteString(L"false");
-						break;
-					case JsonLiteral::JsonValue::Null:
-						writer.WriteString(L"null");
-						break;
-					}
-				}
-
-				void Visit(JsonString* node)
-				{
-					writer.WriteChar(L'\"');
-					JsonEscapeString(node->content.value, writer);
-					writer.WriteChar(L'\"');
-				}
-
-				void Visit(JsonNumber* node)
-				{
-					writer.WriteString(node->content.value);
-				}
-
-				void Visit(JsonArray* node)
-				{
-					writer.WriteChar(L'[');
-					FOREACH_INDEXER(Ptr<JsonNode>, item, i, node->items)
-					{
-						if(i>0) writer.WriteChar(L',');
-						item->Accept(this);
-					}
-					writer.WriteChar(L']');
-				}
-
-				void Visit(JsonObjectField* node)
-				{
-					writer.WriteChar(L'\"');
-					JsonEscapeString(node->name.value, writer);
-					writer.WriteString(L"\":");
-					node->value->Accept(this);
-				}
-
-				void Visit(JsonObject* node)
-				{
-					writer.WriteChar(L'{');
-					FOREACH_INDEXER(Ptr<JsonObjectField>, field, i, node->fields)
-					{
-						if(i>0) writer.WriteChar(L',');
-						field->Accept(this);
-					}
-					writer.WriteChar(L'}');
-				}
-			};
-
-/***********************************************************************
-API
-***********************************************************************/
-
-			void JsonEscapeString(const WString& text, stream::TextWriter& writer)
-			{
-				const wchar_t* reading=text.Buffer();
-				while(wchar_t c=*reading++)
-				{
-					switch(c)
-					{
-					case L'\"': writer.WriteString(L"\\\""); break;
-					case L'\\': writer.WriteString(L"\\\\"); break;
-					case L'/': writer.WriteString(L"\\/"); break;
-					case L'\b': writer.WriteString(L"\\b"); break;
-					case L'\f': writer.WriteString(L"\\f"); break;
-					case L'\n': writer.WriteString(L"\\n"); break;
-					case L'\r': writer.WriteString(L"\\r"); break;
-					case L'\t': writer.WriteString(L"\\t"); break;
-					default: writer.WriteChar(c);
-					}
-				}
-			}
-
-			vuint16_t GetHex(wchar_t c)
-			{
-				if(L'0'<=c && c<=L'9')
-				{
-					return c-L'0';
-				}
-				else if(L'A'<=c && c<=L'F')
-				{
-					return c-L'A';
-				}
-				else if(L'a'<=c && c<=L'f')
-				{
-					return c-L'a';
-				}
-				else
-				{
-					return 0;
-				}
-			}
-
-			void JsonUnescapeString(const WString& text, stream::TextWriter& writer)
-			{
-				const wchar_t* reading=text.Buffer();
-				while(wchar_t c=*reading++)
-				{
-					if(c==L'\\' && *reading)
-					{
-						switch(c=*reading++)
-						{
-						case L'b': writer.WriteChar(L'\b'); break;
-						case L'f': writer.WriteChar(L'\f'); break;
-						case L'n': writer.WriteChar(L'\n'); break;
-						case L'r': writer.WriteChar(L'\r'); break;
-						case L't': writer.WriteChar(L'\t'); break;
-						case L'u':
-							{
-								wchar_t h1, h2, h3, h4;
-								if((h1=reading[0]) && (h2=reading[1]) && (h3=reading[2]) && (h4=reading[3]))
-								{
-									reading+=4;
-									wchar_t h=(wchar_t)(vuint16_t)(
-										(GetHex(h1)<<12) +
-										(GetHex(h2)<<8) +
-										(GetHex(h3)<<4) +
-										(GetHex(h4)<<0)
-										);
-									writer.WriteChar(h);
-								}
-							}
-							break;
-						default: writer.WriteChar(c);
-						}
-					}
-					else
-					{
-						writer.WriteChar(c);
-					}
-				}
-			}
-
-			void JsonPrint(Ptr<JsonNode> node, stream::TextWriter& writer)
-			{
-				JsonPrintVisitor visitor(writer);
-				node->Accept(&visitor);
-			}
-
-			WString JsonToString(Ptr<JsonNode> node)
-			{
-				MemoryStream stream;
-				{
-					StreamWriter writer(stream);
-					JsonPrint(node, writer);
-				}
-				stream.SeekFromBegin(0);
-				{
-					StreamReader reader(stream);
-					return reader.ReadToEnd();
-				}
+				proc.colorizeProc(proc.argument, token.start, token.length, token.token);
 			}
 		}
-	}
-}
 
-
-/***********************************************************************
-.\PARSING\JSON\PARSINGJSON_AST.CPP
-***********************************************************************/
-/***********************************************************************
-Vczh Library++ 3.0
-Developer: Zihan Chen(vczh)
-Parser::ParsingJson.parser.txt
-
-This file is generated by: Vczh Parser Generator
-***********************************************************************/
-
-
-namespace vl
-{
-	namespace parsing
-	{
-		namespace json
+		vint RegexLexerColorizer::WalkOneToken(const wchar_t* input, vint length, vint start, bool colorize)
 		{
-/***********************************************************************
-Visitor Pattern Implementation
-***********************************************************************/
-
-			void JsonLiteral::Accept(JsonNode::IVisitor* visitor)
+			if (internalState.interTokenState)
 			{
-				visitor->Visit(this);
-			}
-
-			void JsonString::Accept(JsonNode::IVisitor* visitor)
-			{
-				visitor->Visit(this);
-			}
-
-			void JsonNumber::Accept(JsonNode::IVisitor* visitor)
-			{
-				visitor->Visit(this);
-			}
-
-			void JsonArray::Accept(JsonNode::IVisitor* visitor)
-			{
-				visitor->Visit(this);
-			}
-
-			void JsonObjectField::Accept(JsonNode::IVisitor* visitor)
-			{
-				visitor->Visit(this);
-			}
-
-			void JsonObject::Accept(JsonNode::IVisitor* visitor)
-			{
-				visitor->Visit(this);
-			}
-
-		}
-	}
-}
-namespace vl
-{
-	namespace reflection
-	{
-		namespace description
-		{
-#ifndef VCZH_DEBUG_NO_REFLECTION
-			using namespace vl::parsing::json;
-
-#define PARSING_TOKEN_FIELD(NAME)\
-			CLASS_MEMBER_EXTERNALMETHOD_TEMPLATE(get_##NAME, NO_PARAMETER, vl::WString(ClassType::*)(), [](ClassType* node) { return node->NAME.value; }, L"*", L"*")\
-			CLASS_MEMBER_EXTERNALMETHOD_TEMPLATE(set_##NAME, { L"value" }, void(ClassType::*)(const vl::WString&), [](ClassType* node, const vl::WString& value) { node->NAME.value = value; }, L"*", L"*")\
-			CLASS_MEMBER_PROPERTY_REFERENCETEMPLATE(NAME, get_##NAME, set_##NAME, L"$This->$Name.value")\
-
-			IMPL_TYPE_INFO_RENAME(vl::parsing::json::JsonNode, system::JsonNode)
-			IMPL_TYPE_INFO_RENAME(vl::parsing::json::JsonLiteral, system::JsonLiteral)
-			IMPL_TYPE_INFO_RENAME(vl::parsing::json::JsonLiteral::JsonValue, system::JsonLiteral::JsonValue)
-			IMPL_TYPE_INFO_RENAME(vl::parsing::json::JsonString, system::JsonString)
-			IMPL_TYPE_INFO_RENAME(vl::parsing::json::JsonNumber, system::JsonNumber)
-			IMPL_TYPE_INFO_RENAME(vl::parsing::json::JsonArray, system::JsonArray)
-			IMPL_TYPE_INFO_RENAME(vl::parsing::json::JsonObjectField, system::JsonObjectField)
-			IMPL_TYPE_INFO_RENAME(vl::parsing::json::JsonObject, system::JsonObject)
-			IMPL_TYPE_INFO_RENAME(vl::parsing::json::JsonNode::IVisitor, system::JsonNode::IVisitor)
-
-			BEGIN_CLASS_MEMBER(JsonNode)
-				CLASS_MEMBER_METHOD_OVERLOAD(Accept, {L"visitor"}, void(JsonNode::*)(JsonNode::IVisitor* visitor))
-			END_CLASS_MEMBER(JsonNode)
-
-			BEGIN_CLASS_MEMBER(JsonLiteral)
-				CLASS_MEMBER_BASE(JsonNode)
-
-				CLASS_MEMBER_CONSTRUCTOR(vl::Ptr<JsonLiteral>(), NO_PARAMETER)
-
-				CLASS_MEMBER_FIELD(value)
-			END_CLASS_MEMBER(JsonLiteral)
-
-			BEGIN_ENUM_ITEM(JsonLiteral::JsonValue)
-				ENUM_ITEM_NAMESPACE(JsonLiteral::JsonValue)
-				ENUM_NAMESPACE_ITEM(True)
-				ENUM_NAMESPACE_ITEM(False)
-				ENUM_NAMESPACE_ITEM(Null)
-			END_ENUM_ITEM(JsonLiteral::JsonValue)
-
-			BEGIN_CLASS_MEMBER(JsonString)
-				CLASS_MEMBER_BASE(JsonNode)
-
-				CLASS_MEMBER_CONSTRUCTOR(vl::Ptr<JsonString>(), NO_PARAMETER)
-
-				PARSING_TOKEN_FIELD(content)
-			END_CLASS_MEMBER(JsonString)
-
-			BEGIN_CLASS_MEMBER(JsonNumber)
-				CLASS_MEMBER_BASE(JsonNode)
-
-				CLASS_MEMBER_CONSTRUCTOR(vl::Ptr<JsonNumber>(), NO_PARAMETER)
-
-				PARSING_TOKEN_FIELD(content)
-			END_CLASS_MEMBER(JsonNumber)
-
-			BEGIN_CLASS_MEMBER(JsonArray)
-				CLASS_MEMBER_BASE(JsonNode)
-
-				CLASS_MEMBER_CONSTRUCTOR(vl::Ptr<JsonArray>(), NO_PARAMETER)
-
-				CLASS_MEMBER_FIELD(items)
-			END_CLASS_MEMBER(JsonArray)
-
-			BEGIN_CLASS_MEMBER(JsonObjectField)
-				CLASS_MEMBER_BASE(JsonNode)
-
-				CLASS_MEMBER_CONSTRUCTOR(vl::Ptr<JsonObjectField>(), NO_PARAMETER)
-
-				PARSING_TOKEN_FIELD(name)
-				CLASS_MEMBER_FIELD(value)
-			END_CLASS_MEMBER(JsonObjectField)
-
-			BEGIN_CLASS_MEMBER(JsonObject)
-				CLASS_MEMBER_BASE(JsonNode)
-
-				CLASS_MEMBER_CONSTRUCTOR(vl::Ptr<JsonObject>(), NO_PARAMETER)
-
-				CLASS_MEMBER_FIELD(fields)
-			END_CLASS_MEMBER(JsonObject)
-
-			BEGIN_INTERFACE_MEMBER(JsonNode::IVisitor)
-				CLASS_MEMBER_METHOD_OVERLOAD(Visit, {L"node"}, void(JsonNode::IVisitor::*)(JsonLiteral* node))
-				CLASS_MEMBER_METHOD_OVERLOAD(Visit, {L"node"}, void(JsonNode::IVisitor::*)(JsonString* node))
-				CLASS_MEMBER_METHOD_OVERLOAD(Visit, {L"node"}, void(JsonNode::IVisitor::*)(JsonNumber* node))
-				CLASS_MEMBER_METHOD_OVERLOAD(Visit, {L"node"}, void(JsonNode::IVisitor::*)(JsonArray* node))
-				CLASS_MEMBER_METHOD_OVERLOAD(Visit, {L"node"}, void(JsonNode::IVisitor::*)(JsonObjectField* node))
-				CLASS_MEMBER_METHOD_OVERLOAD(Visit, {L"node"}, void(JsonNode::IVisitor::*)(JsonObject* node))
-			END_INTERFACE_MEMBER(JsonNode)
-
-#undef PARSING_TOKEN_FIELD
-
-			class JsonTypeLoader : public vl::Object, public ITypeLoader
-			{
-			public:
-				void Load(ITypeManager* manager)
+				RegexProcessingToken token(-1, -1, internalState.interTokenId, false, internalState.interTokenState);
+				proc.extendProc(proc.argument, input, length, false, token);
+#if _DEBUG
 				{
-					ADD_TYPE_INFO(vl::parsing::json::JsonNode)
-					ADD_TYPE_INFO(vl::parsing::json::JsonLiteral)
-					ADD_TYPE_INFO(vl::parsing::json::JsonLiteral::JsonValue)
-					ADD_TYPE_INFO(vl::parsing::json::JsonString)
-					ADD_TYPE_INFO(vl::parsing::json::JsonNumber)
-					ADD_TYPE_INFO(vl::parsing::json::JsonArray)
-					ADD_TYPE_INFO(vl::parsing::json::JsonObjectField)
-					ADD_TYPE_INFO(vl::parsing::json::JsonObject)
-					ADD_TYPE_INFO(vl::parsing::json::JsonNode::IVisitor)
-				}
-
-				void Unload(ITypeManager* manager)
-				{
-				}
-			};
-#endif
-
-			bool JsonLoadTypes()
-			{
-#ifndef VCZH_DEBUG_NO_REFLECTION
-				ITypeManager* manager=GetGlobalTypeManager();
-				if(manager)
-				{
-					Ptr<ITypeLoader> loader=new JsonTypeLoader;
-					return manager->AddTypeLoader(loader);
-				}
-#endif
-				return false;
-			}
-		}
-	}
-}
-
-
-/***********************************************************************
-.\PARSING\JSON\PARSINGJSON_PARSER.CPP
-***********************************************************************/
-/***********************************************************************
-Vczh Library++ 3.0
-Developer: Zihan Chen(vczh)
-Parser::ParsingJson.parser.txt
-
-This file is generated by: Vczh Parser Generator
-***********************************************************************/
-
-
-namespace vl
-{
-	namespace parsing
-	{
-		namespace json
-		{
-/***********************************************************************
-ParserText
-***********************************************************************/
-
-const wchar_t* const parserTextBuffer[] = {
-  L"" L"\r\n"
-, L"//////////////////////////////////////////////////////////////////" L"\r\n"
-, L"// AST" L"\r\n"
-, L"//////////////////////////////////////////////////////////////////" L"\r\n"
-, L"" L"\r\n"
-, L"class Node" L"\r\n"
-, L"{" L"\r\n"
-, L"}" L"\r\n"
-, L"" L"\r\n"
-, L"class Literal:Node" L"\r\n"
-, L"{" L"\r\n"
-, L"\tenum Value" L"\r\n"
-, L"\t{" L"\r\n"
-, L"\t\tTrue," L"\r\n"
-, L"\t\tFalse," L"\r\n"
-, L"\t\tNull," L"\r\n"
-, L"\t}" L"\r\n"
-, L"" L"\r\n"
-, L"\tValue value;" L"\r\n"
-, L"}" L"\r\n"
-, L"" L"\r\n"
-, L"class String:Node" L"\r\n"
-, L"{" L"\r\n"
-, L"\ttoken content(JsonUnescapingString)\t\t\t\t@Color(\"String\");" L"\r\n"
-, L"}" L"\r\n"
-, L"" L"\r\n"
-, L"class Number:Node" L"\r\n"
-, L"{" L"\r\n"
-, L"\ttoken content;" L"\r\n"
-, L"}" L"\r\n"
-, L"" L"\r\n"
-, L"class Array:Node" L"\r\n"
-, L"{" L"\r\n"
-, L"\tNode[] items;" L"\r\n"
-, L"}" L"\r\n"
-, L"" L"\r\n"
-, L"class ObjectField:Node" L"\r\n"
-, L"{" L"\r\n"
-, L"\ttoken name(JsonUnescapingString)\t\t\t\t@Color(\"AttName\");" L"\r\n"
-, L"\tNode value;" L"\r\n"
-, L"}" L"\r\n"
-, L"" L"\r\n"
-, L"class Object:Node" L"\r\n"
-, L"{" L"\r\n"
-, L"\tObjectField[] fields;" L"\r\n"
-, L"}" L"\r\n"
-, L"" L"\r\n"
-, L"//////////////////////////////////////////////////////////////////" L"\r\n"
-, L"// Lexer" L"\r\n"
-, L"//////////////////////////////////////////////////////////////////" L"\r\n"
-, L"" L"\r\n"
-, L"token TRUEVALUE = \"true\"\t\t\t\t\t\t\t@Color(\"Keyword\");" L"\r\n"
-, L"token FALSEVALUE = \"false\"\t\t\t\t\t\t\t@Color(\"Keyword\");" L"\r\n"
-, L"token NULLVALUE = \"null\"\t\t\t\t\t\t\t@Color(\"Keyword\");" L"\r\n"
-, L"token OBJOPEN = \"\\{\"\t\t\t\t\t\t\t\t@Color(\"Boundary\");" L"\r\n"
-, L"token OBJCLOSE = \"\\}\"\t\t\t\t\t\t\t\t@Color(\"Boundary\");" L"\r\n"
-, L"token ARROPEN = \"\\[\"\t\t\t\t\t\t\t\t@Color(\"Boundary\");" L"\r\n"
-, L"token ARRCLOSE = \"\\]\"\t\t\t\t\t\t\t\t@Color(\"Boundary\");" L"\r\n"
-, L"token COMMA = \",\";" L"\r\n"
-, L"token COLON = \":\";" L"\r\n"
-, L"token NUMBER = \"[\\-]?\\d+(.\\d+)?([eE][+\\-]?\\d+)?\"\t@Color(\"Number\");" L"\r\n"
-, L"token STRING = \"\"\"([^\\\\\"\"]|\\\\[^u]|\\\\u\\d{4})*\"\"\"\t\t@ContextColor();" L"\r\n"
-, L"" L"\r\n"
-, L"discardtoken SPACE = \"\\s+\";" L"\r\n"
-, L"" L"\r\n"
-, L"//////////////////////////////////////////////////////////////////" L"\r\n"
-, L"// Rules" L"\r\n"
-, L"//////////////////////////////////////////////////////////////////" L"\r\n"
-, L"" L"\r\n"
-, L"rule Node JLiteral" L"\r\n"
-, L"\t= STRING:content as String" L"\r\n"
-, L"\t= NUMBER:content as Number" L"\r\n"
-, L"\t= \"true\" as Literal with {value = \"True\"}" L"\r\n"
-, L"\t= \"false\" as Literal with {value = \"False\"}" L"\r\n"
-, L"\t= \"null\" as Literal with {value = \"Null\"}" L"\r\n"
-, L"\t;" L"\r\n"
-, L"" L"\r\n"
-, L"rule ObjectField JField" L"\r\n"
-, L"\t= STRING:name \":\" JValue:value as ObjectField" L"\r\n"
-, L"\t;" L"\r\n"
-, L"" L"\r\n"
-, L"rule Object JObject" L"\r\n"
-, L"\t= \"{\" [JField:fields {\",\" JField:fields} ] \"}\" as Object" L"\r\n"
-, L"\t;" L"\r\n"
-, L"" L"\r\n"
-, L"rule Array JArray" L"\r\n"
-, L"\t= \"[\" [JValue:items {\",\" JValue:items} ] \"]\" as Array" L"\r\n"
-, L"\t;" L"\r\n"
-, L"" L"\r\n"
-, L"rule Node JValue" L"\r\n"
-, L"\t= !JLiteral" L"\r\n"
-, L"\t= !JObject" L"\r\n"
-, L"\t= !JArray" L"\r\n"
-, L"\t;" L"\r\n"
-, L"" L"\r\n"
-, L"rule Node JRoot" L"\r\n"
-, L"\t= !JObject" L"\r\n"
-, L"\t= !JArray" L"\r\n"
-, L"\t;" L"\r\n"
-};
-const vint lengthTextBuffer[] = {
-  2, 68, 8, 68, 2, 12, 3, 3, 2, 20, 3, 13, 4, 9, 10, 9, 4, 2, 15, 3, 2, 19, 3, 59, 3, 2, 19, 3, 17, 3, 2, 18
-, 3, 16, 3, 2, 24, 3, 57, 14, 3, 2, 19, 3, 24, 3, 2, 68, 10, 68, 2, 51, 53, 51, 49, 50, 49, 50, 20, 20, 68, 67, 2, 29
-, 2, 68, 10, 68, 2, 20, 29, 29, 44, 46, 44, 4, 2, 25, 48, 4, 2, 21, 59, 4, 2, 19, 56, 4, 2, 18, 14, 13, 12, 4, 2, 17
-, 13, 12, 4
-};
-const vint lengthTextBufferTotal = 2018;
-
-			vl::WString JsonGetParserTextBuffer()
-			{
-				vl::collections::Array<wchar_t> textBuffer(lengthTextBufferTotal + 1);
-				wchar_t* reading = &textBuffer[0];
-				for(vint i = 0; i < sizeof(parserTextBuffer) / sizeof(*parserTextBuffer); i++)
-				{
-					memcpy(reading, parserTextBuffer[i], lengthTextBuffer[i] * sizeof(wchar_t));
-					reading += lengthTextBuffer[i];
-				}
-				*reading = 0;
-				return &textBuffer[0];
-			}
-
-/***********************************************************************
-SerializedTable
-***********************************************************************/
-
-const vint parserBufferLength = 3809; // 17748 bytes before compressing
-const vint parserBufferBlock = 1024;
-const vint parserBufferRemain = 737;
-const vint parserBufferRows = 4;
-const char* const parserBuffer[] = {
-"\x00\x0B\x00\x02\x83\x80\x07\x7D\x00\x82\x03\xFF\x45\x08\x82\x83\x86\x81\x21\x6F\x6C\x2F\x32\x37\x84\x86\x02\x86\x00\x17\x82\x93\x24\x3A\x39\x34\x37\x67\x06\x98\x8A\x88\x8E\x84\x00\x88\x12\x94\x98\x87\x0B\x93\x81\x20\x3A\x74\x4E\x21\x2D\x35\x32\x90\x86\x92\x0C\xA6\xA8\x93\x85\x88\x84\x96\x86\x3F\x80\x0B\x25\x39\x3F\x3B\x88\x32\x36\x88\xB8\x88\x8A\x99\x88\x9F\x96\x40\x83\x83\xA5\xA7\xA1\xA4\x83\xA5\x04\xCD\xA9\x9D\x94\x81\xA1\xAE\xA9\x44\xC6\xB2\x28\xAC\xA9\x86\x93\xAC\x03\xBB\xAA\x8C\x88\x00\x8D\xB6\x81\x42\x6F\x35\x2E\x34\x31\x32\x39\x3C\x56\xE6\xA5\x89\xBE\xA3\xB4\x85\xB7\x7F\x83\xB1\xB3\xB5\xBF\xB9\xBC\x81\x58\x83\x9A\xAF\xAC\xB6\xB6\xC0\xB9\x74\xF6\xB8\xA5\xB8\xC7\xB2\xC4\xBE\x5B\x8E\xCD\xD0\xB0\xCD\xC3\xC9\x91\x96\x8D\x98\xCC\xC8\x82\x8D\xD3\x81\x4E\x75\x2D\x22\x35\x32\x3B\xC3\x82\x0C\x18\xB1\xCF\x8F\x36\x34\x3B\x32\x78\x74\x2A\xB8\x80\x06\xAF\xCB\x9C\x2E\xF2\x32\x21\x38\xBF\x7E\xE3\xE3\xFF\x3E\xC2\x81\xAC\x21\x37\xDB\xE1\x6C\x48\xC8\xE4\x08\x8C\xEA\x80\x27\x6F\x64\x35\x92\xE6\xE6\xD0\x82\xD3\xA9\xAB\xED\xDC\xED\xE8\x8E\xD3\x27\x62\x6A\x25\x23\x34\x3C\xF3\x7F\x80\x0C\xF0\xC0\x08\xFA\xF4\xF6\x23\x34\x65\x6C\x08\xA4\xFE\xEB\x82\xD2\x8E\x1E\x60\x4E\x7A\x72\x00\x21\x65\x81\x70\xC3\x79\x16\x82\x49\xCE\x65\x1D\x1B\x1C\x03\x90\x50\x01\x73\xCF\x61\x1C\x1B\x82\x03\x76\x16\x85\x1D\xDB\x5C\x7D\x7E\x40\xE0\x6A\x6C\x6A\x1C\x04\x81\x53\x19\x6D\xB7\x76\x6E\x7B\x87\x19\x43\x44\x7F\x7A\x74\x2C\x86\x6A\x19\xF8\x7A\x70\x84\x79\xF2\x44\x42\x7F\x8B\xF6\x75\x84\x1A\x75\x08\x40\x9E\x1B\x4C\x65\x14\x60\x40\x46\x3B\xA9\x70\x8F\x7D\xF9\x64\x18\x86\x40\x1A\xAC\x1C\x87\x8A\xE6\x43\x40\x83\x47\x67\x25\x83\x43\x89\xB6\x65\x16\x6C\x6F\x0F\x18\x44\x08\x46\x61\xBC\x66\x9A\x52\xEE\x64\x77\x9B\x4D\x69\x9C\x7B\x98\x9A\x6D\x88\x7F\x9B\x55\x71\x88\x79\x00\x46\x77\x82\x44\x16\x14\x55\x05\x16\x15\x10\x4C\x3D\x90\x90\x41\x40\x9D\x4C\x84\x6F\x02\x18\x4A\x02\xA2\x03\x46\x10\xA3\x14\x7E\x80\xAD\x9F\x93\x00\x26\x16\x87\x1C\x45\x98\x43\x00\x9E\x9C\x97\x75\x14\x13\x4C\x3F\x91\xA1\x11\x83\x83\x42\x91\x1D\x6C\x2C\x19\xA0\x43\xA5\x8B\x72\x87\x13\x42\x0A\x1F\x10\x14\x45\x0E\x1B\xA8\x42\xB7\x9C\x1B\x1F\xA6\xC0\x5B\x61\x62\x40\xB0\x8A\x13\x10\x13\x4F\x10\xA7\xAC\x41\xB9\xBD\x1D\xA9\x8B\x51\x4D\xB0\x01\x10\x52\x12\x13\xAD\xAD\xC7\x83\x49\xAF\x16\x06\x84\x80\x60\x41\x80\x50\xB2\x17\xB0\xC5\x85\x15\xB6\x40\xB9\x9D\x1C\x8B\xB6\xBF\x4C\x59\x5B\x13\x4D\x0D\x11\x12\x91\x3D\x6C\x04\x82\x7B\x94\x83\x1F\x10\xB1\x4E\x30\xB3\x42\x0E\xE8\x88\x6C\x7D\x95\x9E\x8D\x12\x11\x11\x52\x1F\x08\x46\xC1\x02\x5B\x1C\x15\x0B\x5D\x3F\x0C\x14\x19\x2B\x28\x0E\x0B\xC3\x2B\x29\x0F\x0C\x0A\x5B\x25\x15\x11\x17\x5B\x2B\x0B\xC1\xC3\x14\xD6\xC9\x9C\x42\x23\xDF\x70\xC0\x00\x53\x3B\x99\x12\x13\x47\x1B\x08\x46\xCB\x02\x62\x08\xC6\x17\x5C\x1C\x12\x09\x17\x7C\x35\xCB\x16\x17\x75\x38\xC5\xCD\x1D\x0F\xFB\x14\x0D\x1F\x29\x2A\x02\x0B\xA2\x0C\x48\xD8\x42\x91\x94\x93\x10\x15\x10\x43\x05\x1C\xAC\x42\x53\xDC\x13\x1F\x0A\x39\x89\x44\x7B\x98\xBE\x9C\xB3\x42\x12\x14\xAD\x66\x86\x04\x18\x64\xD2\x40\xD8\x0D\x90\x7E\x0A\x14\x6F\x2F\x14\x1C\x47\x76\x74\x1D\x00\x46\x73\xC2\x40\x10\x08\x24\x3C\x08\xD9\x85\x6C\x3E\x0D\xBC\x00\x80\x7B\xD2\xD8\x1B\x0E\x18\x45\xE3\xD9\x61\xEA\xD0\xDE\x1C\x74\x33\x68\x42\xE3\x77\xFA\xD9\xE2\x85\x7E\xDA\x60\x02\xE0\xD0\x4A\xD4\x42\xD2\x98\xD6\x8E\x09\x0C\xFA\x18\x41\xEA\x40\x92\xE9\xD4\xE6\x0E\x20\x29\xC2\x17\xCA\x47\x20\x08\xE8\x97\x29\xB4\x10\x09\x18\x73\x29\xED\x44\x96\x40\x0D\x0A\x01\xE9\x7C\xFE\x08\xEA\x13\x55\x02\xC4\xC2\xEB\x20\x30\xEE\x96\xEC\xB4\xE0\x01\x7B\x88\xB9\xFB\xED\xE5\xDF\xA8\xE2\x06\xA1\x19\x22\x33\xE5\xEF\xE4\x6C\x37\xD7\x1E\x73\x68\x20\x0B\x1C\x08\x51\x9C\x80\x09\x0F\x20\x22\x04\x16\x1C\x1C\x95\xFD\x1E\xEE\xBC\xC3\xEE\xED\xF9\x96\xAC\x18\xA5\xF5\xC9\xD8\xFA\xF4\xF7\xDE\xE0\xFB\x85\x19\xE3\xE5\xF6\x13\xA5\xD4\x60\x07\xFA\x4E\x78\x7B\xF7\x62\x06\x0D\xA8\x4C\x0C\xFD\x57\x76\x75\xEC\x60\x03\x7B\x74\x1D\x7B\xF7\x61\x7C\x7E\xF2\x62\x01\x35\xA9\x4A\x7F\xDF\x01\x78\x7A\x08\x18\x26\x83\x88\x6D\x83\xDA\x6D\x64\x0F\x22\x34\x2D\x6E\x08\x28\x85\xDE\x4F\x7E\x06\x10\x00\x0A\x46\x5F\x76\x0B\xFE\x1B\x81\x87\xFD\x5F\x75\x07\x18\x38\x84\xE9\x4A\x02\x86\x29\x65\x0F\x7D\x21\x0F\x79\xF3\x7A\x6D\x86",
-"\x0E\x40\x8A\x56\x4A\x4C\x3F\x10\xBC\x8B\x7F\x23\x81\x0A\x38\xC4\x2F\x87\xC9\x4A\x0C\x48\xFD\x34\x87\x6C\x55\x84\x0E\x0B\x33\x0A\x06\x8C\x1D\x8B\x87\x59\x8F\x7E\xEA\x2C\x74\x79\x21\x74\x25\x7C\x3A\x15\x78\x13\xBE\x84\x78\x0A\x96\x78\x04\x3C\x54\x0D\x16\xD2\x86\x23\xAF\x4F\x89\x41\x57\x97\x73\x1D\xC4\x3E\x04\x19\x0C\x10\x23\x7F\x9B\x87\x1E\xF9\x06\x81\x2D\x15\x7B\x0B\x20\x0B\x8E\xF8\x28\x7D\x41\x07\x77\x6F\x7B\x22\x0C\x06\x1A\xC5\x8C\x7E\x46\xB7\x37\x41\x02\x80\x05\x17\x65\x7D\x0B\x05\xA0\x03\x90\xEC\x6A\x0B\x20\x85\x97\x91\x44\x94\x94\x78\x8D\x95\x74\x10\x10\x92\x92\x53\xBB\x78\x95\x97\x95\x75\x1F\x1A\x9C\x92\x4F\x83\x90\x86\x67\x74\x93\xE1\x08\x2B\x96\x45\xA5\x0B\x84\x6E\x66\x84\x19\x59\x62\x20\xF9\x2B\x84\x92\x2D\x94\x8F\x69\x58\x8E\x47\x5D\x84\x25\x97\x59\x80\x99\x09\xF4\x24\x99\x23\x42\x23\x85\x61\x8E\x86\x96\x67\x61\x8F\x92\x43\x23\x64\x48\x95\x3C\x1D\x7D\x84\x12\x8C\x25\x9B\x87\x71\x86\x83\x1E\x25\x94\x8A\x1F\x44\x7C\x46\x4D\x53\x0F\x23\xE5\x7D\x95\x76\x8D\x4F\x9D\x3E\x52\x94\x2D\xA2\x0D\x0E\x4F\xB1\x89\x94\xE9\x91\x7B\x3A\xA0\x08\x90\x7B\xBA\x38\x9F\xF1\x8E\x84\x2B\xEA\x89\x8A\x84\xB6\x41\x93\x9B\x9C\x9E\x3F\xC9\x81\x47\x29\x83\x91\x8F\xA2\x90\x89\x1E\x5B\x85\x08\x8C\x1D\xA2\x90\x1A\xA4\x94\x41\xAE\x9C\x8C\x4B\x8E\x45\x76\x0B\xA4\xA7\x22\xA0\x09\x94\x88\xB5\x97\x8D\x83\x8A\x9A\xC9\x67\x67\xA2\xCB\x59\xA1\x41\x2E\x14\x07\x47\x88\x2B\xA6\xBD\x63\x91\x7A\x86\x83\xA6\x2F\xB0\x97\xA5\xFC\x51\x92\x04\x77\x63\xAA\x49\x98\x93\x97\x88\x9D\x90\xA6\x1A\xBB\x9B\xE5\x5D\x9D\x53\xA9\x94\xA1\xA7\x49\x18\x21\x56\xE8\x94\xA2\x75\xAC\x9D\xA1\xA8\x70\x9F\x43\x8B\xA9\xA8\xB0\xA0\x02\xAC\x64\x1A\x9D\x44\xFD\x9F\x8D\x38\x92\xA9\x9C\x30\x5E\x9A\x40\x60\x91\x8F\x2D\x9B\xA8\x21\x77\xBA\x6D\x40\xE5\x73\xA1\x82\xA6\xA8\xAD\x28\xB4\x9C\x43\xEE\x91\xAD\x7C\xAE\xA2\xA2\x6D\xB4\xA2\x4C\xFE\x36\x8E\x8D\x8E\x9B\x20\xBD\x83\x92\x34\xC2\x95\x9A\x63\xBE\xA1\xA4\x2E\x94\x52\x12\x6C\x6E\x6D\xB7\x9C\xB3\x9C\x31\x05\x04\x46\x22\xBB\x87\xCF\x87\x89\x8E\x4B\x86\xB4\xEA\x41\x81\xA7\xB7\x94\xAC\x21\x74\xB7\xA9\x0C\x77\xA4\x21\xBC\xB0\xAC\x3D\x5E\xB7\x6E\x5F\x84\xB7\xAC\xC3\xA9\xA6\xA0\x64\x0E\xA1\x5A\x87\xBC\xAD\xE4\x71\x88\x97\x7A\x9A\xA0\x46\x92\xB1\x07\x9D\x84\x25\xA7\x37\xA4\x38\x29\xBA\xBA\xA5\x4A\xAC\xA1\x96\x46\xB5\x9F\x29\xCB\xAA\xAD\x97\x89\x7F\x96\x53\x99\x88\x46\xD1\x91\x07\x2F\x88\x26\xBC\x7A\x61\x8C\xEA\x63\x8C\x65\x32\x84\x4F\x6E\x22\x09\x8D\x75\xED\x8F\x94\xE3\x94\xA1\x8B\xAE\xB4\xA1\x99\x08\x2B\xBF\xDB\xA3\x9F\xB3\xC2\x8E\x70\x41\x0E\x7B\x85\x74\x99\xB3\x2F\x67\x7F\xB0\x0A\x84\x28\x85\xCD\xA4\x83\xB2\x74\x3A\x73\x40\x4A\x6B\x84\xD3\xAE\x80\xB9\xC0\xA3\xBE\x8F\x7D\x86\xBC\x82\x28\xB8\xB8\x62\x8A\x65\x7B\xA8\x76\x8C\xFE\x71\xB8\xA9\xF3\xA8\x76\x1B\xF6\xB2\x9D\x2C\x98\xC1\x8B\x20\x88\x21\x8C\xC0\xB2\x9B\xC5\x74\x0D\xB2\x03\x37\x6C\x36\xBE\x4E\x07\x17\xFE\x42\xC0\x03\x2E\x70\x8D\xB6\xC2\xC2\x81\x0A\x69\x72\x20\xD9\xBE\x38\x91\x08\x22\x26\xDC\x9F\xAA\x9F\xB6\xC4\x90\x82\x20\x72\xBC\x7A\xAD\xAB\x4A\xD0\x47\x82\x83\x2D\xC1\xBA\xB6\xC0\xC7\x76\x60\x07\x95\xE2\x9D\xC6\x8B\x9A\xA1\xC6\x04\x33\xC6\x64\xD1\xC4\x0F\xB8\x60\xC8\x00\x3A\xD7\xB1\x82\x65\xC5\x8E\x9A\x9A\xA3\xCA\x00\x02\xCA\x64\xC4\xCC\x51\x30\xF2\xCA\xBA\x18\xD4\x90\x9A\x83\x23\xC6\x4A\xB5\xC5\xCD\x8C\x6F\xCD\x9C\xBE\x94\xCF\x65\x97\x74\x92\x78\xC2\xCA\xA1\xFC\xC9\x69\x1C\xE2\xCC\xD1\x9A\xBF\xB3\x7E\x84\x2D\xBF\xCF\x87\xD1\x6E\x45\xC0\x03\x91\xD6\xCE\xC0\xB7\x7E\x01\xD3\x24\x8F\xCD\xA9\xE3\x96\xC6\xB9\x80\x03\x64\x48\xC6\xB4\x46\xD8\x71\xD4\xCE\x58\x7D\x8F\xA3\x68\x21\xAE\xED\x70\x3B\x10\xEB\x73\xC4\xC5\x68\x47\xF1\x6F\x87\x4A\x90\x0B\x8D\x80\xBF\x61\x7B\xC0\x52\x04\x78\xE3\x76\x37\x8D\xCB\x6D\x37\xB1\x8D\x86\x81\xE9\x5E\x90\x7B\x0F\x98\x7F\x04\xAF\x96\x83\xF3\x69\x7A\x80\xD3\xDD\x75\xF4\x71\x73\x7F\x37\x98\xD8\x82\x12\x9A\x7C\x1B\x96\x8F\x7E\xF9\x41\x85\x0F\xE1\xCE\x7D\xF4\x08\x89\x82\x73\xCD\x81\xDB\x11\x99\x7E\x1B\x96\x88\x82\x05\xA0\xDE\xC7\x4D\x5A\xC1\x93\x39\xAD\xC3\x7D\x43\x21\xBD\x3C\xCB\xBE\x88\xAD\x74\xC4\x22\x68\x8B\x92\xAF\x8A\xC5\x7D\xB5\x71\x8F\x39\x99\xCC\x3D\xAE\xD1\xB6\x38\xAE\x05\x06\xDA\x83\x26\xB6\x7B\xA2\x05\x5F\x89\x9F\xAE\xDF\x82\xB4\xE4\xBC\xA0\xB0\x71\x93\xA2\x9D\xC5",
-"\xA0\x45\xB1\x78\x96\xA6\x64\xB5\x0E\xB9\x81\x10\xBF\xA7\xE5\x61\xA9\x41\xDB\xB7\xBB\xA2\xBF\xB4\xE7\x2D\xAD\xAA\x77\xB5\x71\xA7\x73\x76\xA0\x7B\xCB\x40\x48\x76\x5A\x33\x4E\xAD\x5E\x41\xBC\x3E\x4F\xCD\xC5\xBE\x4C\x36\x0B\x23\x24\x3C\x17\xF5\xA1\x9D\xF3\x34\xA2\xDE\x18\x07\xEA\x4F\xFB\xE9\x74\x8A\x48\xC1\x67\x5A\xA4\x37\x1A\x00\xEE\x74\x01\xDB\x7F\xA4\xE8\x31\x3B\x65\x1C\x34\x07\x6A\xE8\x38\x54\xEE\x6E\xED\xD7\x30\xEC\x6F\x1E\x04\xEF\xE3\x1C\x03\x5C\xAF\x3F\x1C\x6F\x46\x4D\xE9\xC2\xF3\x49\xF0\xCB\x43\x5E\xE1\x80\x0A\xF1\x65\x7C\x34\x52\x14\x98\xEC\x00\x5E\xD5\x0D\x59\xCD\x86\xF0\x52\xB8\x78\x6F\x16\xFC\x6F\xC0\xC6\x42\xF1\x86\xED\xF1\xE1\x90\xFB\x7E\x4A\x6D\xD8\x53\x9C\xE3\x70\xE6\x92\x4A\xF2\xCB\x5E\x69\x84\x9D\xE6\x4B\x3F\x2C\x40\xF5\xC2\xE2\xF5\xE9\xA4\xFE\x86\xE4\xFD\xD9\xF4\xE8\x2B\xF6\x59\xAD\xFD\x6B\x40\x1C\x87\xF2\xA5\x32\xF3\xCB\xE4\x4B\xF0\x43\x0A\xF4\xF0\x09\x5F\x2A\x20\xCE\xD4\x0F\xE6\xC7\xE5\xF9\xA6\xC8\xB9\xDA\x72\x13\xFA\xAF\x4F\x71\xF1\xC7\x89\xFA\xF9\xC8\x58\x21\xF3\xCE\x5F\xF8\x00\x11\xFA\xFB\xBF\x57\x71\xF0\xF3\x48\xB9\x62\xE7\x08\xFD\xAF\xEA\xFF\xE5\x81\xF6\x49\xA9\x60\xFE\x4C\x81\xF7\xF7\x9C\x46\x4D\x02\x8C\x0A\xF4\x45\xFD\x77\x7F\x02\x1D\x7B\x16\x26\x7F\x02\x8B\x75\x33\x5F\x68\xFB\x37\x80\x37\x12\x7B\x46\x24\x20\x0C\x85\x10\x06\x88\x18\x8A\x76\x20\x83\x78\x11\x15\x0E\x7F\x27\x34\x10\x19\x87\x80\x6C\x7E\x43\xE3\x7A\x2E\xBD\x20\x00\x14\x4C\x1B\x00\x7A\x1F\xFF\x0F\x7F\x85\x76\x24\x4E\x68\x2B\x1B\x83\x10\x2D\x87\x7F\x1F\x8C\x21\xB5\x73\x82\x68\x12\x10\xA9\x46\x82\x66\x69\x20\x29\x8F\x82\x67\x26\x24\xD5\x4A\x82\xF1\x1C\x80\x33\x85\x06\x35\x82\x82\x48\x89\x83\x3E\x8C\x2C\xC9\x59\x20\x87\x7E\x80\xAE\x70\x7E\x21\x8F\x26\x52\x77\x5F\x54\x7B\x84\xA6\x10\x5C\x3D\x87\x13\x8A\x7E\x6A\x17\x8C\x10\x83\x62\x10\x13\x8B\x78\x55\x8D\x62\x57\x88\x80\x8C\x5C\x4C\x4D\x2C\x22\x61\x8B\x78\x27\x84\x06\x47\x89\x80\x09\x80\x58\xBC\x19\x75\x5B\x84\x32\x2B\x82\x1B\x9A\x2C\x80\x65\x8B\x24\x67\x8E\x68\x09\x80\x5C\x2C\x28\x67\x86\x7F\x86\x71\x89\x86\x8E\x64\x87\xCE\x73\x10\x41\x1E\x5F\x07\x81\x78\xB5\x61\x81\x23\x12\x7B\x6F\x62\x89\x96\x8A\x7C\x81\x7F\x37\xC8\x77\x89\x81\x75\x4D\x84\x8C\x89\x50\x8C\x10\xDE\x7B\x78\x53\x8B\x26\x94\x23\x48\x3A\x82\x76\x83\x47\x87\x57\x1A\x78\x9B\x6B\x26\x46\x28\x30\x54\x3C\x80\xA7\x87\x76\x58\x80\x73\xC4\x1C\x22\xB2\x82\x83\x3B\x84\x1C\x63\x81\x81\x76\x7D\x1E\xFA\x7F\x26\xFC\x7B\x87\x07\x85\x8B\x4E\x87\x8B\x76\x69\x20\x00\x84\x84\xBD\x89\x07\xBF\x8E\x8C\x62\x74\x49\x86\x78\x78\x1A\x87\x80\xCB\x26\x20\xD5\x45\x88\xCF\x86\x20\x01\x82\x80\x45\x8E\x78\x65\x77\x83\x24\x8D\x76\xD5\x13\x10\x94\x74\x80\x6C\x0F\x7B\x3E\x13\x10\xEB\x71\x7F\xF1\x7C\x7D\xB2\x7F\x79\x0C\x89\x8D\x48\x22\x8D\x8E\x63\x76\xDE\x88\x8F\x81\x84\x49\xE2\x86\x83\xE9\x24\x41\xA6\x70\x40\xEA\x8C\x8E\xE5\x7F\x8E\xC3\x74\x7D\xB1\x73\x12\xB4\x75\x8F\xE3\x83\x10\xDB\x85\x78\x18\x63\x48\xFB\x8E\x81\x53\x4E\x8F\xA3\x75\x76\x91\x77\x8E\xD7\x19\x40\x05\x95\x78\x99\x75\x7D\xE9\x71\x8F\xD8\x31\x78\x04\x2D\x86\xA1\x7F\x90\xC5\x4C\x8F\x88\x8A\x8F\x18\x1F\x8D\xBC\x83\x8D\x0B\x81\x78\xAE\x61\x83\xE0\x75\x81\xF7\x86\x91\xAA\x8A\x51\x15\x90\x8E\x17\x9B\x80\x88\x17\x7C\xD7\x82\x80\xF6\x83\x84\x3A\x99\x8F\x14\x9F\x92\x2C\x9F\x72\xB9\x4B\x3F\xA5\x8E\x2A\xCE\x27\x7E\x51\x83\x80\x5F\x38\x90\x67\x27\x7D\x22\x2D\x1A\xF0\x79\x90\xB0\x73\x38\xDD\x73\x94\xF7\x75\x94\x08\x11\x91\xD6\x7D\x8D\x4A\x97\x94\xFD\x8E\x94\x20\x92\x21\x52\x92\x7C\x54\x9D\x95\xBE\x72\x91\x27\x3E\x7E\x5B\x9F\x96\xF2\x7C\x37\x4D\x7F\x95\x0C\x16\x36\x02\x88\x93\x0C\x1F\x89\x4D\x79\x75\x4F\x90\x00\x92\x75\x62\xA9\x89\x8F\x59\x45\x10\xA1\x88\x10\x13\x0C\x80\x83\x97\x98\x09\x81\x47\x75\x82\x21\xFE\x5C\x8A\x09\x1E\x8A\x79\x8C\x10\xBB\x83\x10\xD1\x85\x96\x5B\x72\x99\x8B\x80\x95\x56\x52\x4E\xBA\x8C\x80\x59\x7D\x99\x02\x81\x8C\x96\x92\x10\xFF\x8B\x34\x67\x93\x8B\x68\x98\x88\xA0\x94\x7E\x8C\x8F\x35\xC7\x5F\x9A\xF7\x77\x9A\x97\x82\x87\x2D\x94\x8D\xA0\x83\x89\x18\x14\x01\xBB\x91\x81\x99\x84\x37\xC3\x90\x9C\x37\x13\x8A\x7C\x97\x7F\x7E\x92\x63\xA6\x94\x99\x71\x43\x98\x85\x94\x24\x90\x9D\x92\x89\x99\x10\xB2\x79\x78\x0E\x90\x90\x02\x16\x93\xCA\x73\x91\x3C\x98\x9B\xE0\x71\x8E\x19\x93\x82\x1B\x9C\x2A\xE8\x88\x3E",
-"\x95\x7A\x90\xAA\x7B\x96\xC0\x72\x92\xF0\x8C\x95\x77\x9E\x95\xF3\x80\x96\xE0\x72\x96\x04\x1E\x9D\x6E\x86\x96\x0C\x10\x93\xE3\x9F\x93\xBA\x75\x9E\x48\x82\x90\x65\x77\x7A\xEB\x9B\x7D\x56\x96\x26\x21\x98\x97\x53\x90\x38\x55\x9D\x40\x81\x7D\x90\xD8\x8A\x92\x00\x0A\x9F\xDC\x8B\x93\x09\x2D\x93\x31\x99\x8F\x18\x98\x7B\x1A\x96\x8E\xE8\x9D\x91\xA9\x2F\x91\x81\x9C\x7A\xF0\x92\x9F\x24\x90\xA1\xB2\x77\x92\x0C\x8D\x9C\xF9\x9B\x94\x4C\x8E\x92\xFD\x90\xA3\x59\x84\x8D\x34\x9D\x64\x2D\xA4\xA1\x16\xA2\x97\x18\xA4\x1C\x1A\xAF\x9F\x32\x9E\x43\x90\x8D\x67\xC7\x9A\x98\x23\x1B\x89\x87\x87\x26\xF8\x90\x83\x34\xA8\x8B\x64\x73\xA3\xB1\x9C\x94\x0A\x80\x82\xEE\x9D\x8E\xD0\x72\x6C\x5F\x2D\xA0\xC4\x7C\xA0\x9E\x9E\x68\xD8\x75\x97\x0E\xA0\x97\x16\x2A\x97\x2E\x83\xA1\xDC\x95\xA1\x4D\xAB\x8C\x3E\xA2\x9E\xDF\x90\xA0\x1C\x23\x98\x52\x5D\x96\x23\x92\x9F\xCF\x37\xA1\x8E\x64\x97\x5A\xAF\xA0\x5C\xA8\x7F\xB2\x78\x67\x1D\x85\xA4\x80\xA1\x94\x23\x1A\x9D\x66\xA8\x84\x1C\x89\xA6\x97\x39\x45\x3F\xAD\xA6\x41\xAC\x21\xAD\x94\x8E\xE4\x87\x9E\x41\x29\x9E\x1C\x24\xA2\x73\x2B\xA0\xED\x9E\x96\x61\xA3\x9F\xD0\x1E\x79\xF6\x9A\x7C\x4B\xA2\x10\x7F\xAB\xA1\x81\x8A\xA8\x6C\xAB\x9F\x8D\xA5\x06\x8F\xA9\x2E\x91\xA5\x7A\x05\xA4\x90\xEC\x91\x97\x25\xAF\x9E\x7B\xA1\x9F\x76\x92\x8F\x0C\x9F\xA9\x8B\x71\xAA\x00\x03\xAA\x40\xA8\x98\x3E\x2B\xA8\xA8\xAC\xA1\x20\xA3\x27\xB9\x7E\xA8\x1C\x90\x00\xBC\x71\xAB\x16\x26\x90\xB5\x92\x10\x09\xAA\x8E\x26\x9F\x41\x39\xA7\xA6\xBE\xAC\xA8\xC0\xAD\x24\xC2\xA6\xA7\x69\x9E\x43\x46\xA7\x13\x35\x95\xAD\x86\xA3\x10\xD7\xA3\xAC\xA5\xA1\xAC\xA7\xAC\xAD\xBD\x90\x94\xDF\xAA\x14\x48\xAB\x9D\xE3\xA2\xAA\x88\xA0\x5C\xDB\xAC\xA3\xC4\xA4\xA5\xB3\xA6\xA5\xE6\x78\xA5\xD2\x79\xA7\x62\xAB\x8E\xF6\xA9\x80\x5F\xAE\xAF\x9C\xA3\xA6\xB2\x73\x8A\x49\xA6\x26\xBC\xA5\xAE\xEA\xA2\xA5\xF4\xA9\xAE\x01\xBB\xAE\xF8\xA7\xA9\x6C\x9C\xAF\x60\xAB\xA5\x99\xAC\x7E\x73\x97\x3B\x20\x17\xB1\x7A\xA4\x9F\x23\x1C\x1B\x17\x01\xA8\x96\x84\xA6\x04\x1B\x9C\x52\x82\x7E\x85\x73\x9D\x34\x15\x9D\x0E\xB9\x45\x81\x7C\x1B\x19\x04\xB2\x98\x8B\xA2\xD4\xA4\xB3\x82\xA7\x13\xBC\x10\x33\x38\xB5\x8D\xB2\x71\xAE\x34\xB1\xB3\x10\xBD\xB3\xD8\x93\xA8\xBA\xA6\x78\x63\x85\xAF\x5D\xAD\xAD\xC8\xAE\xA1\xE6\x95\xAC\x84\x24\xA9\x07\xA9\x7E\x75\xA5\xA5\x07\x97\xA2\x76\x99\xA2\x0B\x97\x13\xF4\x87\x80\x49\xB3\xB4\x1A\xB9\xAA\xAB\xA2\x1A\x4F\xBE\x43\x03\x9E\x6E\x96\xAF\x26\x98\xA2\xAB\x73\xA7\xAB\x25\x92\x7B\x12\xA2\x80\x5F\xB0\xA5\x3E\x92\xB6\x02\xAD\xAA\x01\xA1\xA2\xCA\xAE\x91\xCC\xA0\xB0\xF9\xA7\xB5\xB5\xA8\xA2\x74\xAF\xB6\x23\x1C\xA2\x07\x8C\x34\x60\xBF\x26\x45\x8D\xAE\x57\x10\xB4\x02\x88\xB8\x74\xB4\xAA\x12\xB7\x28\x39\xBE\xAE\x47\xB5\x78\x73\xB8\x10\xFE\x98\xAD\x4C\xB9\x29\x7F\xBF\xAC\xFB\xAD\x25\x59\xAA\xA9\x18\xBC\xB6\x8A\xB7\x32\x03\xB4\xBA\x1F\xBD\xA9\x07\xB7\xB9\x4D\x79\xB9\x04\x1B\xB9\xE6\xA3\xB9\x9E\xB4\xB1\x51\x96\xB1\x04\xB5\xB5\x4B\xB8\x88\x78\xAA\xBA\xFF\xA2\xB4\x9A\x94\xB4\x79\x96\xB3\x60\x8E\x98\x14\xAB\x99\xCA\x71\x8C\x8C\xB9\x10\x8E\xB7\x7F\x90\xB8\x10\xC8\xBB\x78\xCA\xB2\xBC\x92\x80",
-};
-
-			void JsonGetParserBuffer(vl::stream::MemoryStream& stream)
-			{
-				vl::stream::MemoryStream compressedStream;
-				for (vint i = 0; i < parserBufferRows; i++)
-				{
-					vint size = i == parserBufferRows - 1 ? parserBufferRemain : parserBufferBlock;
-					compressedStream.Write((void*)parserBuffer[i], size);
-				}
-				compressedStream.SeekFromBegin(0);
-				vl::stream::LzwDecoder decoder;
-				vl::stream::DecoderStream decoderStream(compressedStream, decoder);
-				vl::collections::Array<vl::vuint8_t> buffer(65536);
-				while (true)
-				{
-					vl::vint size = decoderStream.Read(&buffer[0], 65536);
-					if (size == 0) break;
-					stream.Write(&buffer[0], size);
-				}
-				stream.SeekFromBegin(0);
-			}
-/***********************************************************************
-Unescaping Function Foward Declarations
-***********************************************************************/
-
-			extern void JsonUnescapingString(vl::parsing::ParsingToken& value, const vl::collections::List<vl::regex::RegexToken>& tokens);
-
-/***********************************************************************
-Parsing Tree Conversion Driver Implementation
-***********************************************************************/
-
-			class JsonTreeConverter : public vl::parsing::ParsingTreeConverter
-			{
-			public:
-				using vl::parsing::ParsingTreeConverter::SetMember;
-
-				bool SetMember(JsonLiteral::JsonValue& member, vl::Ptr<vl::parsing::ParsingTreeNode> node, const TokenList& tokens)
-				{
-					vl::Ptr<vl::parsing::ParsingTreeToken> token=node.Cast<vl::parsing::ParsingTreeToken>();
-					if(token)
-					{
-						if(token->GetValue()==L"True") { member=JsonLiteral::JsonValue::True; return true; }
-						else if(token->GetValue()==L"False") { member=JsonLiteral::JsonValue::False; return true; }
-						else if(token->GetValue()==L"Null") { member=JsonLiteral::JsonValue::Null; return true; }
-						else { member=JsonLiteral::JsonValue::True; return false; }
-					}
-					member=JsonLiteral::JsonValue::True;
-					return false;
-				}
-
-				void Fill(vl::Ptr<JsonNode> tree, vl::Ptr<vl::parsing::ParsingTreeObject> obj, const TokenList& tokens)
-				{
-				}
-
-				void Fill(vl::Ptr<JsonLiteral> tree, vl::Ptr<vl::parsing::ParsingTreeObject> obj, const TokenList& tokens)
-				{
-					SetMember(tree->value, obj->GetMember(L"value"), tokens);
-				}
-
-				void Fill(vl::Ptr<JsonString> tree, vl::Ptr<vl::parsing::ParsingTreeObject> obj, const TokenList& tokens)
-				{
-					if(SetMember(tree->content, obj->GetMember(L"content"), tokens))
-					{
-						JsonUnescapingString(tree->content, tokens);
-					}
-				}
-
-				void Fill(vl::Ptr<JsonNumber> tree, vl::Ptr<vl::parsing::ParsingTreeObject> obj, const TokenList& tokens)
-				{
-					SetMember(tree->content, obj->GetMember(L"content"), tokens);
-				}
-
-				void Fill(vl::Ptr<JsonArray> tree, vl::Ptr<vl::parsing::ParsingTreeObject> obj, const TokenList& tokens)
-				{
-					SetMember(tree->items, obj->GetMember(L"items"), tokens);
-				}
-
-				void Fill(vl::Ptr<JsonObjectField> tree, vl::Ptr<vl::parsing::ParsingTreeObject> obj, const TokenList& tokens)
-				{
-					if(SetMember(tree->name, obj->GetMember(L"name"), tokens))
-					{
-						JsonUnescapingString(tree->name, tokens);
-					}
-					SetMember(tree->value, obj->GetMember(L"value"), tokens);
-				}
-
-				void Fill(vl::Ptr<JsonObject> tree, vl::Ptr<vl::parsing::ParsingTreeObject> obj, const TokenList& tokens)
-				{
-					SetMember(tree->fields, obj->GetMember(L"fields"), tokens);
-				}
-
-				vl::Ptr<vl::parsing::ParsingTreeCustomBase> ConvertClass(vl::Ptr<vl::parsing::ParsingTreeObject> obj, const TokenList& tokens)override
-				{
-					if(obj->GetType()==L"Literal")
-					{
-						vl::Ptr<JsonLiteral> tree = new JsonLiteral;
-						vl::collections::CopyFrom(tree->creatorRules, obj->GetCreatorRules());
-						Fill(tree, obj, tokens);
-						Fill(tree.Cast<JsonNode>(), obj, tokens);
-						return tree;
-					}
-					else if(obj->GetType()==L"String")
-					{
-						vl::Ptr<JsonString> tree = new JsonString;
-						vl::collections::CopyFrom(tree->creatorRules, obj->GetCreatorRules());
-						Fill(tree, obj, tokens);
-						Fill(tree.Cast<JsonNode>(), obj, tokens);
-						return tree;
-					}
-					else if(obj->GetType()==L"Number")
-					{
-						vl::Ptr<JsonNumber> tree = new JsonNumber;
-						vl::collections::CopyFrom(tree->creatorRules, obj->GetCreatorRules());
-						Fill(tree, obj, tokens);
-						Fill(tree.Cast<JsonNode>(), obj, tokens);
-						return tree;
-					}
-					else if(obj->GetType()==L"Array")
-					{
-						vl::Ptr<JsonArray> tree = new JsonArray;
-						vl::collections::CopyFrom(tree->creatorRules, obj->GetCreatorRules());
-						Fill(tree, obj, tokens);
-						Fill(tree.Cast<JsonNode>(), obj, tokens);
-						return tree;
-					}
-					else if(obj->GetType()==L"ObjectField")
-					{
-						vl::Ptr<JsonObjectField> tree = new JsonObjectField;
-						vl::collections::CopyFrom(tree->creatorRules, obj->GetCreatorRules());
-						Fill(tree, obj, tokens);
-						Fill(tree.Cast<JsonNode>(), obj, tokens);
-						return tree;
-					}
-					else if(obj->GetType()==L"Object")
-					{
-						vl::Ptr<JsonObject> tree = new JsonObject;
-						vl::collections::CopyFrom(tree->creatorRules, obj->GetCreatorRules());
-						Fill(tree, obj, tokens);
-						Fill(tree.Cast<JsonNode>(), obj, tokens);
-						return tree;
-					}
-					else 
-						return 0;
-				}
-			};
-
-			vl::Ptr<vl::parsing::ParsingTreeCustomBase> JsonConvertParsingTreeNode(vl::Ptr<vl::parsing::ParsingTreeNode> node, const vl::collections::List<vl::regex::RegexToken>& tokens)
-			{
-				JsonTreeConverter converter;
-				vl::Ptr<vl::parsing::ParsingTreeCustomBase> tree;
-				converter.SetMember(tree, node, tokens);
-				return tree;
-			}
-
-/***********************************************************************
-Parsing Tree Conversion Implementation
-***********************************************************************/
-
-			vl::Ptr<JsonLiteral> JsonLiteral::Convert(vl::Ptr<vl::parsing::ParsingTreeNode> node, const vl::collections::List<vl::regex::RegexToken>& tokens)
-			{
-				return JsonConvertParsingTreeNode(node, tokens).Cast<JsonLiteral>();
-			}
-
-			vl::Ptr<JsonString> JsonString::Convert(vl::Ptr<vl::parsing::ParsingTreeNode> node, const vl::collections::List<vl::regex::RegexToken>& tokens)
-			{
-				return JsonConvertParsingTreeNode(node, tokens).Cast<JsonString>();
-			}
-
-			vl::Ptr<JsonNumber> JsonNumber::Convert(vl::Ptr<vl::parsing::ParsingTreeNode> node, const vl::collections::List<vl::regex::RegexToken>& tokens)
-			{
-				return JsonConvertParsingTreeNode(node, tokens).Cast<JsonNumber>();
-			}
-
-			vl::Ptr<JsonArray> JsonArray::Convert(vl::Ptr<vl::parsing::ParsingTreeNode> node, const vl::collections::List<vl::regex::RegexToken>& tokens)
-			{
-				return JsonConvertParsingTreeNode(node, tokens).Cast<JsonArray>();
-			}
-
-			vl::Ptr<JsonObjectField> JsonObjectField::Convert(vl::Ptr<vl::parsing::ParsingTreeNode> node, const vl::collections::List<vl::regex::RegexToken>& tokens)
-			{
-				return JsonConvertParsingTreeNode(node, tokens).Cast<JsonObjectField>();
-			}
-
-			vl::Ptr<JsonObject> JsonObject::Convert(vl::Ptr<vl::parsing::ParsingTreeNode> node, const vl::collections::List<vl::regex::RegexToken>& tokens)
-			{
-				return JsonConvertParsingTreeNode(node, tokens).Cast<JsonObject>();
-			}
-
-/***********************************************************************
-Parser Function
-***********************************************************************/
-
-			vl::Ptr<vl::parsing::ParsingTreeNode> JsonParseAsParsingTreeNode(const vl::WString& input, vl::Ptr<vl::parsing::tabling::ParsingTable> table, vl::collections::List<vl::Ptr<vl::parsing::ParsingError>>& errors, vl::vint codeIndex)
-			{
-				vl::parsing::tabling::ParsingState state(input, table, codeIndex);
-				state.Reset(L"JRoot");
-				vl::Ptr<vl::parsing::tabling::ParsingGeneralParser> parser=vl::parsing::tabling::CreateStrictParser(table);
-				vl::Ptr<vl::parsing::ParsingTreeNode> node=parser->Parse(state, errors);
-				return node;
-			}
-
-			vl::Ptr<vl::parsing::ParsingTreeNode> JsonParseAsParsingTreeNode(const vl::WString& input, vl::Ptr<vl::parsing::tabling::ParsingTable> table, vl::vint codeIndex)
-			{
-				vl::collections::List<vl::Ptr<vl::parsing::ParsingError>> errors;
-				return JsonParseAsParsingTreeNode(input, table, errors, codeIndex);
-			}
-
-			vl::Ptr<JsonNode> JsonParse(const vl::WString& input, vl::Ptr<vl::parsing::tabling::ParsingTable> table, vl::collections::List<vl::Ptr<vl::parsing::ParsingError>>& errors, vl::vint codeIndex)
-			{
-				vl::parsing::tabling::ParsingState state(input, table, codeIndex);
-				state.Reset(L"JRoot");
-				vl::Ptr<vl::parsing::tabling::ParsingGeneralParser> parser=vl::parsing::tabling::CreateStrictParser(table);
-				vl::Ptr<vl::parsing::ParsingTreeNode> node=parser->Parse(state, errors);
-				if(node && errors.Count()==0)
-				{
-					return JsonConvertParsingTreeNode(node, state.GetTokens()).Cast<JsonNode>();
-				}
-				return 0;
-			}
-
-			vl::Ptr<JsonNode> JsonParse(const vl::WString& input, vl::Ptr<vl::parsing::tabling::ParsingTable> table, vl::vint codeIndex)
-			{
-				vl::collections::List<vl::Ptr<vl::parsing::ParsingError>> errors;
-				return JsonParse(input, table, errors, codeIndex);
-			}
-
-/***********************************************************************
-Table Generation
-***********************************************************************/
-
-			vl::Ptr<vl::parsing::tabling::ParsingTable> JsonLoadTable()
-			{
-				vl::stream::MemoryStream stream;
-				JsonGetParserBuffer(stream);
-				vl::Ptr<vl::parsing::tabling::ParsingTable> table=new vl::parsing::tabling::ParsingTable(stream);
-				table->Initialize();
-				return table;
-			}
-
-		}
-	}
-}
-
-
-/***********************************************************************
-.\PARSING\PARSING.CPP
-***********************************************************************/
-
-namespace vl
-{
-	namespace parsing
-	{
-		namespace tabling
-		{
-			using namespace definitions;
-			using namespace analyzing;
-			using namespace collections;
-			using namespace regex;
-
-/***********************************************************************
-ParsingGeneralParser
-***********************************************************************/
-
-			ParsingGeneralParser::ParsingGeneralParser(Ptr<ParsingTable> _table)
-				:table(_table)
-			{
-			}
-
-			ParsingGeneralParser::~ParsingGeneralParser()
-			{
-			}
-
-			Ptr<ParsingTable> ParsingGeneralParser::GetTable()
-			{
-				return table;
-			}
-
-			void ParsingGeneralParser::BeginParse()
-			{
-			}
-
-			bool ParsingGeneralParser::Parse(ParsingState& state, ParsingTransitionProcessor& processor, collections::List<Ptr<ParsingError>>& errors)
-			{
-				BeginParse();
-				processor.Reset();
-
-				for(vint i=0;i<state.GetTokens().Count();i++)
-				{
-					const RegexToken* token=&state.GetTokens().Get(i);
-					if(token->token==-1 || !token->completeToken)
-					{
-						errors.Add(new ParsingError(token, L"Unrecognizable token: \""+WString(token->reading, token->length)+L"\"."));
-					}
-				}
-
-				while(true)
-				{
-					ParsingState::TransitionResult result=ParseStep(state, errors);
-					if(!result)
-					{
-						const RegexToken* token=state.GetToken(state.GetCurrentToken());
-						errors.Add(new ParsingError(token, L"Internal error when parsing."));
-						return false;
-					}
-					else if(result.transitionType==ParsingState::TransitionResult::SkipToken)
-					{
-						if(state.GetCurrentTableTokenIndex()==ParsingTable::TokenFinish)
-						{
-							const RegexToken* token=state.GetToken(state.GetCurrentToken());
-							errors.Add(new ParsingError(token, L"Failed to recover error when reaching the end of the input."));
-							return false;
-						}
-						else
-						{
-							state.SkipCurrentToken();
-							continue;
-						}
-					}
-					else if(!processor.Run(result))
-					{
-						const RegexToken* token=state.GetToken(state.GetCurrentToken());
-						errors.Add(new ParsingError(token, L"Internal error when building the parsing tree."));
-						return false;
-					}
-					if(result.tableTokenIndex==ParsingTable::TokenFinish && !processor.GetProcessingAmbiguityBranch())
-					{
-						break;
-					}
-				}
-
-				return true;
-			}
-
-			Ptr<ParsingTreeNode> ParsingGeneralParser::Parse(ParsingState& state, collections::List<Ptr<ParsingError>>& errors)
-			{
-				ParsingTreeBuilder builder;
-				Parse(state, builder, errors);
-
-				Ptr<ParsingTreeNode> node=builder.GetNode();
-				if(!node)
-				{
-					errors.Add(new ParsingError(L"Internal error when building the parsing tree after a succeeded parsing process."));
-					return 0;
-				}
-				return node;
-			}
-
-			Ptr<ParsingTreeNode> ParsingGeneralParser::Parse(const WString& input, const WString& rule, collections::List<Ptr<ParsingError>>& errors, vint codeIndex)
-			{
-				ParsingState state(input, table, codeIndex);
-				if(state.Reset(rule)==-1)
-				{
-					errors.Add(new ParsingError(L"Rule \""+rule+L"\" does not exist."));
-					return 0;
-				}
-				return Parse(state, errors);
-			}
-
-/***********************************************************************
-ParsingStrictParser
-***********************************************************************/
-
-			bool ParsingStrictParser::OnTestErrorRecoverExists()
-			{
-				return false;
-			}
-
-			void ParsingStrictParser::OnClearErrorRecover()
-			{
-			}
-
-			ParsingState::TransitionResult ParsingStrictParser::OnErrorRecover(ParsingState& state, vint currentTokenIndex, collections::List<Ptr<ParsingError>>& errors)
-			{
-				const RegexToken* token=state.GetToken(state.GetCurrentToken());
-				errors.Add(new ParsingError(token, (token==0?L"Error happened during parsing when reaching the end of the input.":L"Error happened during parsing.")));
-				return ParsingState::TransitionResult();
-			}
-
-			ParsingStrictParser::ParsingStrictParser(Ptr<ParsingTable> _table)
-				:ParsingGeneralParser(_table)
-			{
-			}
-
-			ParsingStrictParser::~ParsingStrictParser()
-			{
-			}
-			
-			ParsingState::TransitionResult ParsingStrictParser::ParseStep(ParsingState& state, collections::List<Ptr<ParsingError>>& errors)
-			{
-				ParsingState::TransitionResult result;
-				if (OnTestErrorRecoverExists())
-				{
-					result = OnErrorRecover(state, -1, errors);
-				}
-				else
-				{
-					result = state.ReadToken();
-					if (result)
-					{
-						OnClearErrorRecover();
-					}
-					else
-					{
-						vint currentTokenIndex = state.GetCurrentTableTokenIndex();
-						if (currentTokenIndex != -1)
-						{
-							result = OnErrorRecover(state, currentTokenIndex, errors);
-						}
-					}
-				}
-				return result;
-			}
-
-/***********************************************************************
-ParsingAutoRecoverParser
-***********************************************************************/
-
-			ParsingAutoRecoverParser::RecoverFuture& ParsingAutoRecoverParser::GetRecoverFuture(vint index)
-			{
-				return recoverFutures[index];
-			}
-
-			ParsingAutoRecoverParser::RecoverFuture& ParsingAutoRecoverParser::CreateRecoverFuture(vint index, vint previousIndex)
-			{
-				RecoverFuture* rf = 0;
-				if (index >= recoverFutures.Count())
-				{
-					CHECK_ERROR(index == recoverFutures.Count(), L"ParsingAutoRecoverParser::CreateRecoverFuture(vint, vint)#Wrong argument: index.");
-					RecoverFuture recoverFuture;
-					recoverFuture.future = new ParsingState::Future;
-					index = recoverFutures.Add(recoverFuture);
-				}
-				rf = &GetRecoverFuture(index);
-				rf->index = index;
-				rf->previousIndex = previousIndex;
-				return *rf;
-			}
-
-			bool ParsingAutoRecoverParser::OnTestErrorRecoverExists()
-			{
-				return recoveringFutureIndex != -1;
-			}
-
-			void ParsingAutoRecoverParser::OnClearErrorRecover()
-			{
-				recoveringFutureIndex = -1;
-			}
-
-			ParsingState::TransitionResult ParsingAutoRecoverParser::OnErrorRecover(ParsingState& state, vint currentTokenIndex, collections::List<Ptr<ParsingError>>& errors)
-			{
-				if(recoveringFutureIndex==-1)
-				{
-					List<vint> prioritizedTokens;
-					prioritizedTokens.Add(ParsingTable::TokenFinish);
-					CopyFrom(
-						prioritizedTokens,
-						Range<vint>(ParsingTable::UserTokenStart, table->GetTokenCount() - ParsingTable::UserTokenStart)
-						);
-					prioritizedTokens.Add(ParsingTable::LeftRecursiveReduce);
-					prioritizedTokens.Add(ParsingTable::NormalReduce);
-					prioritizedTokens.Remove(currentTokenIndex);
-					prioritizedTokens.Insert(0, currentTokenIndex);
-
-					vint processingFutureIndex=-1;
-					vint usedFutureCount=0;
-					while(processingFutureIndex<usedFutureCount)
-					{
-						RecoverFuture previous;
-						if(processingFutureIndex!=-1)
-						{
-							previous = GetRecoverFuture(processingFutureIndex);
-						}
-						processingFutureIndex++;
-						if(previous.future && previous.future->currentState==-1) continue;
-
-						FOREACH(vint, currentTableTokenIndex, prioritizedTokens)
-						{
-							vint newInsertedTokenCount = previous.insertedTokenCount;
-							if (currentTableTokenIndex != ParsingTable::NormalReduce && currentTableTokenIndex != ParsingTable::LeftRecursiveReduce)
-							{
-								newInsertedTokenCount++;
-							}
-							if (currentTableTokenIndex != currentTokenIndex && newInsertedTokenCount > maxInsertedTokenCount)
-							{
-								continue;
-							}
-
-							RecoverFuture& now = CreateRecoverFuture(usedFutureCount, previous.index);
-							now.insertedTokenCount = newInsertedTokenCount;
-
-							if(state.ReadTokenInFuture(currentTableTokenIndex, previous.future, now.future, 0))
-							{
-								if(currentTableTokenIndex==currentTokenIndex)
-								{
-									if(previous.future)
-									{
-										recoveringFutureIndex = previous.index;
-										RecoverFuture* rf = &GetRecoverFuture(previous.index);
-										while(rf->future->previous)
-										{
-											RecoverFuture* prf = &GetRecoverFuture(rf->previousIndex);
-											prf->nextIndex = rf->index;
-											prf->future->next = rf->future;
-											rf = prf;
-										}
-										recoveringFutureIndex = rf->index;
-									}
-									else
-									{
-										recoveringFutureIndex = 0;
-									}
-									goto FOUND_ERROR_RECOVER_SOLUTION;
-								}
-								else
-								{
-									usedFutureCount++;
-								}
-							}
-						}
-					}
-				}
-			FOUND_ERROR_RECOVER_SOLUTION:
-
-				RecoverFuture* rf = 0;
-				if (recoveringFutureIndex != -1)
-				{
-					rf = &GetRecoverFuture(recoveringFutureIndex);
-					if(rf->future->next)
-					{
-						recoveringFutureIndex = rf->nextIndex;
-					}
-					else
-					{
-						recoveringFutureIndex = -1;
-					}
-				}
-
-				if(rf)
-				{
-					return state.RunTransition(rf->future->selectedItem, 0);
-				}
-				else
-				{
-					return ParsingState::TransitionResult(ParsingState::TransitionResult::SkipToken);
-				}
-			}
-
-			ParsingAutoRecoverParser::ParsingAutoRecoverParser(Ptr<ParsingTable> _table, vint _maxInsertedTokenCount)
-				:ParsingStrictParser(_table)
-				, recoveringFutureIndex(-1)
-				, maxInsertedTokenCount(_maxInsertedTokenCount == -1 ? 4 : _maxInsertedTokenCount)
-			{
-			}
-
-			ParsingAutoRecoverParser::~ParsingAutoRecoverParser()
-			{
-				FOREACH(RecoverFuture, future, recoverFutures)
-				{
-					delete future.future;
-				}
-			}
-
-			void ParsingAutoRecoverParser::BeginParse()
-			{
-				recoveringFutureIndex = -1;
-				ParsingStrictParser::BeginParse();
-			}
-
-/***********************************************************************
-ParsingAmbiguousParser
-***********************************************************************/
-
-			ParsingAmbiguousParser::ParsingAmbiguousParser(Ptr<ParsingTable> _table)
-				:ParsingGeneralParser(_table)
-				,consumedDecisionCount(0)
-			{
-			}
-
-			ParsingAmbiguousParser::~ParsingAmbiguousParser()
-			{
-			}
-
-			void ParsingAmbiguousParser::OnErrorRecover(ParsingState& state, vint currentTokenIndex, collections::List<ParsingState::Future*>& futures, vint& begin, vint& end, collections::List<Ptr<ParsingError>>& errors)
-			{
-				begin=end;
-			}
-
-			vint ParsingAmbiguousParser::GetResolvableFutureLevels(collections::List<ParsingState::Future*>& futures, vint begin, vint end)
-			{
-				if(end-begin<2)
-				{
-					return 1;
-				}
-				List<ParsingState::Future*> resolvingFutures;
-				for(vint i=begin;i<end;i++)
-				{
-					resolvingFutures.Add(futures[i]);
-				}
-
-				vint level=0;
-				while(true)
-				{
-					for(vint i=0;i<resolvingFutures.Count()-1;i++)
-					{
-						ParsingState::Future* first=resolvingFutures[i];
-						ParsingState::Future* second=resolvingFutures[i+1];
-
-						if(first->currentState!=second->currentState
-							|| first->reduceStateCount!=second->reduceStateCount
-							|| first->shiftStates.Count()!=second->shiftStates.Count()
-							)
-						{
-							return level;
-						}
-						else
-						{
-							for(vint j=0;j<first->shiftStates.Count();j++)
-							{
-								if(first->shiftStates[j]!=second->shiftStates[j])
-								{
-									return level;
-								}
-							}
-						}
-					}
-					level++;
-
-					for(vint i=0;i<resolvingFutures.Count();i++)
-					{
-						if(!(resolvingFutures[i]=resolvingFutures[i]->previous))
-						{
-							return level;
-						}
-					}
-				}
-			}
-
-			vint ParsingAmbiguousParser::SearchPathForOneStep(ParsingState& state, collections::List<ParsingState::Future*>& futures, vint& begin, vint& end, collections::List<Ptr<ParsingError>>& errors)
-			{
-				futures.Add(state.ExploreCreateRootFuture());
-				vint previousBegin = 0;
-				vint previousEnd = 1;
-				vint resolvableFutureLevels = 0;
-				bool errorRecovered = false;
-
-				while(true)
-				{
-					// keep all futures that consumed a token in a list
-					List<ParsingState::Future*> consumedTokenFutures;
-					vint processBegin = previousBegin;
-					vint processEnd = previousEnd;
-					while (processEnd > processBegin)
-					{
-						// explore the current token
-						if (state.ExploreStep(futures, processBegin, processEnd - processBegin, futures))
-						{
-							CopyFrom(
-								consumedTokenFutures,
-								From(futures)
-									.Skip(processEnd)
-									.Take(futures.Count() - processEnd),
-								true
-								);
-							futures.RemoveRange(processEnd, futures.Count() - processEnd);
-						}
-
-						// explore left recursive reduce and normal reduce
-						state.ExploreLeftRecursiveReduce(futures, processBegin, processEnd - processBegin, futures);
-						state.ExploreNormalReduce(futures, processBegin, processEnd - processBegin, futures);
-
-						// if a token is consumed, then for those reduce futures, explore them until a token is consumed, and discard all failed futures
-						processBegin = processEnd;
-						processEnd = futures.Count();
-					}
-
-					if (consumedTokenFutures.Count() == 0)
-					{
-						// failed to get any future that consumed a token, do error recovering
-						vint tokenIndex = state.GetCurrentTableTokenIndex();
-						OnErrorRecover(state, tokenIndex, futures, previousBegin, previousEnd, errors);
-						if (previousBegin == previousEnd)
-						{
-							break;
-						}
-					}
-					else
-					{
-						state.SkipCurrentToken();
-						// put all futures that consumed a token from consumedTokenFutures back to future list
-						previousBegin = futures.Count();
-						CopyFrom(futures, consumedTokenFutures, true);
-						previousEnd = futures.Count();
-
-						// resolve all futures and see if all futures collapsed into a equivalent single future
-						resolvableFutureLevels = GetResolvableFutureLevels(futures, previousBegin, previousEnd);
-						if (resolvableFutureLevels != 0)
-						{
-							break;
-						}
-					}
-				}
-
-				begin = previousBegin;
-				end = previousEnd;
-				return resolvableFutureLevels;
-			}
-
-			vint ParsingAmbiguousParser::GetConflictReduceCount(collections::List<ParsingState::Future*>& futures)
-			{
-				vint conflictReduceCount=-1;
-				for(vint i=0;i<futures.Count()-1;i++)
-				{
-					vint count=0;
-					ParsingState::Future* first=futures[i];
-					ParsingState::Future* second=futures[i+1];
-					vint firstIndex=first->selectedItem->instructions.Count();
-					vint secondIndex=second->selectedItem->instructions.Count();
-					while(--firstIndex>=0 && --secondIndex>=0)
-					{
-						ParsingTable::Instruction* firstIns=&first->selectedItem->instructions[firstIndex];
-						ParsingTable::Instruction* secondIns=&second->selectedItem->instructions[secondIndex];
-						if(firstIns && secondIns)
-						{
-							if(firstIns->instructionType==secondIns->instructionType
-								&& firstIns->nameParameter==secondIns->nameParameter
-								&& firstIns->stateParameter==secondIns->stateParameter
-								&& firstIns->value==secondIns->value
-								)
-							{
-								if(firstIns->instructionType==ParsingTable::Instruction::Reduce || firstIns->instructionType==ParsingTable::Instruction::LeftRecursiveReduce)
-								{
-									count++;
-								}
-								continue;
-							}
-						}
-						break;
-					}
-					if(conflictReduceCount==-1 || conflictReduceCount>count)
-					{
-						conflictReduceCount=count;
-					}
-				}
-				if(conflictReduceCount==-1)
-				{
-					conflictReduceCount=0;
-				}
-				return conflictReduceCount;
-			}
-
-			void ParsingAmbiguousParser::GetConflictReduceIndices(collections::List<ParsingState::Future*>& futures, vint conflictReduceCount, collections::Array<vint>& conflictReduceIndices)
-			{
-				conflictReduceIndices.Resize(futures.Count());
-				for(vint i=0;i<futures.Count();i++)
-				{
-					ParsingState::Future* future=futures[i];
-					vint index=future->selectedItem->instructions.Count();
-					vint count=0;
-					while(count<conflictReduceCount && index>0)
-					{
-						switch(future->selectedItem->instructions[--index].instructionType)
-						{
-						case ParsingTable::Instruction::Reduce:
-						case ParsingTable::Instruction::LeftRecursiveReduce:
-							count++;
-							break;
-						default:;
-						}
-					}
-					conflictReduceIndices[i]=index;
-				}
-			}
-			vint ParsingAmbiguousParser::GetAffectedStackNodeCount(collections::List<ParsingState::Future*>& futures, collections::Array<vint>& conflictReduceIndices)
-			{
-				vint affectedStackNodeCount=-1;
-				for(vint i=0;i<futures.Count();i++)
-				{
-					ParsingState::Future* future=futures[i];
-					vint count=1;
-					while(future && future->selectedItem)
-					{
-						vint start=(future==futures[i]?conflictReduceIndices[i]:future->selectedItem->instructions.Count())-1;
-						for(vint j=start;j>=0;j--)
-						{
-							switch(future->selectedItem->instructions[j].instructionType)
-							{
-							case ParsingTable::Instruction::Reduce:
-								count++;
-								break;
-							case ParsingTable::Instruction::Shift:
-								count--;
-								break;
-							default:;
-							}
-						}
-						future=future->previous;
-					}
-
-					if(affectedStackNodeCount==-1)
-					{
-						affectedStackNodeCount=count;
-					}
-					else if(affectedStackNodeCount!=count)
-					{
-						return -1;
-					}
-				}
-				return affectedStackNodeCount;
-			}
-
-			void ParsingAmbiguousParser::BuildSingleDecisionPath(ParsingState& state, ParsingState::Future* future, vint lastAvailableInstructionCount)
-			{
-				List<Pair<ParsingTable::TransitionItem*, regex::RegexToken*>> path;
-				while(future && future->selectedToken!=-1)
-				{
-					path.Add(Pair<ParsingTable::TransitionItem*, regex::RegexToken*>(future->selectedItem, future->selectedRegexToken));
-					future = future->previous;
-				}
-
-				for (vint j = path.Count() - 1; j >= 0; j--)
-				{
-					if(j==0 && lastAvailableInstructionCount!=-1)
-					{
-						decisions.Add(state.RunTransition(path[j].key, path[j].value, 0, lastAvailableInstructionCount, false));
-					}
-					else
-					{
-						decisions.Add(state.RunTransition(path[j].key, path[j].value));
-					}
-				}
-			}
-
-			void ParsingAmbiguousParser::BuildAmbiguousDecisions(ParsingState& state, collections::List<ParsingState::Future*>& futures, vint begin, vint end, vint resolvableFutureLevels, collections::List<Ptr<ParsingError>>& errors)
-			{
-				List<ParsingState::Future*> resolvingFutures;
-				CopyFrom(
-					resolvingFutures,
-					From(futures)
-						.Skip(begin)
-						.Take(end - begin)
+					bool pausedAtTheEnd = token.length == length && !token.completeToken;
+					CHECK_ERROR(
+						token.completeToken || pausedAtTheEnd,
+						L"RegexLexerColorizer::WalkOneToken(const wchar_t*, vint, vint, bool)#The extendProc is not allowed to pause before the end of the input."
 					);
-				for (vint i = 1; i < resolvableFutureLevels; i++)
-				{
-					for(vint j=0;j<resolvingFutures.Count();j++)
-					{
-						resolvingFutures[j] = resolvingFutures[j]->previous;
-					}
-				}
-
-				Array<vint> conflictReduceIndices;
-				vint conflictReduceCount=GetConflictReduceCount(resolvingFutures);
-				GetConflictReduceIndices(resolvingFutures, conflictReduceCount, conflictReduceIndices);
-
-				WString ambiguityNodeType, ambiguityRuleName;
-				if(resolvingFutures[0]->selectedItem->instructions.Count()==conflictReduceIndices[0])
-				{
-					vint rootStartState=state.GetParsingRuleStartState();
-					ambiguityNodeType=state.GetTable()->GetStateInfo(rootStartState).ruleAmbiguousType;
-					ambiguityRuleName=state.GetParsingRule();
-				}
-				else
-				{
-					ParsingTable::Instruction& ins=resolvingFutures[0]->selectedItem->instructions[conflictReduceIndices[0]];
-					ambiguityNodeType=state.GetTable()->GetStateInfo(ins.stateParameter).ruleAmbiguousType;
-					ambiguityRuleName=state.GetTable()->GetStateInfo(ins.stateParameter).ruleName;
-				}
-				if(ambiguityNodeType==L"")
-				{
-					const RegexToken* token=state.GetToken(state.GetCurrentToken());
-					errors.Add(new ParsingError(token, L"Ambiguity happens when reducing rule \""+ambiguityRuleName+L"\" but this rule does not have an associated ambiguous node type."));
-					return;
-				}
-
-				vint affectedStackNodeCount=GetAffectedStackNodeCount(resolvingFutures, conflictReduceIndices);
-				if(affectedStackNodeCount==-1)
-				{
-					const RegexToken* token=state.GetToken(state.GetCurrentToken());
-					errors.Add(new ParsingError(token, (token==0?L"Failed to pass ambiguity checking during parsing when reaching to the end of the input.":L"Failed to pass ambiguity checking during parsing.")));
-					return;
-				}
-
-				Ptr<ParsingState::StateGroup> stateGroup;
-				for(vint i=0;i<resolvingFutures.Count();i++)
-				{
-					if(stateGroup)
-					{
-						state.RestoreSnapshot(stateGroup);
-					}
-					else
-					{
-						stateGroup=state.TakeSnapshot();
-					}
-					{
-						ParsingState::TransitionResult result(
-							i==0
-							?ParsingState::TransitionResult::AmbiguityBegin
-							:ParsingState::TransitionResult::AmbiguityBranch
-							);
-						if(i==0)
-						{
-							result.ambiguityAffectedStackNodeCount=affectedStackNodeCount;
-						}
-						decisions.Add(result);
-					}
-					{
-						BuildSingleDecisionPath(state, resolvingFutures[i], conflictReduceIndices[i]);
-
-						if(i==resolvingFutures.Count()-1)
-						{
-							ParsingState::TransitionResult result(ParsingState::TransitionResult::AmbiguityEnd);
-							result.ambiguityNodeType=ambiguityNodeType;
-							decisions.Add(result);
-
-							vint start=conflictReduceIndices[i];
-							ParsingState::TransitionResult lastDecision=decisions[decisions.Count()-2];
-							decisions.Add(state.RunTransition(lastDecision.transition, lastDecision.token, start, lastDecision.transition->instructions.Count()-start, true));
-						}
-					}
-				}
-
-				ParsingState::Future* lastFuture=futures[end-1];
-				ParsingState::Future** futureCleaner=&lastFuture;
-				for(int i=1;i<resolvableFutureLevels;i++)
-				{
-					futureCleaner=&(*futureCleaner)->previous;
-				}
-				*futureCleaner=0;
-
-				if(lastFuture)
-				{
-					BuildSingleDecisionPath(state, lastFuture, -1);
-				}
-			}
-
-			void ParsingAmbiguousParser::BuildDecisions(ParsingState& state, collections::List<ParsingState::Future*>& futures, vint begin, vint end, vint resolvableFutureLevels, collections::List<Ptr<ParsingError>>& errors)
-			{
-				if(end-begin==0)
-				{
-					const RegexToken* token=state.GetToken(state.GetCurrentToken());
-					errors.Add(new ParsingError(token, (token==0?L"Error happened during parsing when reaching to the end of the input.":L"Error happened during parsing.")));
-				}
-				else if(end-begin==1)
-				{
-					BuildSingleDecisionPath(state, futures[begin], -1);
-				}
-				else
-				{
-					BuildAmbiguousDecisions(state, futures, begin, end, resolvableFutureLevels, errors);
-				}
-			}
-			
-			ParsingState::TransitionResult ParsingAmbiguousParser::ParseStep(ParsingState& state, collections::List<Ptr<ParsingError>>& errors)
-			{
-				if(decisions.Count()==consumedDecisionCount)
-				{
-					List<ParsingState::Future*> futures;
-					vint resultBegin=0;
-					vint resultEnd=0;
-
-					vint resolvableFutureLevels=SearchPathForOneStep(state, futures, resultBegin, resultEnd, errors);
-					BuildDecisions(state, futures, resultBegin, resultEnd, resolvableFutureLevels, errors);
-
-					FOREACH(ParsingState::Future*, future, futures)
-					{
-						delete future;
-					}
-				}
-
-				if(decisions.Count()>consumedDecisionCount)
-				{
-					ParsingState::TransitionResult result=decisions[consumedDecisionCount++];
-					if(consumedDecisionCount==decisions.Count())
-					{
-						decisions.Clear();
-						consumedDecisionCount=0;
-					}
-					return result;
-				}
-				else
-				{
-					return ParsingState::TransitionResult();
-				}
-			}
-
-			void ParsingAmbiguousParser::BeginParse()
-			{
-				decisions.Clear();
-				consumedDecisionCount=0;
-				ParsingGeneralParser::BeginParse();
-			}
-
-/***********************************************************************
-ParsingAutoRecoverAmbiguousParser
-***********************************************************************/
-
-			void ParsingAutoRecoverAmbiguousParser::OnErrorRecover(ParsingState& state, vint currentTokenIndex, collections::List<ParsingState::Future*>& futures, vint& begin, vint& end, collections::List<Ptr<ParsingError>>& errors)
-			{
-				vint insertedTokenCount = 0;
-				while (insertedTokenCount++ < maxInsertedTokenCount)
-				{
-					// keep all futures that consumed a token in a list
-					List<ParsingState::Future*> consumedTokenFutures;
-					vint processBegin = begin;
-					vint processEnd = end;
-					while (processEnd > processBegin)
-					{
-						// explore all tokens
-						for (vint i = processBegin; i < processEnd; i++)
-						{
-							state.Explore(ParsingTable::TokenFinish, futures[i], futures);
-							for (vint token = ParsingTable::UserTokenStart; token < state.GetTable()->GetTokenCount(); token++)
-							{
-								state.Explore(token, futures[i], futures);
-							}
-						}
-						// copy all futures that consumed a token to consumedTokenFutures
-						if (futures.Count() > processEnd)
-						{
-							CopyFrom(
-								consumedTokenFutures,
-								From(futures)
-									.Skip(processEnd)
-									.Take(futures.Count() - processEnd),
-								true
-								);
-							futures.RemoveRange(processEnd, futures.Count() - processEnd);
-						}
-
-						// explore left recursive reduce and normal reduce
-						state.ExploreLeftRecursiveReduce(futures, processBegin, processEnd - processBegin, futures);
-						state.ExploreNormalReduce(futures, processBegin, processEnd - processBegin, futures);
-
-						// if a token is consumed, then for those reduce futures, explore them until a token is consumed, and discard all failed futures
-						processBegin = processEnd;
-						processEnd = futures.Count();
-					}
-
-					if (consumedTokenFutures.Count() == 0)
-					{
-						// failed to get any future that consumed a token
-						goto ERROR_RECOVERY_FAILED;
-					}
-					else
-					{
-						// try to see if the target token is reached
-						List<ParsingState::Future*> recoveryFutures;
-						FOREACH(ParsingState::Future*, future, consumedTokenFutures)
-						{
-							if (future->selectedToken == currentTokenIndex)
-							{
-								// because this is reached by error recoverying, so all futures in availableFutures should have previous futures
-								recoveryFutures.Add(future->previous);
-							}
-						}
-
-						if (recoveryFutures.Count()>0)
-						{
-							// finally reached the expected currentTokenIndex
-							// move these previous futures to the end
-							// then the original parser algorith, will use these previous futures to reach the currentTokenIndex in the next step
-							FOREACH(ParsingState::Future*, future, recoveryFutures)
-							{
-								futures.Remove(future);
-								futures.Add(future);
-							}
-							begin = futures.Count() - recoveryFutures.Count();
-							end = futures.Count();
-
-							// delete all futures in consumedTokenFutures
-							FOREACH(ParsingState::Future*, future, consumedTokenFutures)
-							{
-								delete future;
-							}
-							goto ERROR_RECOVERY_SUCCEEDED;
-						}
-						else
-						{
-							// put all futures that consumed a token from consumedTokenFutures back to future list
-							begin = futures.Count();
-							CopyFrom(futures, consumedTokenFutures, true);
-							end = futures.Count();
-						}
-					}
-				}
-				// if the maxInsertedTokenCount is exceeded, then we get here
-			ERROR_RECOVERY_FAILED:
-				begin = end = futures.Count();
-				return;
-			ERROR_RECOVERY_SUCCEEDED:
-				return;
-			}
-
-			ParsingAutoRecoverAmbiguousParser::ParsingAutoRecoverAmbiguousParser(Ptr<ParsingTable> _table, vint _maxInsertedTokenCount)
-				:ParsingAmbiguousParser(_table)
-				, maxInsertedTokenCount(_maxInsertedTokenCount == -1 ? 4 : _maxInsertedTokenCount)
-			{
-			}
-
-			ParsingAutoRecoverAmbiguousParser::~ParsingAutoRecoverAmbiguousParser()
-			{
-			}
-
-/***********************************************************************
-Helper Functions
-***********************************************************************/
-
-			Ptr<ParsingGeneralParser> CreateStrictParser(Ptr<ParsingTable> table)
-			{
-				if(table)
-				{
-					if(table->GetAmbiguity())
-					{
-						return new ParsingAmbiguousParser(table);
-					}
-					else
-					{
-						return new ParsingStrictParser(table);
-					}
-				}
-				else
-				{
-					return 0;
-				}
-			}
-
-			Ptr<ParsingGeneralParser> CreateAutoRecoverParser(Ptr<ParsingTable> table)
-			{
-				if(table)
-				{
-					if(table->GetAmbiguity())
-					{
-						return new ParsingAutoRecoverAmbiguousParser(table);
-					}
-					else
-					{
-						return new ParsingAutoRecoverParser(table);
-					}
-				}
-				else
-				{
-					return 0;
-				}
-			}
-
-			Ptr<ParsingGeneralParser> CreateBootstrapStrictParser()
-			{
-				List<Ptr<ParsingError>> errors;
-				Ptr<ParsingDefinition> definition=CreateParserDefinition();
-				Ptr<ParsingTable> table=GenerateTable(definition, false, errors);
-				return CreateStrictParser(table);
-			}
-
-			Ptr<ParsingGeneralParser> CreateBootstrapAutoRecoverParser()
-			{
-				List<Ptr<ParsingError>> errors;
-				Ptr<ParsingDefinition> definition=CreateParserDefinition();
-				Ptr<ParsingTable> table=GenerateTable(definition, false, errors);
-				return CreateAutoRecoverParser(table);
-			}
-		}
-	}
-}
-
-/***********************************************************************
-Reflection
-***********************************************************************/
-
-#ifndef VCZH_DEBUG_NO_REFLECTION
-
-namespace vl
-{
-	namespace reflection
-	{
-		namespace description
-		{
-			using namespace parsing;
-
-			PARSINGREFLECTION_TYPELIST(IMPL_VL_TYPE_INFO)
-
-/***********************************************************************
-Type Declaration
-***********************************************************************/
-
-#define _ ,
-
-			BEGIN_STRUCT_MEMBER(ParsingTextPos)
-				STRUCT_MEMBER(index)
-				STRUCT_MEMBER(row)
-				STRUCT_MEMBER(column)
-			END_STRUCT_MEMBER(ParsingTextPos)
-
-			BEGIN_STRUCT_MEMBER(ParsingTextRange)
-				STRUCT_MEMBER(start)
-				STRUCT_MEMBER(end)
-			END_STRUCT_MEMBER(ParsingTextRange)
-
-			BEGIN_CLASS_MEMBER(ParsingTreeNode)
-				CLASS_MEMBER_PROPERTY_FAST(CodeRange)
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(Parent)
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(SubNodes)
-
-				CLASS_MEMBER_METHOD(Clone, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(InitializeQueryCache, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(ClearQueryCache, NO_PARAMETER)
-				CLASS_MEMBER_METHOD_OVERLOAD(FindSubNode, {L"position"}, ParsingTreeNode*(ParsingTreeNode::*)(const ParsingTextPos&))
-				CLASS_MEMBER_METHOD_OVERLOAD(FindSubNode, {L"range"}, ParsingTreeNode*(ParsingTreeNode::*)(const ParsingTextRange&))
-				CLASS_MEMBER_METHOD_OVERLOAD(FindDeepestNode, {L"position"}, ParsingTreeNode*(ParsingTreeNode::*)(const ParsingTextPos&))
-				CLASS_MEMBER_METHOD_OVERLOAD(FindDeepestNode, {L"range"}, ParsingTreeNode*(ParsingTreeNode::*)(const ParsingTextRange&))
-			END_CLASS_MEMBER(ParsingTreeNode)
-
-			BEGIN_CLASS_MEMBER(ParsingTreeToken)
-				CLASS_MEMBER_CONSTRUCTOR(Ptr<ParsingTreeToken>(const WString&, vint), {L"value" _ L"tokenIndex"})
-
-				CLASS_MEMBER_PROPERTY_FAST(TokenIndex)
-				CLASS_MEMBER_PROPERTY_FAST(Value)
-			END_CLASS_MEMBER(ParsingTreeToken)
-
-			BEGIN_CLASS_MEMBER(ParsingTreeObject)
-				CLASS_MEMBER_CONSTRUCTOR(Ptr<ParsingTreeObject>(const WString&), {L"type"})
-
-				CLASS_MEMBER_PROPERTY_FAST(Type)
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(Members)
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(MemberNames)
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(CreatorRules)
-
-				CLASS_MEMBER_METHOD(GetMember, {L"name"})
-				CLASS_MEMBER_METHOD(SetMember, {L"name" _ L"node"})
-			END_CLASS_MEMBER(ParsingTreeObject)
-
-			BEGIN_CLASS_MEMBER(ParsingTreeArray)
-				CLASS_MEMBER_CONSTRUCTOR(Ptr<ParsingTreeObject>(const WString&), {L"elementType"})
-
-				CLASS_MEMBER_PROPERTY_FAST(ElementType)
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(Items)
-
-				CLASS_MEMBER_METHOD(GetItem, {L"index"})
-				CLASS_MEMBER_METHOD(SetItem, {L"index" _ L"node"})
-				CLASS_MEMBER_METHOD(AddItem, {L"node"})
-				CLASS_MEMBER_METHOD(InsertItem, {L"index" _ L"node"})
-				CLASS_MEMBER_METHOD_OVERLOAD(RemoveItem, {L"index"}, bool(ParsingTreeArray::*)(vint))
-				CLASS_MEMBER_METHOD_OVERLOAD(RemoveItem, {L"node"}, bool(ParsingTreeArray::*)(ParsingTreeNode*))
-				CLASS_MEMBER_METHOD(IndexOfItem, {L"node"})
-				CLASS_MEMBER_METHOD(ContainsItem, {L"node"})
-				CLASS_MEMBER_METHOD(Clone, NO_PARAMETER)
-
-				CLASS_MEMBER_METHOD_RENAME(GetCount, Count, NO_PARAMETER)
-				CLASS_MEMBER_PROPERTY_READONLY(Count, GetCount)
-			END_CLASS_MEMBER(ParsingTreeArray)
-
-			BEGIN_CLASS_MEMBER(ParsingTreeCustomBase)
-				CLASS_MEMBER_FIELD(codeRange)
-				CLASS_MEMBER_FIELD(creatorRules)
-			END_CLASS_MEMBER(ParsingTreeCustomBase)
-
-			BEGIN_CLASS_MEMBER(ParsingToken)
-				CLASS_MEMBER_BASE(ParsingTreeCustomBase)
-
-				CLASS_MEMBER_FIELD(tokenIndex)
-				CLASS_MEMBER_FIELD(value)
-			END_CLASS_MEMBER(ParsingToken)
-
-			BEGIN_CLASS_MEMBER(ParsingError)
-				CLASS_MEMBER_CONSTRUCTOR(Ptr<ParsingError>(), NO_PARAMETER)
-				CLASS_MEMBER_CONSTRUCTOR(Ptr<ParsingError>(const WString&), {L"errorMessage"})
-				CLASS_MEMBER_CONSTRUCTOR(Ptr<ParsingError>(ParsingTreeCustomBase*, const WString&), {L"parsingTree" _ L"errorMessage"})
-
-				CLASS_MEMBER_FIELD(codeRange)
-				CLASS_MEMBER_FIELD(parsingTree)
-				CLASS_MEMBER_FIELD(errorMessage)
-			END_CLASS_MEMBER(ParsingError)
-#undef _
-		}
-	}
-}
-
-#endif
-
-namespace vl
-{
-	namespace reflection
-	{
-		namespace description
-		{
-
-/***********************************************************************
-Type Loader
-***********************************************************************/
-			
-#ifndef VCZH_DEBUG_NO_REFLECTION
-			class ParsingTypeLoader : public Object, public ITypeLoader
-			{
-			public:
-				void Load(ITypeManager* manager)
-				{
-					PARSINGREFLECTION_TYPELIST(ADD_TYPE_INFO)
-				}
-
-				void Unload(ITypeManager* manager)
-				{
-				}
-			};
-#endif
-
-			bool LoadParsingTypes()
-			{
-#ifndef VCZH_DEBUG_NO_REFLECTION
-				ITypeManager* manager=GetGlobalTypeManager();
-				if(manager)
-				{
-					Ptr<ITypeLoader> loader=new ParsingTypeLoader;
-					return manager->AddTypeLoader(loader);
+					CHECK_ERROR(
+						token.completeToken || token.token == internalState.interTokenId,
+						L"RegexLexerColorizer::WalkOneToken(const wchar_t*, vint, vint, bool)#The extendProc is not allowed to continue pausing with a different token id."
+					);
+					CHECK_ERROR(
+						(token.interTokenState == nullptr) == !pausedAtTheEnd,
+						L"RegexLexerColorizer::Colorize(const wchar_t*, vint, void*)#The extendProc should return an inter token state object if and only if a valid token does not end at the end of the input."
+					);
 				}
 #endif
-				return false;
-			}
-		}
-	}
-}
-
-/***********************************************************************
-.\PARSING\PARSINGAUTOMATON.CPP
-***********************************************************************/
-
-namespace vl
-{
-	namespace parsing
-	{
-		using namespace collections;
-		using namespace definitions;
-
-		namespace analyzing
-		{
-
-/***********************************************************************
-Action
-***********************************************************************/
-
-			Action::Action()
-				:actionType(Create)
-				,actionSource(0)
-				,actionTarget(0)
-				,creatorRule(0)
-				,shiftReduceSource(0)
-				,shiftReduceTarget(0)
-			{
-			}
-
-			Action::~Action()
-			{
-			}
-
-/***********************************************************************
-Transition
-***********************************************************************/
-
-			Transition::Transition()
-				:source(0)
-				,target(0)
-				,transitionType(Epsilon)
-				,stackOperationType(None)
-				,transitionSymbol(0)
-			{
-			}
-
-			Transition::~Transition()
-			{
-			}
-
-			bool Transition::IsEquivalent(Transition* t1, Transition* t2, bool careSourceAndTarget)
-			{
-				if(careSourceAndTarget)
+				if (colorize)
 				{
-					if(t1->source!=t2->source || t1->target!=t2->target)
+					proc.colorizeProc(proc.argument, 0, token.length, token.token);
+				}
+				if (!(internalState.interTokenState = token.interTokenState))
+				{
+					internalState.interTokenId = -1;
+				}
+				return token.length;
+			}
+
+			vint lastFinalStateLength = 0;
+			vint lastFinalStateToken = -1;
+
+			for (vint i = start; i < length; i++)
+			{
+				vint currentToken = -1;
+				bool finalState = false;
+				bool previousTokenStop = false;
+				walker.Walk(input[i], internalState.currentState, currentToken, finalState, previousTokenStop);
+
+				if (previousTokenStop)
+				{
+					internalState.currentState = walker.GetStartState();
+					if (proc.extendProc && lastFinalStateToken != -1)
 					{
-						return false;
+						RegexProcessingToken token(start, lastFinalStateLength, lastFinalStateToken, true, nullptr);
+						CallExtendProcAndColorizeProc(input, length, token, colorize);
+						return start + token.length;
 					}
-				}
-				if(	t1->actions.Count()!=t2->actions.Count() ||
-					t1->transitionType!=t2->transitionType ||
-					t1->transitionSymbol!=t2->transitionSymbol)
-				{
-					return false;
-				}
-				for(vint j=0;j<t1->actions.Count();j++)
-				{
-					Ptr<Action> a1=t1->actions[j];
-					Ptr<Action> a2=t2->actions[j];
-					if(	a1->actionType!=a2->actionType ||
-						a1->actionSource!=a2->actionSource ||
-						a1->actionTarget!=a2->actionTarget ||
-						a1->shiftReduceSource!=a2->shiftReduceSource )
+					else if (i == start)
 					{
-						return false;
-					}
-				}
-				return true;
-			}
-
-/***********************************************************************
-State
-***********************************************************************/
-
-			State::State()
-				:ownerRule(0)
-				,ownerRuleSymbol(0)
-				,grammarNode(0)
-				,stateNode(0)
-				,statePosition(BeforeNode)
-				,endState(false)
-			{
-			}
-
-			State::~State()
-			{
-			}
-
-/***********************************************************************
-RuleInfo
-***********************************************************************/
-
-			RuleInfo::RuleInfo()
-				:rootRuleStartState(0)
-				,rootRuleEndState(0)
-				,startState(0)
-				,stateNameCount(0)
-			{
-			}
-
-			RuleInfo::~RuleInfo()
-			{
-			}
-
-/***********************************************************************
-Automaton
-***********************************************************************/
-
-			Automaton::Automaton(ParsingSymbolManager* _symbolManager)
-				:symbolManager(_symbolManager)
-			{
-			}
-
-			Automaton::~Automaton()
-			{
-			}
-
-			void Automaton::AddRuleInfo(definitions::ParsingDefinitionRuleDefinition* rule, Ptr<RuleInfo> ruleInfo)
-			{
-				orderedRulesDefs.Add(rule);
-				ruleInfos.Add(ruleInfo);
-				ruleDefToInfoMap.Add(rule, ruleInfo);
-			}
-
-			State* Automaton::RuleStartState(definitions::ParsingDefinitionRuleDefinition* ownerRule)
-			{
-				State* state=new State;
-				states.Add(state);
-
-				state->ownerRule=ownerRule;
-				state->ownerRuleSymbol=symbolManager->GetGlobal()->GetSubSymbolByName(ownerRule->name);
-				state->stateName=ownerRule->name+L".Start";
-				state->stateExpression=L"@ <"+ownerRule->name+L">";
-				return state;
-			}
-
-			State* Automaton::RootRuleStartState(definitions::ParsingDefinitionRuleDefinition* ownerRule)
-			{
-				State* state=new State;
-				states.Add(state);
-
-				state->ownerRule=ownerRule;
-				state->ownerRuleSymbol=symbolManager->GetGlobal()->GetSubSymbolByName(ownerRule->name);
-				state->stateName=ownerRule->name+L".RootStart";
-				state->stateExpression=L"@ $<"+ownerRule->name+L">";
-				return state;
-			}
-
-			State* Automaton::RootRuleEndState(definitions::ParsingDefinitionRuleDefinition* ownerRule)
-			{
-				State* state=new State;
-				states.Add(state);
-
-				state->ownerRule=ownerRule;
-				state->ownerRuleSymbol=symbolManager->GetGlobal()->GetSubSymbolByName(ownerRule->name);
-				state->stateName=ownerRule->name+L".RootEnd";
-				state->stateExpression=L"$<"+ownerRule->name+L"> @";
-				return state;
-			}
-
-			State* Automaton::StartState(definitions::ParsingDefinitionRuleDefinition* ownerRule, definitions::ParsingDefinitionGrammar* grammarNode, definitions::ParsingDefinitionGrammar* stateNode)
-			{
-				State* state=new State;
-				states.Add(state);
-
-				state->ownerRule=ownerRule;
-				state->ownerRuleSymbol=symbolManager->GetGlobal()->GetSubSymbolByName(ownerRule->name);
-				state->grammarNode=grammarNode;
-				state->stateNode=stateNode;
-				state->statePosition=State::BeforeNode;
-				state->stateName=ownerRule->name+L"."+itow(++ruleDefToInfoMap[ownerRule]->stateNameCount);
-				stateNode=FindAppropriateGrammarState(grammarNode, stateNode, true);
-				state->stateExpression=L"<"+ownerRule->name+L">: "+GrammarStateToString(grammarNode, stateNode, true);
-				return state;
-			}
-
-			State* Automaton::EndState(definitions::ParsingDefinitionRuleDefinition* ownerRule, definitions::ParsingDefinitionGrammar* grammarNode, definitions::ParsingDefinitionGrammar* stateNode)
-			{
-				State* state=new State;
-				states.Add(state);
-
-				state->ownerRule=ownerRule;
-				state->ownerRuleSymbol=symbolManager->GetGlobal()->GetSubSymbolByName(ownerRule->name);
-				state->grammarNode=grammarNode;
-				state->stateNode=stateNode;
-				state->statePosition=State::AfterNode;
-				state->stateName=ownerRule->name+L"."+itow(++ruleDefToInfoMap[ownerRule]->stateNameCount);
-				stateNode=FindAppropriateGrammarState(grammarNode, stateNode, false);
-				state->stateExpression=L"<"+ownerRule->name+L">: "+GrammarStateToString(grammarNode, stateNode, false);
-				return state;
-			}
-
-			State* Automaton::CopyState(State* oldState)
-			{
-				State* resultState=0;
-				if(oldState->statePosition==State::BeforeNode)
-				{
-					resultState=StartState(oldState->ownerRule, oldState->grammarNode, oldState->stateNode);
-				}
-				else
-				{
-					resultState=EndState(oldState->ownerRule, oldState->grammarNode, oldState->stateNode);
-				}
-				resultState->endState=oldState->endState;
-				return resultState;
-			}
-
-			Transition* Automaton::CreateTransition(State* start, State* end)
-			{
-				Transition* transition=new Transition;
-				transitions.Add(transition);
-
-				start->transitions.Add(transition);
-				end->inputs.Add(transition);
-
-				transition->source=start;
-				transition->target=end;
-				return transition;
-			}
-
-			Transition* Automaton::TokenBegin(State* start, State* end)
-			{
-				Transition* transition=CreateTransition(start, end);
-				transition->transitionType=Transition::TokenBegin;
-				return transition;
-			}
-
-			Transition* Automaton::TokenFinish(State* start, State* end)
-			{
-				Transition* transition=CreateTransition(start, end);
-				transition->transitionType=Transition::TokenFinish;
-				return transition;
-			}
-
-			Transition* Automaton::NormalReduce(State* start, State* end)
-			{
-				Transition* transition=CreateTransition(start, end);
-				transition->transitionType=Transition::NormalReduce;
-				return transition;
-			}
-
-			Transition* Automaton::LeftRecursiveReduce(State* start, State* end)
-			{
-				Transition* transition=CreateTransition(start, end);
-				transition->transitionType=Transition::LeftRecursiveReduce;
-				return transition;
-			}
-
-			Transition* Automaton::Epsilon(State* start, State* end)
-			{
-				Transition* transition=CreateTransition(start, end);
-				transition->transitionType=Transition::Epsilon;
-				return transition;
-			}
-
-			Transition* Automaton::Symbol(State* start, State* end, ParsingSymbol* transitionSymbol)
-			{
-				Transition* transition=CreateTransition(start, end);
-				transition->transitionType=Transition::Symbol;
-				transition->transitionSymbol=transitionSymbol;
-				return transition;
-			}
-
-			Transition* Automaton::CopyTransition(State* start, State* end, Transition* oldTransition)
-			{
-				Transition* transition=CreateTransition(start, end);
-				transition->transitionType=oldTransition->transitionType;
-				transition->stackOperationType=oldTransition->stackOperationType;
-				transition->transitionSymbol=oldTransition->transitionSymbol;
-				return transition;
-			}
-
-			void Automaton::DeleteTransition(Transition* transition)
-			{
-				transition->source->transitions.Remove(transition);
-				transition->target->inputs.Remove(transition);
-				transitions.Remove(transition);
-			}
-
-			void Automaton::DeleteState(State* state)
-			{
-				while(state->inputs.Count())
-				{
-					DeleteTransition(state->inputs[0]);
-				}
-				while(state->transitions.Count())
-				{
-					DeleteTransition(state->transitions[0]);
-				}
-				states.Remove(state);
-			}
-		}
-	}
-}
-
-/***********************************************************************
-.\PARSING\PARSINGAUTOMATON_CLOSURE.CPP
-***********************************************************************/
-
-namespace vl
-{
-	namespace parsing
-	{
-		using namespace collections;
-		using namespace definitions;
-
-		namespace analyzing
-		{
-
-/***********************************************************************
-CreateNondeterministicPDAFromEpsilonPDA::closure_searching
-***********************************************************************/
-
-			// closure function for searching <epsilon* symbol> reachable states
-			ClosureItem::SearchResult EpsilonClosure(Transition* transition)
-			{
-				return
-					transition->transitionType!=Transition::Epsilon?ClosureItem::Hit:
-					//transition->target->endState?ClosureItem::Blocked:
-					ClosureItem::Continue;
-			}
-
-			// closure searching function
-			void SearchClosureInternal(ClosureItem::SearchResult(*closurePredicate)(Transition*), List<Transition*>& transitionPath, Transition* transition, State* state, List<ClosureItem>& closure)
-			{
-				FOREACH(Transition*, singleTransitionPath, transitionPath)
-				{
-					if(singleTransitionPath->source==state && closurePredicate(singleTransitionPath)!=ClosureItem::Blocked)
-					{
-						Ptr<List<Transition*>> path=new List<Transition*>;
-						CopyFrom(*path.Obj(), transitionPath);
-						closure.Add(ClosureItem(state, path, true));
-						return;
-					}
-				}
-
-				ClosureItem::SearchResult result=transition?closurePredicate(transition):ClosureItem::Continue;
-				switch(result)
-				{
-				case ClosureItem::Continue:
-					{
-						FOREACH(Transition*, newTransition, state->transitions)
+						if (colorize)
 						{
-							if(!transitionPath.Contains(newTransition))
-							{
-								transitionPath.Add(newTransition);
-								SearchClosureInternal(closurePredicate, transitionPath, newTransition, newTransition->target, closure);
-								transitionPath.RemoveAt(transitionPath.Count()-1);
-							}
+							proc.colorizeProc(proc.argument, start, 1, -1);
 						}
-					}
-					break;
-				case ClosureItem::Hit:
-					{
-						Ptr<List<Transition*>> path=new List<Transition*>;
-						CopyFrom(*path.Obj(), transitionPath);
-						closure.Add(ClosureItem(state, path, false));
-					}
-					break;
-				default:;
-				}
-			}
-
-			void SearchClosure(ClosureItem::SearchResult(*closurePredicate)(Transition*), State* startState, List<ClosureItem>& closure)
-			{
-				List<Transition*> transitionPath;
-				SearchClosureInternal(closurePredicate, transitionPath, 0, startState, closure);
-			}
-
-			// map old state to new state and track all states that are not visited yet
-			State* GetMappedState(Ptr<Automaton> newAutomaton, State* oldState, List<State*>& scanningStates, Dictionary<State*, State*>& oldNewStateMap)
-			{
-				State* newState=0;
-				vint mapIndex=oldNewStateMap.Keys().IndexOf(oldState);
-				if(mapIndex==-1)
-				{
-					newState=newAutomaton->CopyState(oldState);
-					oldNewStateMap.Add(oldState, newState);
-				}
-				else
-				{
-					newState=oldNewStateMap.Values().Get(mapIndex);
-				}
-				if(!scanningStates.Contains(oldState))
-				{
-					scanningStates.Add(oldState);
-				}
-				return newState;
-			}
-
-/***********************************************************************
-RemoveEpsilonTransitions
-***********************************************************************/
-
-			void RemoveEpsilonTransitions(collections::Dictionary<State*, State*>& oldNewStateMap, collections::List<State*>& scanningStates, Ptr<Automaton> automaton)
-			{
-				vint currentStateIndex=0;
-
-				while(currentStateIndex<scanningStates.Count())
-				{
-					// map visiting state to new state
-					State* currentOldState=scanningStates[currentStateIndex++];
-					State* currentNewState=GetMappedState(automaton, currentOldState, scanningStates, oldNewStateMap);
-
-					// search for epsilon closure
-					List<ClosureItem> closure;
-					SearchClosure(&EpsilonClosure, currentOldState, closure);
-					FOREACH(ClosureItem, closureItem, closure)
-					{
-						Transition* oldTransition=closureItem.transitions->Get(closureItem.transitions->Count()-1);
-						if(!closureItem.cycle || oldTransition->transitionType!=Transition::Epsilon)
-						{
-							// if the oldTransition begins from an end state
-							if(oldTransition->source->endState && closureItem.transitions->Count()>1)
-							{
-								// keep a epsilon transition that without the last "TokenFinish"
-								State* newEndState=GetMappedState(automaton, oldTransition->source, scanningStates, oldNewStateMap);
-								Transition* transition=automaton->Epsilon(currentNewState, newEndState);
-								FOREACH(Transition*, pathTransition, *closureItem.transitions.Obj())
-								{
-									if(pathTransition==oldTransition) break;
-									CopyFrom(transition->actions, pathTransition->actions, true);
-								}
-							}
-							else
-							{
-								// build compacted non-epsilon transition to the target state of the path
-								State* newEndState=GetMappedState(automaton, oldTransition->target, scanningStates, oldNewStateMap);
-								Transition* transition=automaton->CopyTransition(currentNewState, newEndState, oldTransition);
-								FOREACH(Transition*, pathTransition, *closureItem.transitions.Obj())
-								{
-									CopyFrom(transition->actions, pathTransition->actions, true);
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-}
-
-/***********************************************************************
-.\PARSING\PARSINGAUTOMATON_EPDA.CPP
-***********************************************************************/
-
-namespace vl
-{
-	namespace parsing
-	{
-		using namespace collections;
-		using namespace definitions;
-
-		namespace analyzing
-		{
-
-/***********************************************************************
-CreateEpsilonPDAVisitor
-***********************************************************************/
-
-			class CreateEpsilonPDAVisitor : public Object, public ParsingDefinitionGrammar::IVisitor
-			{
-			public:
-				Ptr<Automaton>						automaton;
-				ParsingDefinitionRuleDefinition*	rule;
-				ParsingDefinitionGrammar*			ruleGrammar;
-				State*								startState;
-				State*								endState;
-				Transition*							result;
-
-				CreateEpsilonPDAVisitor(Ptr<Automaton> _automaton, ParsingDefinitionRuleDefinition* _rule, ParsingDefinitionGrammar* _ruleGrammar, State* _startState, State* _endState)
-					:automaton(_automaton)
-					,rule(_rule)
-					,ruleGrammar(_ruleGrammar)
-					,startState(_startState)
-					,endState(_endState)
-					,result(0)
-				{
-				}
-
-				static Transition* Create(ParsingDefinitionGrammar* grammar, Ptr<Automaton> automaton, ParsingDefinitionRuleDefinition* rule, ParsingDefinitionGrammar* ruleGrammar, State* startState, State* endState)
-				{
-					CreateEpsilonPDAVisitor visitor(automaton, rule, ruleGrammar, startState, endState);
-					grammar->Accept(&visitor);
-					return visitor.result;
-				}
-
-				Transition* Create(ParsingDefinitionGrammar* grammar, State* startState, State* endState)
-				{
-					return Create(grammar, automaton, rule, ruleGrammar, startState, endState);
-				}
-
-				void Visit(ParsingDefinitionPrimitiveGrammar* node)override
-				{
-					result=automaton->Symbol(startState, endState, automaton->symbolManager->CacheGetSymbol(node));
-				}
-
-				void Visit(ParsingDefinitionTextGrammar* node)override
-				{
-					result=automaton->Symbol(startState, endState, automaton->symbolManager->CacheGetSymbol(node));
-				}
-
-				void Visit(ParsingDefinitionSequenceGrammar* node)override
-				{
-					State* middleState=automaton->EndState(startState->ownerRule, ruleGrammar, node->first.Obj());
-					Create(node->first.Obj(), startState, middleState);
-					Create(node->second.Obj(), middleState, endState);
-				}
-
-				void Visit(ParsingDefinitionAlternativeGrammar* node)override
-				{
-					Create(node->first.Obj(), startState, endState);
-					Create(node->second.Obj(), startState, endState);
-				}
-
-				void Visit(ParsingDefinitionLoopGrammar* node)override
-				{
-					State* loopStart=automaton->StartState(startState->ownerRule, ruleGrammar, node->grammar.Obj());
-					automaton->Epsilon(startState, loopStart);
-					automaton->Epsilon(loopStart, endState);
-					Create(node->grammar.Obj(), loopStart, loopStart);
-				}
-
-				void Visit(ParsingDefinitionOptionalGrammar* node)override
-				{
-					Create(node->grammar.Obj(), startState, endState);
-					automaton->Epsilon(startState, endState);
-				}
-
-				void Visit(ParsingDefinitionCreateGrammar* node)override
-				{
-					State* middleState=automaton->EndState(startState->ownerRule, ruleGrammar, node->grammar.Obj());
-					Create(node->grammar.Obj(), startState, middleState);
-					Transition* transition=automaton->Epsilon(middleState, endState);
-
-					Ptr<Action> action=new Action;
-					action->actionType=Action::Create;
-					action->actionSource=automaton->symbolManager->CacheGetType(node->type.Obj(), 0);
-					action->creatorRule=rule;
-					transition->actions.Add(action);
-				}
-
-				void Visit(ParsingDefinitionAssignGrammar* node)override
-				{
-					Transition* transition=Create(node->grammar.Obj(), startState, endState);
-
-					Ptr<Action> action=new Action;
-					action->actionType=Action::Assign;
-					action->actionSource=automaton->symbolManager->CacheGetSymbol(node);
-					action->creatorRule=rule;
-					transition->actions.Add(action);
-				}
-
-				void Visit(ParsingDefinitionUseGrammar* node)override
-				{
-					Transition* transition=Create(node->grammar.Obj(), startState, endState);
-
-					Ptr<Action> action=new Action;
-					action->actionType=Action::Using;
-					action->creatorRule=rule;
-					transition->actions.Add(action);
-				}
-
-				void Visit(ParsingDefinitionSetterGrammar* node)override
-				{
-					State* middleState=automaton->EndState(startState->ownerRule, ruleGrammar, node->grammar.Obj());
-					Create(node->grammar.Obj(), startState, middleState);
-					Transition* transition=automaton->Epsilon(middleState, endState);
-
-					Ptr<Action> action=new Action;
-					action->actionType=Action::Setter;
-					action->actionSource=automaton->symbolManager->CacheGetSymbol(node);
-					action->actionTarget=action->actionSource->GetDescriptorSymbol()->GetSubSymbolByName(node->value);
-					action->creatorRule=rule;
-					transition->actions.Add(action);
-				}
-			};
-
-/***********************************************************************
-CreateRuleEpsilonPDA
-***********************************************************************/
-
-			void CreateRuleEpsilonPDA(Ptr<Automaton> automaton, Ptr<definitions::ParsingDefinitionRuleDefinition> rule, ParsingSymbolManager* manager)
-			{
-				Ptr<RuleInfo> ruleInfo=new RuleInfo;
-				automaton->AddRuleInfo(rule.Obj(), ruleInfo);
-
-				ruleInfo->rootRuleStartState=automaton->RootRuleStartState(rule.Obj());
-				ruleInfo->rootRuleEndState=automaton->RootRuleEndState(rule.Obj());
-				ruleInfo->startState=automaton->RuleStartState(rule.Obj());
-				automaton->TokenBegin(ruleInfo->rootRuleStartState, ruleInfo->startState);
-
-				FOREACH(Ptr<ParsingDefinitionGrammar>, grammar, rule->grammars)
-				{
-					State* grammarStartState=automaton->StartState(rule.Obj(), grammar.Obj(), grammar.Obj());
-					State* grammarEndState=automaton->EndState(rule.Obj(), grammar.Obj(), grammar.Obj());
-					grammarEndState->stateName+=L".End";
-					grammarEndState->endState=true;
-					automaton->Epsilon(ruleInfo->startState, grammarStartState);
-					automaton->TokenFinish(grammarEndState, ruleInfo->rootRuleEndState);
-					ruleInfo->endStates.Add(grammarEndState);
-					CreateEpsilonPDAVisitor::Create(grammar.Obj(), automaton, rule.Obj(), grammar.Obj(), grammarStartState, grammarEndState);
-				}
-			}
-
-/***********************************************************************
-CreateEpsilonPDA
-***********************************************************************/
-
-			Ptr<Automaton> CreateEpsilonPDA(Ptr<definitions::ParsingDefinition> definition, ParsingSymbolManager* manager)
-			{
-				Ptr<Automaton> automaton=new Automaton(manager);
-				FOREACH(Ptr<ParsingDefinitionRuleDefinition>, rule, definition->rules)
-				{
-					CreateRuleEpsilonPDA(automaton, rule, manager);
-				}
-				return automaton;
-			}
-		}
-	}
-}
-
-/***********************************************************************
-.\PARSING\PARSINGAUTOMATON_GENERATETABLE.CPP
-***********************************************************************/
-
-namespace vl
-{
-	namespace parsing
-	{
-		using namespace collections;
-		using namespace definitions;
-		using namespace tabling;
-
-		namespace analyzing
-		{
-
-/***********************************************************************
-GetTypeNameForCreateInstruction
-***********************************************************************/
-
-			WString GetTypeNameForCreateInstruction(ParsingSymbol* type)
-			{
-				ParsingSymbol* parent=type->GetParentSymbol();
-				if(parent->GetType()==ParsingSymbol::ClassType)
-				{
-					return GetTypeNameForCreateInstruction(parent)+L"."+type->GetName();
-				}
-				else
-				{
-					return type->GetName();
-				}
-			}
-
-/***********************************************************************
-CreateLookAhead
-***********************************************************************/
-
-			void CopyStableLookAheads(List<Ptr<ParsingTable::LookAheadInfo>>& la, List<Ptr<ParsingTable::LookAheadInfo>>& sla, const List<Ptr<ParsingTable::LookAheadInfo>>& la2)
-			{
-				CopyFrom(sla, From(la)
-					.Where([&](Ptr<ParsingTable::LookAheadInfo> lai)
-					{
-						return From(la2).All([&](Ptr<ParsingTable::LookAheadInfo> lai2)
-						{
-							return ParsingTable::LookAheadInfo::TestPrefix(lai, lai2)==ParsingTable::LookAheadInfo::NotPrefix;
-						});
-					}),
-					true);
-			}
-
-			void RemoveStableLookAheads(List<Ptr<ParsingTable::LookAheadInfo>>& la, const List<Ptr<ParsingTable::LookAheadInfo>>& sla)
-			{
-				for(vint i=la.Count()-1;i>=0;i--)
-				{
-					if(sla.Contains(la[i].Obj()))
-					{
-						la.RemoveAt(i);
-					}
-				}
-			}
-
-			bool WalkLookAheads(Ptr<ParsingTable> table, List<Ptr<ParsingTable::LookAheadInfo>>& la, vint maxTokenCount)
-			{
-				vint count=la.Count();
-				for(vint i=0;i<count;i++)
-				{
-					Ptr<ParsingTable::LookAheadInfo> lai=la[i];
-					if(lai->tokens.Count()==maxTokenCount)
-					{
-						return false;
-					}
-					ParsingTable::LookAheadInfo::Walk(table, lai, lai->state, la);
-				}
-				return true;
-			}
-
-			void CompactLookAheads(Ptr<ParsingTable::TransitionItem> t, List<Ptr<ParsingTable::LookAheadInfo>>& sla)
-			{
-				CopyFrom(sla, t->lookAheads, true);
-				CopyFrom(t->lookAheads, From(sla)
-					.Where([&](Ptr<ParsingTable::LookAheadInfo> lai)
-					{
-						return From(sla).All([&](Ptr<ParsingTable::LookAheadInfo> lai2)
-						{
-							if(lai==lai2) return true;
-							ParsingTable::LookAheadInfo::PrefixResult result=ParsingTable::LookAheadInfo::TestPrefix(lai, lai2);
-							switch(result)
-							{
-							case ParsingTable::LookAheadInfo::Prefix:
-								return false;
-							case ParsingTable::LookAheadInfo::Equal:
-								return sla.IndexOf(lai.Obj()) < sla.IndexOf(lai2.Obj());
-							default:
-								return true;
-							}
-						});
-					}));
-			}
-
-			bool CreateLookAhead(Ptr<ParsingTable> table, Ptr<ParsingTable::TransitionItem> t1, Ptr<ParsingTable::TransitionItem> t2, vint maxTokenCount)
-			{
-				List<Ptr<ParsingTable::LookAheadInfo>> la1, la2, sla1, sla2;
-
-				// calculate 1-token look aheads
-				ParsingTable::LookAheadInfo::Walk(table, 0, t1->targetState, la1);
-				ParsingTable::LookAheadInfo::Walk(table, 0, t2->targetState, la2);
-
-				do
-				{
-					// pick up all stable look aheads and remove them from the look ahead list
-					// stable look ahead means, when the look ahead is satisfied, then the transition is picked up with full confidence
-					// non-stable look ahead means, when the look ahead is satisifed, it only increase confidence, needs further tokens for decision
-					CopyStableLookAheads(la1, sla1, la2);
-					CopyStableLookAheads(la2, sla2, la1);
-					RemoveStableLookAheads(la1, sla1);
-					RemoveStableLookAheads(la2, sla2);
-
-					// check if there are non-stable look aheads in two transitions points to the same state
-					// in such situation means that the two transition cannot always be determined using look aheads
-					FOREACH(Ptr<ParsingTable::LookAheadInfo>, lai1, la1)
-					{
-						FOREACH(Ptr<ParsingTable::LookAheadInfo>, lai2, la2)
-						{
-							if (lai1->state == lai2->state)
-							{
-								if (ParsingTable::LookAheadInfo::TestPrefix(lai1, lai2) != ParsingTable::LookAheadInfo::NotPrefix)
-								{
-									return false;
-								}
-								if (ParsingTable::LookAheadInfo::TestPrefix(lai2, lai1) != ParsingTable::LookAheadInfo::NotPrefix)
-								{
-									return false;
-								}
-							}
-						}
-					}
-
-					// use the non-stable look aheads to walk a token further
-					if(!WalkLookAheads(table, la1, maxTokenCount) || !WalkLookAheads(table, la2, maxTokenCount))
-					{
-						return false;
-					}
-				}
-				while(la1.Count()>0 || la2.Count()>0);
-
-				CompactLookAheads(t1, sla1);
-				CompactLookAheads(t2, sla2);
-				return true;
-			}
-
-/***********************************************************************
-CollectAttribute
-***********************************************************************/
-
-			void CollectType(ParsingSymbol* symbol, List<ParsingSymbol*>& types)
-			{
-				if(symbol->GetType()==ParsingSymbol::ClassType)
-				{
-					types.Add(symbol);
-				}
-				vint count=symbol->GetSubSymbolCount();
-				for(vint i=0;i<count;i++)
-				{
-					CollectType(symbol->GetSubSymbol(i), types);
-				}
-			}
-
-			void CollectAttributeInfo(Ptr<ParsingTable::AttributeInfoList> att, List<Ptr<definitions::ParsingDefinitionAttribute>>& atts)
-			{
-				FOREACH(Ptr<definitions::ParsingDefinitionAttribute>, datt, atts)
-				{
-					Ptr<ParsingTable::AttributeInfo> tatt=new ParsingTable::AttributeInfo(datt->name);
-					CopyFrom(tatt->arguments, datt->arguments);
-					att->attributes.Add(tatt);
-				}
-			}
-
-			Ptr<ParsingTable::AttributeInfoList> CreateAttributeInfo(List<Ptr<definitions::ParsingDefinitionAttribute>>& atts)
-			{
-				Ptr<ParsingTable::AttributeInfoList> att=new ParsingTable::AttributeInfoList;
-				CollectAttributeInfo(att, atts);
-				return att;
-			}
-
-/***********************************************************************
-GenerateTable
-***********************************************************************/
-
-			vint LookAheadConflictPriority(vint tableTokenIndex)
-			{
-				switch (tableTokenIndex)
-				{
-				case ParsingTable::NormalReduce:
-					return 0;
-				case ParsingTable::LeftRecursiveReduce:
-					return 1;
-				default:
-					return 2;
-				}
-			}
-
-			void GenerateLookAhead(Ptr<ParsingTable> table, List<State*>& stateIds, vint state, vint token, Ptr<ParsingTable::TransitionItem> t1, Ptr<ParsingTable::TransitionItem> t2, bool enableAmbiguity, collections::List<Ptr<ParsingError>>& errors)
-			{
-				if(ParsingTable::TransitionItem::CheckOrder(t1, t2, ParsingTable::TransitionItem::UnknownOrder)==ParsingTable::TransitionItem::UnknownOrder)
-				{
-					if(enableAmbiguity || !CreateLookAhead(table, t1, t2, 16))
-					{
-						if (LookAheadConflictPriority(t1->token) != LookAheadConflictPriority(t2->token))
-						{
-							return;
-						}
-						WString stateName=itow(state)+L"["+table->GetStateInfo(state).stateName+L"]";
-						WString tokenName=
-							token==ParsingTable::TokenBegin?WString(L"$TokenBegin"):
-							token==ParsingTable::TokenFinish?WString(L"$TokenFinish"):
-							token==ParsingTable::NormalReduce?WString(L"$NormalReduce"):
-							token==ParsingTable::LeftRecursiveReduce?WString(L"$LeftRecursiveReduce"):
-							table->GetTokenInfo(token).name;
-						switch (t1->token)
-						{
-						case ParsingTable::NormalReduce:
-							errors.Add(new ParsingError(stateIds[state]->ownerRule, L"Conflict happened with normal reduce in transition of \""+tokenName+L"\" of state \""+stateName+L"\"."));
-							break;
-						case ParsingTable::LeftRecursiveReduce:
-							errors.Add(new ParsingError(stateIds[state]->ownerRule, L"Conflict happened with left recursive reduce in transition of \""+tokenName+L"\" of state \""+stateName+L"\"."));
-							break;
-						default:
-							errors.Add(new ParsingError(stateIds[state]->ownerRule, L"Conflict happened in transition of \""+tokenName+L"\" of state \""+stateName+L"\"."));
-							break;
-						}
-					}
-				}
-			}
-
-			Ptr<tabling::ParsingTable> GenerateTableFromPDA(Ptr<definitions::ParsingDefinition> definition, ParsingSymbolManager* manager, Ptr<Automaton> jointPDA, bool enableAmbiguity, collections::List<Ptr<ParsingError>>& errors)
-			{
-				List<Ptr<ParsingTable::AttributeInfoList>> atts;
-
-				/***********************************************************************
-				find all class types
-				***********************************************************************/
-				List<ParsingSymbol*> types;
-				Dictionary<WString, vint> typeAtts;
-				Dictionary<Pair<WString, WString>, vint> treeFieldAtts;
-
-				// stable class field order
-				List<ParsingSymbol*> orderedChildTypeKeys;
-				Dictionary<ParsingSymbol*, Ptr<List<ParsingSymbol*>>> childTypeValues;
-
-				// find all class types
-				CollectType(manager->GetGlobal(), types);
-				FOREACH(ParsingSymbol*, type, types)
-				{
-					Ptr<ParsingTable::AttributeInfoList> typeAtt = new ParsingTable::AttributeInfoList;
-					ParsingSymbol* parent = type;
-					while (parent)
-					{
-						ParsingDefinitionClassDefinition* classDef = manager->CacheGetClassDefinition(parent);
-						CollectAttributeInfo(typeAtt, classDef->attributes);
-
-						Ptr<List<ParsingSymbol*>> children;
-						vint index = childTypeValues.Keys().IndexOf(parent);
-						if (index == -1)
-						{
-							children = new List<ParsingSymbol*>;
-							orderedChildTypeKeys.Add(parent);
-							childTypeValues.Add(parent, children);
-						}
-						else
-						{
-							children = childTypeValues.Values().Get(index);
-						}
-
-						children->Add(type);
-						parent = parent->GetDescriptorSymbol();
-					}
-
-					if (typeAtt->attributes.Count() > 0)
-					{
-						typeAtts.Add(GetTypeFullName(type), atts.Count());
-						atts.Add(typeAtt);
+						return i + 1;
 					}
 					else
 					{
-						typeAtts.Add(GetTypeFullName(type), -1);
+						if (colorize)
+						{
+							proc.colorizeProc(proc.argument, start, lastFinalStateLength, lastFinalStateToken);
+						}
+						return start + lastFinalStateLength;
 					}
 				}
 
-				// find all class fields
-				FOREACH(ParsingSymbol*, type, orderedChildTypeKeys)
+				if (finalState)
 				{
-					List<ParsingSymbol*>& children = *childTypeValues[type].Obj();
-					ParsingDefinitionClassDefinition* classDef = manager->CacheGetClassDefinition(type);
-					List<vint> fieldAtts;
-
-					FOREACH_INDEXER(Ptr<ParsingDefinitionClassMemberDefinition>, field, index, classDef->members)
-					{
-						if (field->attributes.Count() > 0)
-						{
-							fieldAtts.Add(atts.Count());
-							atts.Add(CreateAttributeInfo(field->attributes));
-						}
-						else
-						{
-							fieldAtts.Add(-1);
-						}
-					}
-
-					FOREACH(ParsingSymbol*, child, children)
-					{
-						WString type = GetTypeFullName(child);
-						FOREACH_INDEXER(Ptr<ParsingDefinitionClassMemberDefinition>, field, index, classDef->members)
-						{
-							treeFieldAtts.Add(Pair<WString, WString>(type, field->name), fieldAtts[index]);
-						}
-					}
+					lastFinalStateLength = i + 1 - start;
+					lastFinalStateToken = currentToken;
 				}
+			}
 
-				/***********************************************************************
-				find all tokens
-				***********************************************************************/
-				vint tokenCount = 0;
-				vint discardTokenCount = 0;
-				Dictionary<ParsingSymbol*, vint> tokenIds;
-				List<WString> discardTokens;
-
-				Dictionary<WString, vint> tokenAtts;
-				Dictionary<WString, vint> ruleAtts;
-
-				FOREACH(Ptr<ParsingDefinitionTokenDefinition>, token, definition->tokens)
+			if (lastFinalStateToken != -1 && start + lastFinalStateLength == length)
+			{
+				if (proc.extendProc)
 				{
-					if (token->attributes.Count() > 0)
+					RegexProcessingToken token(start, lastFinalStateLength, lastFinalStateToken, true, nullptr);
+					CallExtendProcAndColorizeProc(input, length, token, colorize);
+				}
+				else if (colorize)
+				{
+					proc.colorizeProc(proc.argument, start, lastFinalStateLength, lastFinalStateToken);
+				}
+			}
+			else if (colorize)
+			{
+				proc.colorizeProc(proc.argument, start, length - start, walker.GetRelatedToken(internalState.currentState));
+			}
+			return length;
+		}
+
+		void* RegexLexerColorizer::Colorize(const wchar_t* input, vint length)
+		{
+			vint index = 0;
+			while (index != length)
+			{
+				index = WalkOneToken(input, length, index, true);
+			}
+			return internalState.interTokenState;
+		}
+
+/***********************************************************************
+RegexLexer
+***********************************************************************/
+
+		RegexLexer::RegexLexer(const collections::IEnumerable<WString>& tokens, RegexProc _proc)
+			:proc(_proc)
+		{
+			// Build DFA for all tokens
+			List<Expression::Ref> expressions;
+			List<Automaton::Ref> dfas;
+			CharRange::List subsets;
+			Ptr<IEnumerator<WString>> enumerator = tokens.CreateEnumerator();
+			while (enumerator->Next())
+			{
+				const WString& code = enumerator->Current();
+
+				RegexExpression::Ref regex = ParseRegexExpression(code);
+				Expression::Ref expression = regex->Merge();
+				expression->CollectCharSet(subsets);
+				expressions.Add(expression);
+			}
+			for (vint i = 0; i < expressions.Count(); i++)
+			{
+				Dictionary<State*, State*> nfaStateMap;
+				Group<State*, State*> dfaStateMap;
+				Expression::Ref expression = expressions[i];
+				expression->ApplyCharSet(subsets);
+				Automaton::Ref eNfa = expression->GenerateEpsilonNfa();
+				Automaton::Ref nfa = EpsilonNfaToNfa(eNfa, PureEpsilonChecker, nfaStateMap);
+				Automaton::Ref dfa = NfaToDfa(nfa, dfaStateMap);
+				dfas.Add(dfa);
+			}
+
+			// Mark all states in DFAs
+			for (vint i = 0; i < dfas.Count(); i++)
+			{
+				Automaton::Ref dfa = dfas[i];
+				for (vint j = 0; j < dfa->states.Count(); j++)
+				{
+					if (dfa->states[j]->finalState)
 					{
-						tokenAtts.Add(token->name, atts.Count());
-						atts.Add(CreateAttributeInfo(token->attributes));
+						dfa->states[j]->userData = (void*)i;
 					}
 					else
 					{
-						tokenAtts.Add(token->name, -1);
-					}
-
-					if (token->discard)
-					{
-						discardTokens.Add(token->name);
-						discardTokenCount++;
-					}
-					else
-					{
-						ParsingSymbol* tokenSymbol = jointPDA->symbolManager->GetGlobal()->GetSubSymbolByName(token->name);
-						tokenIds.Add(tokenSymbol, tokenIds.Count() + ParsingTable::UserTokenStart);
-						tokenCount++;
+						dfa->states[j]->userData = (void*)dfas.Count();
 					}
 				}
-
-				/***********************************************************************
-				find all rules
-				***********************************************************************/
-				FOREACH(Ptr<ParsingDefinitionRuleDefinition>, rule, definition->rules)
-				{
-					if (rule->attributes.Count() > 0)
-					{
-						ruleAtts.Add(rule->name, atts.Count());
-						atts.Add(CreateAttributeInfo(rule->attributes));
-					}
-					else
-					{
-						ruleAtts.Add(rule->name, -1);
-					}
-				}
-
-				/***********************************************************************
-				find all available states
-				***********************************************************************/
-				List<State*> stateIds;
-				vint availableStateCount = 0;
-				{
-					vint currentState = 0;
-					List<State*> scanningStates;
-					FOREACH(Ptr<RuleInfo>, ruleInfo, jointPDA->ruleInfos)
-					{
-						if (!scanningStates.Contains(ruleInfo->rootRuleStartState))
-						{
-							scanningStates.Add(ruleInfo->rootRuleStartState);
-						}
-
-						while (currentState < scanningStates.Count())
-						{
-							State* state = scanningStates[currentState++];
-							stateIds.Add(state);
-
-							FOREACH(Transition*, transition, state->transitions)
-							{
-								if (!scanningStates.Contains(transition->target))
-								{
-									scanningStates.Add(transition->target);
-								}
-							}
-						}
-					}
-					availableStateCount = scanningStates.Count();
-				}
-
-				// there will be some states that is used in shift and reduce but it is not a reachable state
-				// so the state table will record all state
-				FOREACH(Ptr<State>, state, jointPDA->states)
-				{
-					if (!stateIds.Contains(state.Obj()))
-					{
-						stateIds.Add(state.Obj());
-					}
-				}
-				vint stateCount = stateIds.Count();
-
-				Ptr<ParsingTable> table = new ParsingTable(atts.Count(), typeAtts.Count(), treeFieldAtts.Count(), tokenCount, discardTokenCount, stateCount, definition->rules.Count());
-
-				/***********************************************************************
-				fill attribute infos
-				***********************************************************************/
-				FOREACH_INDEXER(Ptr<ParsingTable::AttributeInfoList>, att, index, atts)
-				{
-					table->SetAttributeInfo(index, att);
-				}
-
-				/***********************************************************************
-				fill tree type infos
-				***********************************************************************/
-				typedef Pair<WString, vint> TreeTypeAttsPair;
-				FOREACH_INDEXER(TreeTypeAttsPair, type, index, typeAtts)
-				{
-					table->SetTreeTypeInfo(index, ParsingTable::TreeTypeInfo(type.key, type.value));
-				}
-
-				/***********************************************************************
-				fill tree field infos
-				***********************************************************************/
-				typedef Pair<Pair<WString, WString>, vint> TreeFieldAttsPair;
-				FOREACH_INDEXER(TreeFieldAttsPair, field, index, treeFieldAtts)
-				{
-					table->SetTreeFieldInfo(index, ParsingTable::TreeFieldInfo(field.key.key, field.key.value, field.value));
-				}
-
-				/***********************************************************************
-				fill token infos
-				***********************************************************************/
-				FOREACH(ParsingSymbol*, symbol, tokenIds.Keys())
-				{
-					ParsingTable::TokenInfo info;
-					info.name = symbol->GetName();
-					info.regex = symbol->GetDescriptorString();
-					info.attributeIndex = tokenAtts[info.name];
-
-					vint id = tokenIds[symbol];
-					table->SetTokenInfo(id, info);
-				}
-
-				FOREACH_INDEXER(WString, name, i, discardTokens)
-				{
-					ParsingSymbol* symbol = jointPDA->symbolManager->GetGlobal()->GetSubSymbolByName(name);
-
-					ParsingTable::TokenInfo info;
-					info.name = symbol->GetName();
-					info.regex = symbol->GetDescriptorString();
-					info.attributeIndex = tokenAtts[info.name];
-					table->SetDiscardTokenInfo(i, info);
-				}
-
-				/***********************************************************************
-				fill rule infos
-				***********************************************************************/
-				FOREACH_INDEXER(ParsingDefinitionRuleDefinition*, rule, i, jointPDA->orderedRulesDefs)
-				{
-					Ptr<RuleInfo> pdaRuleInfo = jointPDA->ruleDefToInfoMap[rule];
-					ParsingTable::RuleInfo info;
-					info.name = rule->name;
-					info.type = TypeToString(rule->type.Obj());
-					info.rootStartState = stateIds.IndexOf(pdaRuleInfo->rootRuleStartState);
-					info.attributeIndex = ruleAtts[info.name];
-
-					if (Ptr<ParsingDefinitionPrimitiveType> classType = rule->type.Cast<ParsingDefinitionPrimitiveType>())
-					{
-						ParsingSymbol* ruleSymbol = manager->GetGlobal()->GetSubSymbolByName(rule->name);
-						ParsingSymbol* ruleType = ruleSymbol->GetDescriptorSymbol();
-						ParsingDefinitionClassDefinition* ruleTypeDef = manager->CacheGetClassDefinition(ruleType);
-						if (ruleTypeDef && ruleTypeDef->ambiguousType)
-						{
-							ParsingSymbol* ambiguousType = manager->CacheGetType(ruleTypeDef->ambiguousType.Obj(), ruleType->GetParentSymbol());
-							info.ambiguousType = GetTypeFullName(ambiguousType);
-						}
-					}
-					table->SetRuleInfo(i, info);
-				}
-
-				/***********************************************************************
-				fill state infos
-				***********************************************************************/
-				FOREACH_INDEXER(State*, state, i, stateIds)
-				{
-					ParsingTable::StateInfo info;
-					info.ruleName = state->ownerRule->name;
-					info.stateName = state->stateName;
-					info.stateExpression = state->stateExpression;
-					table->SetStateInfo(i, info);
-				}
-
-				/***********************************************************************
-				fill transition table
-				***********************************************************************/
-				FOREACH_INDEXER(State*, state, stateIndex, stateIds)
-				{
-					// if this state is not necessary, stop building the table
-					if (stateIndex >= availableStateCount) break;
-
-					FOREACH(Transition*, transition, state->transitions)
-					{
-						vint tokenIndex = -1;
-						switch (transition->transitionType)
-						{
-						case Transition::TokenBegin:
-							tokenIndex = ParsingTable::TokenBegin;
-							break;
-						case Transition::TokenFinish:
-							tokenIndex = ParsingTable::TokenFinish;
-							break;
-						case Transition::NormalReduce:
-							tokenIndex = ParsingTable::NormalReduce;
-							break;
-						case Transition::LeftRecursiveReduce:
-							tokenIndex = ParsingTable::LeftRecursiveReduce;
-							break;
-						case Transition::Symbol:
-							tokenIndex = tokenIds[transition->transitionSymbol];
-							break;
-						default:;
-						}
-
-						Ptr<ParsingTable::TransitionBag> bag = table->GetTransitionBag(stateIndex, tokenIndex);
-						if (!bag)
-						{
-							bag = new ParsingTable::TransitionBag;
-							table->SetTransitionBag(stateIndex, tokenIndex, bag);
-						}
-
-						Ptr<ParsingTable::TransitionItem> item = new ParsingTable::TransitionItem;
-						item->token = tokenIndex;
-						item->targetState = stateIds.IndexOf(transition->target);
-						bag->transitionItems.Add(item);
-
-						FOREACH(Ptr<Action>, action, transition->actions)
-						{
-							ParsingTable::Instruction ins;
-							switch (action->actionType)
-							{
-							case Action::Create:
-							{
-								ins.instructionType = ParsingTable::Instruction::Create;
-								ins.nameParameter = GetTypeNameForCreateInstruction(action->actionSource);
-							}
-							break;
-							case Action::Using:
-							{
-								ins.instructionType = ParsingTable::Instruction::Using;
-							}
-							break;
-							case Action::Assign:
-							{
-								if (action->actionSource->GetDescriptorSymbol()->GetType() == ParsingSymbol::ArrayType)
-								{
-									ins.instructionType = ParsingTable::Instruction::Item;
-								}
-								else
-								{
-									ins.instructionType = ParsingTable::Instruction::Assign;
-								}
-								ins.nameParameter = action->actionSource->GetName();
-							}
-							break;
-							case Action::Setter:
-							{
-								ins.instructionType = ParsingTable::Instruction::Setter;
-								ins.nameParameter = action->actionSource->GetName();
-								ins.value = action->actionTarget->GetName();
-							}
-							break;
-							case Action::Shift:
-							{
-								ins.instructionType = ParsingTable::Instruction::Shift;
-								ins.stateParameter = stateIds.IndexOf(action->shiftReduceSource);
-							}
-							break;
-							case Action::Reduce:
-							{
-								ins.instructionType = ParsingTable::Instruction::Reduce;
-								ins.stateParameter = stateIds.IndexOf(action->shiftReduceSource);
-								item->stackPattern.Add(ins.stateParameter);
-							}
-							break;
-							case Action::LeftRecursiveReduce:
-							{
-								ins.instructionType = ParsingTable::Instruction::LeftRecursiveReduce;
-								ins.stateParameter = stateIds.IndexOf(action->shiftReduceSource);
-							}
-							break;
-							}
-							ins.creatorRule = action->creatorRule->name;
-							item->instructions.Add(ins);
-						}
-					}
-				}
-
-				/***********************************************************************
-				check conflict and build look ahead table
-				***********************************************************************/
-				for (vint i = 0; i < table->GetStateCount(); i++)
-				{
-					for (vint j = 0; j < table->GetTokenCount(); j++)
-					{
-						Ptr<ParsingTable::TransitionBag> bag = table->GetTransitionBag(i, j);
-						if (bag)
-						{
-							CopyFrom(
-								bag->transitionItems,
-								From(bag->transitionItems)
-								.OrderBy([&](Ptr<ParsingTable::TransitionItem> t1, Ptr<ParsingTable::TransitionItem> t2)
-							{
-								// stable transition order
-								vint i1 = bag->transitionItems.IndexOf(t1.Obj());
-								vint i2 = bag->transitionItems.IndexOf(t2.Obj());
-								auto defaultOrder =
-									i1 < i2 ? ParsingTable::TransitionItem::CorrectOrder :
-									i1 > i2 ? ParsingTable::TransitionItem::WrongOrder :
-									ParsingTable::TransitionItem::SameOrder
-									;
-								return ParsingTable::TransitionItem::Compare(t1, t2, defaultOrder);
-							})
-							);
-
-							// build look ahead inside a transition
-							for (vint k1 = 0; k1 < bag->transitionItems.Count() - 1; k1++)
-							{
-								for (vint k2 = k1 + 1; k2 < bag->transitionItems.Count(); k2++)
-								{
-									Ptr<ParsingTable::TransitionItem> t1 = bag->transitionItems[k1];
-									Ptr<ParsingTable::TransitionItem> t2 = bag->transitionItems[k2];
-									GenerateLookAhead(table, stateIds, i, j, t1, t2, enableAmbiguity, errors);
-								}
-							}
-
-							// build look ahead between this transition and reduce transitions
-							for (vint t = ParsingTable::NormalReduce; t <= ParsingTable::LeftRecursiveReduce && t < j; t++)
-							{
-								if (Ptr<ParsingTable::TransitionBag> reduceBag = table->GetTransitionBag(i, t))
-								{
-									for (vint k1 = 0; k1 < reduceBag->transitionItems.Count(); k1++)
-									{
-										for (vint k2 = 0; k2 < bag->transitionItems.Count(); k2++)
-										{
-											Ptr<ParsingTable::TransitionItem> t1 = reduceBag->transitionItems[k1];
-											Ptr<ParsingTable::TransitionItem> t2 = bag->transitionItems[k2];
-											GenerateLookAhead(table, stateIds, i, j, t1, t2, enableAmbiguity, errors);
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-
-				/***********************************************************************
-				initialize table
-				***********************************************************************/
-				if (errors.Count() > 0)
-				{
-					table->SetAmbiguity(true);
-				}
-				table->Initialize();
-				return table;
 			}
 
-			Ptr<tabling::ParsingTable> GenerateTable(Ptr<definitions::ParsingDefinition> definition, bool enableAmbiguity, collections::List<Ptr<ParsingError>>& errors)
+			// Connect all DFAs to an e-NFA
+			Automaton::Ref bigEnfa = new Automaton;
+			for (vint i = 0; i < dfas.Count(); i++)
 			{
-				errors.Clear();
-				ParsingSymbolManager symbolManager;
-				ValidateDefinition(definition, &symbolManager, errors);
-				if(errors.Count()==0)
+				CopyFrom(bigEnfa->states, dfas[i]->states);
+				CopyFrom(bigEnfa->transitions, dfas[i]->transitions);
+			}
+			bigEnfa->startState = bigEnfa->NewState();
+			for (vint i = 0; i < dfas.Count(); i++)
+			{
+				bigEnfa->NewEpsilon(bigEnfa->startState, dfas[i]->startState);
+			}
+
+			// Build a single DFA out of the e-NFA
+			Dictionary<State*, State*> nfaStateMap;
+			Group<State*, State*> dfaStateMap;
+			Automaton::Ref bigNfa = EpsilonNfaToNfa(bigEnfa, PureEpsilonChecker, nfaStateMap);
+			for (vint i = 0; i < nfaStateMap.Keys().Count(); i++)
+			{
+				void* userData = nfaStateMap.Values().Get(i)->userData;
+				nfaStateMap.Keys()[i]->userData = userData;
+			}
+			Automaton::Ref bigDfa = NfaToDfa(bigNfa, dfaStateMap);
+			for (vint i = 0; i < dfaStateMap.Keys().Count(); i++)
+			{
+				void* userData = dfaStateMap.GetByIndex(i).Get(0)->userData;
+				for (vint j = 1; j < dfaStateMap.GetByIndex(i).Count(); j++)
 				{
-					Ptr<Automaton> epsilonPDA=CreateEpsilonPDA(definition, &symbolManager);
-					Ptr<Automaton> nondeterministicPDA=CreateNondeterministicPDAFromEpsilonPDA(epsilonPDA);
-					Ptr<Automaton> jointPDA=CreateJointPDAFromNondeterministicPDA(nondeterministicPDA);
-					CompactJointPDA(jointPDA);
-					MarkLeftRecursiveInJointPDA(jointPDA, errors);
-					if(errors.Count()==0)
+					void* newData = dfaStateMap.GetByIndex(i).Get(j)->userData;
+					if (userData > newData)
 					{
-						Ptr<ParsingTable> table=GenerateTableFromPDA(definition, &symbolManager, jointPDA, enableAmbiguity, errors);
-						if(enableAmbiguity || errors.Count()==0)
-						{
-							return table;
-						}
+						userData = newData;
 					}
 				}
-				return 0;
+				dfaStateMap.Keys()[i]->userData = userData;
+			}
+
+			// Build state machine
+			pure = new PureInterpretor(bigDfa, subsets);
+			stateTokens.Resize(bigDfa->states.Count());
+			for (vint i = 0; i < stateTokens.Count(); i++)
+			{
+				void* userData = bigDfa->states[i]->userData;
+				stateTokens[i] = (vint)userData;
 			}
 		}
-	}
-}
 
-/***********************************************************************
-.\PARSING\PARSINGAUTOMATON_JPDA.CPP
-***********************************************************************/
-
-namespace vl
-{
-	namespace parsing
-	{
-		using namespace collections;
-		using namespace definitions;
-
-		namespace analyzing
+		RegexLexer::~RegexLexer()
 		{
-/***********************************************************************
-CreateJointPDAFromNondeterministicPDA
-***********************************************************************/
-
-			Ptr<Automaton> CreateJointPDAFromNondeterministicPDA(Ptr<Automaton> nondeterministicPDA)
-			{
-				Ptr<Automaton> automaton=new Automaton(nondeterministicPDA->symbolManager);
-
-				// build rule info data
-				Dictionary<WString, ParsingDefinitionRuleDefinition*> ruleMap;
-				Dictionary<State*, State*> oldNewStateMap;
-				FOREACH(ParsingDefinitionRuleDefinition*, rule, nondeterministicPDA->orderedRulesDefs)
-				{
-					// build new rule info
-					Ptr<RuleInfo> ruleInfo=nondeterministicPDA->ruleDefToInfoMap[rule];
-					Ptr<RuleInfo> newRuleInfo=new RuleInfo;
-					automaton->AddRuleInfo(rule, newRuleInfo);
-					ruleMap.Add(rule->name, rule);
-
-					newRuleInfo->rootRuleStartState=automaton->RootRuleStartState(rule);
-					newRuleInfo->rootRuleEndState=automaton->RootRuleEndState(rule);
-					newRuleInfo->startState=automaton->RuleStartState(rule);
-
-					oldNewStateMap.Add(ruleInfo->rootRuleStartState, newRuleInfo->rootRuleStartState);
-					oldNewStateMap.Add(ruleInfo->rootRuleEndState, newRuleInfo->rootRuleEndState);
-					oldNewStateMap.Add(ruleInfo->startState, newRuleInfo->startState);
-
-					newRuleInfo->rootRuleStartState->stateExpression=ruleInfo->rootRuleStartState->stateExpression;
-					newRuleInfo->rootRuleEndState->stateExpression=ruleInfo->rootRuleEndState->stateExpression;
-					newRuleInfo->startState->stateExpression=ruleInfo->startState->stateExpression;
-				}
-
-				FOREACH(Ptr<State>, oldState, nondeterministicPDA->states)
-				{
-					if((oldState->inputs.Count()>0 || oldState->transitions.Count()>0) && !oldNewStateMap.Keys().Contains(oldState.Obj()))
-					{
-						State* newState=automaton->CopyState(oldState.Obj());
-						oldNewStateMap.Add(oldState.Obj(), newState);
-						newState->stateExpression=oldState->stateExpression;
-					}
-				}
-
-				// create transitions
-				FOREACH(ParsingDefinitionRuleDefinition*, rule, nondeterministicPDA->orderedRulesDefs)
-				{
-					Ptr<RuleInfo> ruleInfo=nondeterministicPDA->ruleDefToInfoMap[rule];
-					Ptr<RuleInfo> newRuleInfo=automaton->ruleDefToInfoMap[rule];
-
-					// complete new rule info
-					FOREACH(State*, endState, ruleInfo->endStates)
-					{
-						newRuleInfo->endStates.Add(oldNewStateMap[endState]);
-					}
-
-					// create joint transitions according to old automaton
-					List<State*> scanningStates;
-					vint currentStateIndex=0;
-					scanningStates.Add(ruleInfo->rootRuleStartState);
-
-					while(currentStateIndex<scanningStates.Count())
-					{
-						State* currentOldState=scanningStates[currentStateIndex++];
-						State* currentNewState=oldNewStateMap[currentOldState];
-						FOREACH(Transition*, oldTransition, currentOldState->transitions)
-						{
-							State* oldSource=oldTransition->source;
-							State* oldTarget=oldTransition->target;
-							State* newSource=oldNewStateMap[oldSource];
-							State* newTarget=oldNewStateMap[oldTarget];
-
-							if(!scanningStates.Contains(oldSource)) scanningStates.Add(oldSource);
-							if(!scanningStates.Contains(oldTarget)) scanningStates.Add(oldTarget);
-
-							if(oldTransition->transitionType==Transition::Symbol && oldTransition->transitionSymbol->GetType()==ParsingSymbol::RuleDef)
-							{
-								// if this is a rule transition, create
-								// source -> ruleStart
-								// ruleEnd[] -> target
-								ParsingDefinitionRuleDefinition* rule=ruleMap[oldTransition->transitionSymbol->GetName()];
-								Ptr<RuleInfo> oldRuleInfo=nondeterministicPDA->ruleDefToInfoMap[rule];
-
-								{
-									Transition* shiftTransition=automaton->Epsilon(newSource, oldNewStateMap[oldRuleInfo->startState]);
-									Ptr<Action> action=new Action;
-									action->actionType=Action::Shift;
-									action->shiftReduceSource=newSource;
-									action->shiftReduceTarget=newTarget;
-									action->creatorRule=shiftTransition->source->ownerRule;
-									shiftTransition->actions.Add(action);
-								}
-
-								FOREACH(State*, oldEndState, oldRuleInfo->endStates)
-								{
-									Transition* reduceTransition=automaton->NormalReduce(oldNewStateMap[oldEndState], newTarget);
-									Ptr<Action> action=new Action;
-									action->actionType=Action::Reduce;
-									action->shiftReduceSource=newSource;
-									action->shiftReduceTarget=newTarget;
-									action->creatorRule=reduceTransition->source->ownerRule;
-									reduceTransition->actions.Add(action);
-									CopyFrom(reduceTransition->actions, oldTransition->actions, true);
-								}
-							}
-							else
-							{
-								// if not, just copy
-								Transition* newTransition=automaton->CopyTransition(newSource, newTarget, oldTransition);
-								CopyFrom(newTransition->actions, oldTransition->actions);
-							}
-						}
-					}
-				}
-				return automaton;
-			}
-
-/***********************************************************************
-CompactJointPDA
-***********************************************************************/
-			
-			// closure function for searching shift-reduce-compact transition
-			ClosureItem::SearchResult ShiftReduceCompactClosure(Transition* transition)
-			{
-				return
-					transition->stackOperationType!=Transition::None?ClosureItem::Blocked:
-					transition->transitionType!=Transition::Epsilon?ClosureItem::Hit:
-					ClosureItem::Continue;
-			}
-
-			void CompactJointPDA(Ptr<Automaton> jointPDA)
-			{
-				FOREACH(Ptr<State>, state, jointPDA->states)
-				{
-					State* currentState=state.Obj();
-
-					// search for epsilon closure
-					List<ClosureItem> closure;
-					SearchClosure(&ShiftReduceCompactClosure, currentState, closure);
-
-					FOREACH(ClosureItem, closureItem, closure)
-					{
-						Transition* lastTransition=closureItem.transitions->Get(closureItem.transitions->Count()-1);
-						Transition::StackOperationType stackOperationType=Transition::None;
-						Transition::TransitionType transitionType=lastTransition->transitionType;
-
-						if(closureItem.cycle && lastTransition->transitionType==Transition::Epsilon)
-						{
-							bool containsShift=false;
-							bool containsReduce=false;
-							FOREACH(Transition*, pathTransition, *closureItem.transitions.Obj())
-							{
-								FOREACH(Ptr<Action>, action, pathTransition->actions)
-								{
-									if(action->actionType==Action::Shift) containsShift=true;
-									if(action->actionType==Action::Reduce) containsReduce=true;
-								}
-							}
-							if(containsShift && !containsReduce)
-							{
-								// a left recursive compacted shift transition is found
-								// if the left recursive state is not the current state
-								// that means this transition path fall into other left recursive state
-								// e.g.
-								//     Term = Factor | Term (here is a left recursion) * Factor
-								//     Exp = Term (this rule symbol transition will fall into Term's left recursive state) ...
-								// if such a case happened, this transition path will be simply discarded
-								if(closureItem.state==currentState)
-								{
-									stackOperationType=Transition::LeftRecursive;
-								}
-							}
-							else if(!containsShift && containsReduce)
-							{
-								// a right recursive compacted reduce transition is found
-								// if this state will receive $TokenFinish, then the stack pattern number can be infinite
-								// e.g. for right recursive expression "a b c" == "(a (b c))"
-								// when trying to do a transition by $TokenFinish
-								//     "a b" should reduce once
-								//     "a b c" should reduce twice
-								// because that a reduce is not considered a virtual token, so this is not going to be happened
-							}
-						}
-						else if(closureItem.transitions->Count()>1)
-						{
-							// in joint PDA, only shift and reduce transitions are epsilon transition
-							// if there are more than one transition in a path, then there should be shift or reduce transitions in the path
-							stackOperationType=Transition::ShiftReduceCompacted;
-						}
-
-						if(stackOperationType!=Transition::None)
-						{
-							// build shift-reduce-compacted transition to the target state of the path
-							Transition* transition=jointPDA->CopyTransition(currentState, lastTransition->target, lastTransition);
-							transition->transitionType=transitionType;
-							transition->stackOperationType=stackOperationType;
-
-							// there will be <shift* token>, <reduce* token> or <reduce* shift* token>
-							// but there will not be something like <reduce* shift* reduce* token>
-							// so we can append stackPattern safely
-							FOREACH(Transition*, pathTransition, *closureItem.transitions.Obj())
-							{
-								CopyFrom(transition->actions, pathTransition->actions, true);
-							}
-						}
-					}
-				}
-
-				// delete unnecessary transactions
-				for(vint i=jointPDA->transitions.Count()-1;i>=0;i--)
-				{
-					Transition* transition=jointPDA->transitions[i].Obj();
-					if(transition->stackOperationType==Transition::None && transition->transitionType==Transition::Epsilon)
-					{
-						jointPDA->DeleteTransition(transition);
-					}
-				}
-			}
-
-/***********************************************************************
-MarkLeftRecursiveInJointPDA
-***********************************************************************/
-
-			void MarkLeftRecursiveInJointPDA(Ptr<Automaton> jointPDA, collections::List<Ptr<ParsingError>>& errors)
-			{
-				vint errorCount=errors.Count();
-				// record all left recursive shifts and delete all left recursive epsilon transition
-				SortedList<Pair<State*, State*>> leftRecursiveShifts;
-				FOREACH(Ptr<State>, state, jointPDA->states)
-				{
-					for(vint i=state->transitions.Count()-1;i>=0;i--)
-					{
-						Transition* transition=state->transitions[i];
-						if(transition->stackOperationType==Transition::LeftRecursive)
-						{
-							Ptr<Action> shiftAction;
-							FOREACH(Ptr<Action>, action, transition->actions)
-							{
-								if(action->actionType==Action::Shift)
-								{
-									if(shiftAction)
-									{
-										errors.Add(new ParsingError(state->ownerRule, L"Indirect left recursive transition in rule \""+state->ownerRule->name+L"\" is not allowed."));
-										goto FOUND_INDIRECT_LEFT_RECURSIVE_TRANSITION;
-									}
-									else
-									{
-										shiftAction=action;
-									}
-								}
-							}
-							if(shiftAction)
-							{
-								leftRecursiveShifts.Add(Pair<State*, State*>(shiftAction->shiftReduceSource, shiftAction->shiftReduceTarget));
-							}
-						FOUND_INDIRECT_LEFT_RECURSIVE_TRANSITION:
-							jointPDA->DeleteTransition(transition);
-						}
-					}
-				}
-				if(errorCount!=errors.Count())
-				{
-					return;
-				}
-
-				// change all reduce actions whose (shiftReduceSource, shiftReduceTarget) is recorded in leftRecursiveShifts to left-recursive-reduce
-				// when a reduce is converted to a left-recursive-reduce, the corresponding state in stackPattern should be removed
-				// so this will keep count(Reduce) == count(stackPattern)
-				FOREACH(Ptr<State>, state, jointPDA->states)
-				{
-					FOREACH(Transition*, transition, state->transitions)
-					{
-						for(vint i=transition->actions.Count()-1;i>=0;i--)
-						{
-							Ptr<Action> action=transition->actions[i];
-							if(action->actionType==Action::Reduce)
-							{
-								Pair<State*, State*> shift(action->shiftReduceSource, action->shiftReduceTarget);
-								if(leftRecursiveShifts.Contains(shift))
-								{
-									// check if this is a normal reduce transition, and change it to a left recursive reduce transition.
-									if (transition->transitionType == Transition::NormalReduce)
-									{
-										transition->transitionType = Transition::LeftRecursiveReduce;
-										// need to create a new action because in the previous phrases, these action object are shared and treated as read only
-										Ptr<Action> newAction=new Action;
-										newAction->actionType=Action::LeftRecursiveReduce;
-										newAction->actionSource=action->actionSource;
-										newAction->actionTarget=action->actionTarget;
-										newAction->creatorRule=action->creatorRule;
-										newAction->shiftReduceSource=action->shiftReduceSource;
-										newAction->shiftReduceTarget=action->shiftReduceTarget;
-										newAction->creatorRule=shift.key->ownerRule;
-										transition->actions[i]=newAction;
-									}
-									else
-									{
-										errors.Add(new ParsingError(state->ownerRule, L"Left recursive reduce action in non-normal-reduce found in rule \""+state->ownerRule->name+L"\" is not allowed."));
-									}
-								}
-							}
-						}
-					}
-				}
-
-				// delete complicated transitions
-				FOREACH(Ptr<State>, state, jointPDA->states)
-				{
-					while(true)
-					{
-						bool deleted=false;
-						FOREACH(Transition*, t1, state->transitions)
-						FOREACH(Transition*, t2, state->transitions)
-						if(t1!=t2)
-						{
-							if(Transition::IsEquivalent(t1, t2, true))
-							{
-								jointPDA->DeleteTransition(t2);
-								deleted=true;
-								goto TRANSITION_DELETED;
-							}
-						}
-					TRANSITION_DELETED:
-						if(!deleted) break;
-					}
-				}
-			}
-		}
-	}
-}
-
-/***********************************************************************
-.\PARSING\PARSINGAUTOMATON_MERGESTATES.CPP
-***********************************************************************/
-
-namespace vl
-{
-	namespace parsing
-	{
-		using namespace collections;
-		using namespace definitions;
-
-		namespace analyzing
-		{
-
-/***********************************************************************
-DeleteUnnecessaryStates
-***********************************************************************/
-
-			void DeleteUnnecessaryStates(Ptr<Automaton> automaton, Ptr<RuleInfo> ruleInfo, List<State*>& newStates)
-			{
-				// delete all states that are not reachable to the end state
-				while(true)
-				{
-					// find a non-end state without out transitions
-					vint deleteCount=0;
-					for(vint i=newStates.Count()-1;i>=0;i--)
-					{
-						State* newState=newStates[i];
-						if(newState->transitions.Count()==0)
-						{
-							if(newState!=ruleInfo->rootRuleEndState && !newState->endState)
-							{
-								automaton->DeleteState(newState);
-								newStates.RemoveAt(i);
-							}
-						}
-					}
-					if(deleteCount==0)
-					{
-						break;
-					}
-				}
-			}
-
-/***********************************************************************
-IsMergableCandidate
-***********************************************************************/
-
-			bool IsMergableCandidate(State* state, Ptr<RuleInfo> ruleInfo)
-			{
-				if(state==ruleInfo->rootRuleStartState || state==ruleInfo->rootRuleEndState || state==ruleInfo->startState)
-				{
-					return false;
-				}
-				return true;
-			}
-
-/***********************************************************************
-RearrangeState
-***********************************************************************/
-
-#define COMPARE_SYMBOL(S1, S2)\
-			if (S1 && S2)\
-			{\
-				if (S1->GetType() < S2->GetType()) return -1;\
-				if (S1->GetType() > S2->GetType()) return 1;\
-				if (S1->GetName() < S2->GetName()) return -1;\
-				if (S1->GetName() > S2->GetName()) return 1;\
-			}\
-			else if (S1)\
-			{\
-				return 1;\
-			}\
-			else if (S2)\
-			{\
-				return -1;\
-			}\
-
-			vint CompareTransitionForRearranging(Transition* t1, Transition* t2)
-			{
-				if (t1->transitionType < t2->transitionType) return -1;
-				if (t1->transitionType > t2->transitionType) return 1;
-				COMPARE_SYMBOL(t1->transitionSymbol, t2->transitionSymbol);
-				return 0;
-			}
-
-			vint CompareActionForRearranging(Ptr<Action> a1, Ptr<Action> a2)
-			{
-				if(a1->actionType<a2->actionType) return -1;
-				if(a1->actionType>a2->actionType) return 1;
-				COMPARE_SYMBOL(a1->actionSource, a2->actionSource);
-				COMPARE_SYMBOL(a1->actionTarget, a2->actionTarget);
-				return 0;
-			}
-
-#undef COMPARE_SYMBOL
-
-			void RearrangeState(State* state, SortedList<State*>& stateContentSorted)
-			{
-				if(!stateContentSorted.Contains(state))
-				{
-					FOREACH(Transition*, transition, state->transitions)
-					{
-						CopyFrom(transition->actions, From(transition->actions).OrderBy(&CompareActionForRearranging));
-					}
-					CopyFrom(state->transitions, From(state->transitions).OrderBy(&CompareTransitionForRearranging));
-					stateContentSorted.Add(state);
-				}
-			}
-
-/***********************************************************************
-MoveActionsForMergingState
-***********************************************************************/
-
-			void MoveActionsForMergingState(Transition* transition)
-			{
-				// collect all movable actions
-				List<Ptr<Action>> movableActions;
-				for(vint i=transition->actions.Count()-1;i>=0;i--)
-				{
-					switch(transition->actions[i]->actionType)
-					{
-					// Using and Assign actions are not movable
-					case Action::Using:
-					case Action::Assign:
-						break;
-					default:
-						movableActions.Add(transition->actions[i]);
-						transition->actions.RemoveAt(i);
-					}
-				}
-
-				// copy all movable actions
-				FOREACH(Transition*, t, transition->source->inputs)
-				{
-					CopyFrom(t->actions, movableActions, true);
-				}
-			}
-
-/***********************************************************************
-IsMergableBecause(Transitions|Input)
-***********************************************************************/
-
-			bool IsMergableBecauseTransitions(State* state1, State* state2)
-			{
-				if(state1->transitions.Count()!=state2->transitions.Count()) return false;
-				if(state1->transitions.Count()==1 && state2->transitions.Count()==1)
-				{
-					Transition* t1=state1->transitions[0];
-					Transition* t2=state2->transitions[0];
-					if(CompareTransitionForRearranging(t1, t2)==0 && !Transition::IsEquivalent(t1, t2, false) && t1->target==t2->target)
-					{
-						MoveActionsForMergingState(t1);
-						MoveActionsForMergingState(t2);
-					}
-				}
-				for(vint i=0;i<state1->transitions.Count();i++)
-				{
-					Transition* t1=state1->transitions[i];
-					Transition* t2=state2->transitions[i];
-					if(!Transition::IsEquivalent(t1, t2, false) || t1->target!=t2->target)
-					{
-						return false;
-					}
-				}
-				return true;
-			}
-
-			bool IsMergableBecauseInputs(State* state1, State* state2)
-			{
-				if(state1->inputs.Count()!=state2->inputs.Count()) return false;
-				for(vint i=0;i<state1->inputs.Count();i++)
-				{
-					Transition* t1=state1->inputs[i];
-					Transition* t2=state2->inputs[i];
-					if(!Transition::IsEquivalent(t1, t2, false) || t1->source!=t2->source)
-					{
-						return false;
-					}
-				}
-				return true;
-			}
-
-/***********************************************************************
-MergeState2ToState1Because(Transitions|Input)
-***********************************************************************/
-
-			void MergeState2ToState1BecauseTransitions(Ptr<Automaton> automaton, State* state1, State* state2)
-			{
-				// modify state1's expression
-				state1->stateExpression+=L"\r\n"+state2->stateExpression;
-
-				// retarget state2's input to state1
-				for(vint i=state2->inputs.Count()-1;i>=0;i--)
-				{
-					Transition* t2=state2->inputs[i];
-					bool add=true;
-					FOREACH(Transition*, t1, state1->inputs)
-					{
-						if(Transition::IsEquivalent(t1, t2, false) && t1->source==t2->source)
-						{
-							add=false;
-							break;
-						}
-					}
-					if(add)
-					{
-						state1->inputs.Add(t2);
-						t2->target=state1;
-						state2->inputs.RemoveAt(i);
-					}
-				}
-
-				automaton->DeleteState(state2);
-			}
-
-			void MergeState2ToState1BecauseInputs(Ptr<Automaton> automaton, State* state1, State* state2)
-			{
-				// modify state1's expression
-				state1->stateExpression+=L"\r\n"+state2->stateExpression;
-
-				// retarget state2's input to state1
-				for(vint i=state2->transitions.Count()-1;i>=0;i--)
-				{
-					Transition* t2=state2->transitions[i];
-					bool add=true;
-					FOREACH(Transition*, t1, state1->transitions)
-					{
-						if(Transition::IsEquivalent(t1, t2, false) && t1->target==t2->target)
-						{
-							add=false;
-							break;
-						}
-					}
-					if(add)
-					{
-						state1->transitions.Add(t2);
-						t2->source=state1;
-						state2->transitions.RemoveAt(i);
-					}
-				}
-
-				automaton->DeleteState(state2);
-			}
-
-/***********************************************************************
-MergeStates
-***********************************************************************/
-
-			void MergeStates(Ptr<Automaton> automaton, Ptr<RuleInfo> ruleInfo, List<State*>& newStates)
-			{
-				SortedList<State*> stateContentSorted;
-				while(true)
-				{
-					for(vint i=0;i<newStates.Count();i++)
-					{
-						State* state1=newStates[i];
-						if(IsMergableCandidate(state1, ruleInfo))
-						{
-							for(vint j=i+1;j<newStates.Count();j++)
-							{
-								State* state2=newStates[j];
-								if(state1!=state2 && IsMergableCandidate(state2, ruleInfo))
-								{
-									RearrangeState(state1, stateContentSorted);
-									RearrangeState(state2, stateContentSorted);
-									if(IsMergableBecauseTransitions(state1, state2))
-									{
-										MergeState2ToState1BecauseTransitions(automaton, state1, state2);
-										newStates.RemoveAt(j);
-										goto MERGED_STATES_PAIR;
-									}
-									else if(IsMergableBecauseInputs(state1, state2))
-									{
-										MergeState2ToState1BecauseInputs(automaton, state1, state2);
-										newStates.RemoveAt(j);
-										goto MERGED_STATES_PAIR;
-									}
-								}
-							}
-						}
-					}
-					break;
-				MERGED_STATES_PAIR:
-					continue;
-				}
-			}
-		}
-	}
-}
-
-/***********************************************************************
-.\PARSING\PARSINGAUTOMATON_NPDA.CPP
-***********************************************************************/
-
-namespace vl
-{
-	namespace parsing
-	{
-		using namespace collections;
-		using namespace definitions;
-
-		namespace analyzing
-		{
-
-/***********************************************************************
-CreateNondeterministicPDAFromEpsilonPDA
-***********************************************************************/
-
-			Ptr<Automaton> CreateNondeterministicPDAFromEpsilonPDA(Ptr<Automaton> epsilonPDA)
-			{
-				Ptr<Automaton> automaton=new Automaton(epsilonPDA->symbolManager);
-				FOREACH(ParsingDefinitionRuleDefinition*, rule, epsilonPDA->orderedRulesDefs)
-				{
-					// build new rule info
-					Ptr<RuleInfo> ruleInfo=epsilonPDA->ruleDefToInfoMap[rule];
-					Ptr<RuleInfo> newRuleInfo=new RuleInfo;
-					automaton->AddRuleInfo(rule, newRuleInfo);
-
-					newRuleInfo->rootRuleStartState=automaton->RootRuleStartState(rule);
-					newRuleInfo->rootRuleEndState=automaton->RootRuleEndState(rule);
-					newRuleInfo->startState=automaton->RuleStartState(rule);
-
-					// build state mapping and state visiting tracking
-					Dictionary<State*, State*> oldNewStateMap;
-					List<State*> scanningStates;
-					vint currentStateIndex=0;
-					oldNewStateMap.Add(ruleInfo->rootRuleStartState, newRuleInfo->rootRuleStartState);
-					oldNewStateMap.Add(ruleInfo->rootRuleEndState, newRuleInfo->rootRuleEndState);
-					oldNewStateMap.Add(ruleInfo->startState, newRuleInfo->startState);
-					// begin with a root rule state state
-					scanningStates.Add(ruleInfo->rootRuleStartState);
-					// remove epsilon transitions
-					RemoveEpsilonTransitions(oldNewStateMap, scanningStates, automaton);
-
-					// stable state orders
-					List<State*> newStates;
-					CopyFrom(
-						newStates,
-						From(epsilonPDA->states)
-							.Where([&](Ptr<State> s) {return oldNewStateMap.Keys().Contains(s.Obj()); })
-							.Select([&](Ptr<State> s) { return oldNewStateMap[s.Obj()]; })
-						);
-					DeleteUnnecessaryStates(automaton, newRuleInfo, newStates);
-					MergeStates(automaton, newRuleInfo, newStates);
-
-					// there should be at east one and only one transition that is TokenBegin from rootRuleStartState
-					// update the startState because the startState may be deleted
-					newRuleInfo->startState=newRuleInfo->rootRuleStartState->transitions[0]->target;
-
-					// record end states
-					FOREACH(State*, state, newStates)
-					{
-						if(state->endState)
-						{
-							newRuleInfo->endStates.Add(state);
-						}
-					}
-				}
-				return automaton;
-			}
-		}
-	}
-}
-
-/***********************************************************************
-.\REGEX\REGEXDATA.CPP
-***********************************************************************/
-
-namespace vl
-{
-	namespace regex_internal
-	{
-
-/***********************************************************************
-CharRange
-***********************************************************************/
-
-		CharRange::CharRange()
-			:begin(L'\0')
-			,end(L'\0')
-		{
+			if (pure)delete pure;
 		}
 
-		CharRange::CharRange(wchar_t _begin, wchar_t _end)
-			:begin(_begin)
-			,end(_end)
+		RegexTokens RegexLexer::Parse(const WString& code, vint codeIndex)const
 		{
+			pure->PrepareForRelatedFinalStateTable();
+			return RegexTokens(pure, stateTokens, code, codeIndex, proc);
 		}
 
-		bool CharRange::operator<(CharRange item)const
+		RegexLexerWalker RegexLexer::Walk()const
 		{
-			return end<item.begin;
+			pure->PrepareForRelatedFinalStateTable();
+			return RegexLexerWalker(pure, stateTokens);
 		}
 
-		bool CharRange::operator<=(CharRange item)const
+		RegexLexerColorizer RegexLexer::Colorize()const
 		{
-			return *this<item || *this==item;
-		}
-
-		bool CharRange::operator>(CharRange item)const
-		{
-			return item.end<begin;
-		}
-
-		bool CharRange::operator>=(CharRange item)const
-		{
-			return *this>item || *this==item;
-		}
-
-		bool CharRange::operator==(CharRange item)const
-		{
-			return begin==item.begin && end==item.end;
-		}
-
-		bool CharRange::operator!=(CharRange item)const
-		{
-			return begin!=item.begin || item.end!=end;
-		}
-
-		bool CharRange::operator<(wchar_t item)const
-		{
-			return end<item;
-		}
-
-		bool CharRange::operator<=(wchar_t item)const
-		{
-			return begin<=item;
-		}
-
-		bool CharRange::operator>(wchar_t item)const
-		{
-			return item<begin;
-		}
-
-		bool CharRange::operator>=(wchar_t item)const
-		{
-			return item<=end;
-		}
-
-		bool CharRange::operator==(wchar_t item)const
-		{
-			return begin<=item && item<=end;
-		}
-
-		bool CharRange::operator!=(wchar_t item)const
-		{
-			return item<begin || end<item;
-		}
-
-	}
-}
-
-/***********************************************************************
-.\PARSING\PARSINGANALYZER.CPP
-***********************************************************************/
-
-namespace vl
-{
-	namespace parsing
-	{
-		using namespace collections;
-		using namespace definitions;
-
-		namespace analyzing
-		{
-
-/***********************************************************************
-ParsingSymbol
-***********************************************************************/
-
-			bool ParsingSymbol::AddSubSymbol(ParsingSymbol* subSymbol)
-			{
-				if(subSymbol->GetParentSymbol()) return false;
-				if(subSymbolMap.Keys().IndexOf(subSymbol->GetName())!=-1) return false;
-				switch(type)
-				{
-				case Global:
-					switch(subSymbol->GetType())
-					{
-					case EnumType:		break;
-					case ClassType:		break;
-					case TokenDef:		break;
-					case RuleDef:		break;
-					default:			return false;
-					}
-					break;
-				case EnumType:
-					switch(subSymbol->GetType())
-					{
-					case EnumItem:		break;
-					default:			return false;
-					}
-					break;
-				case ClassType:
-					switch(subSymbol->GetType())
-					{
-					case EnumType:		
-					case ClassType:
-					case ClassField:	break;
-					default:			return false;
-					}
-					break;
-				default:				return false;
-				}
-
-				subSymbol->parentSymbol=this;
-				subSymbolList.Add(subSymbol);
-				subSymbolMap.Add(subSymbol->GetName(), subSymbol);
-				return true;
-			}
-
-			ParsingSymbol::ParsingSymbol(ParsingSymbolManager* _manager, SymbolType _type, const WString& _name, ParsingSymbol* _descriptorSymbol, const WString& _descriptorString)
-				:manager(_manager)
-				,type(_type)
-				,name(_name)
-				,descriptorSymbol(_descriptorSymbol)
-				,descriptorString(_descriptorString)
-				,parentSymbol(0)
-				,arrayTypeSymbol(0)
-			{
-			}
-
-			ParsingSymbol::~ParsingSymbol()
-			{
-			}
-
-			ParsingSymbolManager* ParsingSymbol::GetManager()
-			{
-				return manager;
-			}
-
-			ParsingSymbol::SymbolType ParsingSymbol::GetType()
-			{
-				return type;
-			}
-
-			const WString& ParsingSymbol::GetName()
-			{
-				return name;
-			}
-
-			vint ParsingSymbol::GetSubSymbolCount()
-			{
-				return subSymbolList.Count();
-			}
-
-			ParsingSymbol* ParsingSymbol::GetSubSymbol(vint index)
-			{
-				if(0<=index && index<subSymbolList.Count())
-				{
-					return subSymbolList[index];
-				}
-				else
-				{
-					return 0;
-				}
-			}
-
-			ParsingSymbol* ParsingSymbol::GetSubSymbolByName(const WString& name)
-			{
-				vint index=subSymbolMap.Keys().IndexOf(name);
-				if(index==-1)
-				{
-					return 0;
-				}
-				else
-				{
-					return subSymbolMap.Values().Get(index);
-				}
-			}
-
-			ParsingSymbol* ParsingSymbol::GetDescriptorSymbol()
-			{
-				return descriptorSymbol;
-			}
-
-			WString ParsingSymbol::GetDescriptorString()
-			{
-				return descriptorString;
-			}
-
-			ParsingSymbol* ParsingSymbol::GetParentSymbol()
-			{
-				return parentSymbol;
-			}
-
-			bool ParsingSymbol::IsType()
-			{
-				switch(type)
-				{
-				case ParsingSymbol::ClassType:
-				case ParsingSymbol::EnumType:
-				case ParsingSymbol::ArrayType:
-				case ParsingSymbol::TokenType:
-					return true;
-				default:
-					return false;
-				}
-			}
-
-			ParsingSymbol* ParsingSymbol::SearchClassSubSymbol(const WString& name)
-			{
-				if(type==ParsingSymbol::ClassType)
-				{
-					ParsingSymbol* scope=this;
-					while(scope)
-					{
-						ParsingSymbol* subSymbol=scope->GetSubSymbolByName(name);
-						if(subSymbol)
-						{
-							return subSymbol;
-						}
-						else
-						{
-							scope=scope->GetDescriptorSymbol();
-						}
-					}
-				}
-				return 0;
-			}
-
-			ParsingSymbol* ParsingSymbol::SearchCommonBaseClass(ParsingSymbol* classType)
-			{
-				if(type==ParsingSymbol::ClassType && classType->GetType()==ParsingSymbol::ClassType)
-				{
-					vint aCount=0;
-					vint bCount=0;
-					ParsingSymbol* a=this;
-					ParsingSymbol* b=classType;
-					while(a || b)
-					{
-						if(a)
-						{
-							aCount++;
-							a=a->GetDescriptorSymbol();
-						}
-						if(b)
-						{
-							bCount++;
-							b=b->GetDescriptorSymbol();
-						}
-					}
-
-					a=this;
-					b=classType;
-					vint min=aCount<bCount?aCount:bCount;
-					for(vint i=aCount;i>min;i--)
-					{
-						a=a->GetDescriptorSymbol();
-					}
-					for(vint i=bCount;i>min;i--)
-					{
-						b=b->GetDescriptorSymbol();
-					}
-
-					while(a!=b)
-					{
-						a=a->GetDescriptorSymbol();
-						b=b->GetDescriptorSymbol();
-					}
-					return a;
-				}
-				return 0;
-			}
-
-/***********************************************************************
-ParsingSymbolManager
-***********************************************************************/
-
-			bool ParsingSymbolManager::TryAddSubSymbol(Ptr<ParsingSymbol> subSymbol, ParsingSymbol* parentSymbol)
-			{
-				if(parentSymbol->AddSubSymbol(subSymbol.Obj()))
-				{
-					createdSymbols.Add(subSymbol);
-					return true;
-				}
-				return false;
-			}
-
-			ParsingSymbolManager::ParsingSymbolManager()
-			{
-				globalSymbol=new ParsingSymbol(this, ParsingSymbol::Global, L"", 0, L"");
-				tokenTypeSymbol=new ParsingSymbol(this, ParsingSymbol::TokenType, L"token", 0, L"");
-				createdSymbols.Add(globalSymbol);
-				createdSymbols.Add(tokenTypeSymbol);
-			}
-
-			ParsingSymbolManager::~ParsingSymbolManager()
-			{
-			}
-
-			ParsingSymbol* ParsingSymbolManager::GetGlobal()
-			{
-				return globalSymbol;
-			}
-
-			ParsingSymbol* ParsingSymbolManager::GetTokenType()
-			{
-				return tokenTypeSymbol;
-			}
-
-			ParsingSymbol* ParsingSymbolManager::GetArrayType(ParsingSymbol* elementType)
-			{
-				if(elementType->IsType())
-				{
-					if(!elementType->arrayTypeSymbol)
-					{
-						elementType->arrayTypeSymbol=new ParsingSymbol(this, ParsingSymbol::ArrayType, L"", elementType, L"");
-						createdSymbols.Add(elementType->arrayTypeSymbol);
-					}
-					return elementType->arrayTypeSymbol;
-				}
-				else
-				{
-					return 0;
-				}
-			}
-
-			ParsingSymbol* ParsingSymbolManager::AddClass(definitions::ParsingDefinitionClassDefinition* classDef, ParsingSymbol* baseType, ParsingSymbol* parentType)
-			{
-				if((!baseType || baseType->GetType()==ParsingSymbol::ClassType) && (!parentType || parentType->IsType()))
-				{
-					ParsingSymbol* symbol=new ParsingSymbol(this, ParsingSymbol::ClassType, classDef->name, baseType, L"");
-					if(TryAddSubSymbol(symbol, parentType?parentType:globalSymbol))
-					{
-						symbolClassDefinitionCache.Add(symbol, classDef);
-						classDefinitionSymbolCache.Add(classDef, symbol);
-						return symbol;
-					}
-				}
-				return 0;
-			}
-
-			ParsingSymbol* ParsingSymbolManager::AddField(const WString& name, ParsingSymbol* classType, ParsingSymbol* fieldType)
-			{
-				if(classType && classType->GetType()==ParsingSymbol::ClassType && fieldType && fieldType->IsType())
-				{
-					ParsingSymbol* symbol=new ParsingSymbol(this, ParsingSymbol::ClassField, name, fieldType, L"");
-					if(TryAddSubSymbol(symbol, classType))
-					{
-						return symbol;
-					}
-				}
-				return 0;
-			}
-
-			ParsingSymbol* ParsingSymbolManager::AddEnum(const WString& name, ParsingSymbol* parentType)
-			{
-				if(!parentType || parentType->GetType()==ParsingSymbol::ClassType)
-				{
-					ParsingSymbol* symbol=new ParsingSymbol(this, ParsingSymbol::EnumType, name, 0, L"");
-					if(TryAddSubSymbol(symbol, parentType?parentType:globalSymbol))
-					{
-						return symbol;
-					}
-				}
-				return 0;
-			}
-
-			ParsingSymbol* ParsingSymbolManager::AddEnumItem(const WString& name, ParsingSymbol* enumType)
-			{
-				if(enumType && enumType->GetType()==ParsingSymbol::EnumType)
-				{
-					ParsingSymbol* symbol=new ParsingSymbol(this, ParsingSymbol::EnumItem, name, enumType, L"");
-					if(TryAddSubSymbol(symbol, enumType))
-					{
-						return symbol;
-					}
-				}
-				return 0;
-			}
-
-			ParsingSymbol* ParsingSymbolManager::AddTokenDefinition(const WString& name, const WString& regex)
-			{
-				ParsingSymbol* symbol=new ParsingSymbol(this, ParsingSymbol::TokenDef, name, tokenTypeSymbol, regex);
-				if(TryAddSubSymbol(symbol, globalSymbol))
-				{
-					return symbol;
-				}
-				return 0;
-			}
-
-			ParsingSymbol* ParsingSymbolManager::AddRuleDefinition(const WString& name, ParsingSymbol* ruleType)
-			{
-				if(ruleType && ruleType->IsType())
-				{
-					ParsingSymbol* symbol=new ParsingSymbol(this, ParsingSymbol::RuleDef, name, ruleType, L"");
-					if(TryAddSubSymbol(symbol, globalSymbol))
-					{
-						return symbol;
-					}
-				}
-				return 0;
-			}
-
-			ParsingSymbolManager::ClassDefinition* ParsingSymbolManager::CacheGetClassDefinition(ParsingSymbol* type)
-			{
-				vint index=symbolClassDefinitionCache.Keys().IndexOf(type);
-				return index==-1?0:symbolClassDefinitionCache.Values().Get(index);
-			}
-
-			ParsingSymbol* ParsingSymbolManager::CacheGetClassType(ClassDefinition* type)
-			{
-				vint index=classDefinitionSymbolCache.Keys().IndexOf(type);
-				return index==-1?0:classDefinitionSymbolCache.Values().Get(index);
-			}
-
-			ParsingSymbol* ParsingSymbolManager::CacheGetType(definitions::ParsingDefinitionType* type, ParsingSymbol* scope)
-			{
-				DefinitionTypeScopePair key(type, scope);
-				vint index=definitionTypeSymbolCache.Keys().IndexOf(key);
-				return index==-1?0:definitionTypeSymbolCache.Values().Get(index);
-			}
-
-			bool ParsingSymbolManager::CacheSetType(definitions::ParsingDefinitionType* type, ParsingSymbol* scope, ParsingSymbol* symbol)
-			{
-				DefinitionTypeScopePair key(type, scope);
-				vint index=definitionTypeSymbolCache.Keys().IndexOf(key);
-				if(index==-1)
-				{
-					definitionTypeSymbolCache.Add(key, symbol);
-					return true;
-				}
-				else
-				{
-					return false;
-				}
-			}
-
-			ParsingSymbol* ParsingSymbolManager::CacheGetSymbol(definitions::ParsingDefinitionGrammar* grammar)
-			{
-				vint index=definitionGrammarSymbolCache.Keys().IndexOf(grammar);
-				return index==-1?0:definitionGrammarSymbolCache.Values().Get(index);
-			}
-
-			bool ParsingSymbolManager::CacheSetSymbol(definitions::ParsingDefinitionGrammar* grammar, ParsingSymbol* symbol)
-			{
-				vint index=definitionGrammarSymbolCache.Keys().IndexOf(grammar);
-				if(index==-1)
-				{
-					definitionGrammarSymbolCache.Add(grammar, symbol);
-					return true;
-				}
-				else
-				{
-					return false;
-				}
-			}
-
-			ParsingSymbol* ParsingSymbolManager::CacheGetType(definitions::ParsingDefinitionGrammar* grammar)
-			{
-				vint index=definitionGrammarTypeCache.Keys().IndexOf(grammar);
-				return index==-1?0:definitionGrammarTypeCache.Values().Get(index);
-			}
-
-			bool ParsingSymbolManager::CacheSetType(definitions::ParsingDefinitionGrammar* grammar, ParsingSymbol* type)
-			{
-				vint index=definitionGrammarTypeCache.Keys().IndexOf(grammar);
-				if(index==-1)
-				{
-					definitionGrammarTypeCache.Add(grammar, type);
-					return true;
-				}
-				else
-				{
-					return false;
-				}
-			}
-
-/***********************************************************************
-FindType
-***********************************************************************/
-
-			WString GetTypeFullName(ParsingSymbol* type)
-			{
-				if(type->GetType()==ParsingSymbol::ArrayType)
-				{
-					return GetTypeFullName(type->GetDescriptorSymbol())+L"[]";
-				}
-				else
-				{
-					WString name=type->GetName();
-					type=type->GetParentSymbol();
-					while(type && type!=type->GetManager()->GetGlobal())
-					{
-						name=type->GetName()+L"."+name;
-						type=type->GetParentSymbol();
-					}
-					return name;
-				}
-			}
-
-/***********************************************************************
-FindType
-***********************************************************************/
-
-			class FindTypeVisitor : public Object, public ParsingDefinitionType::IVisitor
-			{
-			public:
-				ParsingSymbolManager*				manager;
-				ParsingSymbol*						scope;
-				List<Ptr<ParsingError>>&			errors;
-				ParsingSymbol*						result;
-
-				FindTypeVisitor(ParsingSymbolManager* _manager, ParsingSymbol* _scope, List<Ptr<ParsingError>>& _errors)
-					:manager(_manager)
-					,scope(_scope)
-					,errors(_errors)
-					,result(0)
-				{
-				}
-
-				void Visit(ParsingDefinitionPrimitiveType* node)override
-				{
-					ParsingSymbol* currentScope=scope;
-					while(currentScope)
-					{
-						ParsingSymbol* type=currentScope->GetSubSymbolByName(node->name);
-						if(type)
-						{
-							if(type->IsType())
-							{
-								result=type;
-							}
-							else
-							{
-								errors.Add(new ParsingError(node, L"\""+node->name+L"\" in current scope is not a type."));
-							}
-							return;
-						}
-						currentScope=currentScope->GetParentSymbol();
-					}
-					errors.Add(new ParsingError(node, L"Cannot not find \""+node->name+L"\" in current scope."));
-				}
-
-				void Visit(ParsingDefinitionTokenType* node)override
-				{
-					result=manager->GetTokenType();
-				}
-
-				void Visit(ParsingDefinitionSubType* node)override
-				{
-					ParsingSymbol* type=FindType(node->parentType.Obj(), manager, scope, errors);
-					if(type)
-					{
-						ParsingSymbol* subType=type->SearchClassSubSymbol(node->subTypeName);
-						if(!subType)
-						{
-							errors.Add(new ParsingError(node, L"\""+GetTypeFullName(type)+L"\" does not has a sub type called \""+node->subTypeName+L"\"."));
-						}
-						else if(subType->IsType())
-						{
-							result=subType;
-						}
-						else
-						{
-							errors.Add(new ParsingError(node, L"\""+GetTypeFullName(type)+L"\" contains a sub definition called \""+node->subTypeName+L"\" but this is not a type."));
-						}
-					}
-				}
-
-				void Visit(ParsingDefinitionArrayType* node)override
-				{
-					ParsingSymbol* type=FindType(node->elementType.Obj(), manager, scope, errors);
-					if(type)
-					{
-						result=manager->GetArrayType(type);
-					}
-				}
-			};
-
-			ParsingSymbol* FindType(definitions::ParsingDefinitionType* type, ParsingSymbolManager* manager, ParsingSymbol* scope, collections::List<Ptr<ParsingError>>& errors)
-			{
-				ParsingSymbol* result=manager->CacheGetType(type, scope);
-				if(!result)
-				{
-					FindTypeVisitor visitor(manager, (scope?scope:manager->GetGlobal()), errors);
-					type->Accept(&visitor);
-					result=visitor.result;
-					manager->CacheSetType(type, scope, result);
-				}
-				return result;
-			}
-
-/***********************************************************************
-PrepareSymbols
-***********************************************************************/
-
-			class PrepareSymbolsTypeDefinitionVisitor : public Object, public ParsingDefinitionTypeDefinition::IVisitor
-			{
-			public:
-				ParsingSymbolManager*				manager;
-				ParsingSymbol*						scope;
-				List<Ptr<ParsingError>>&			errors;
-
-				PrepareSymbolsTypeDefinitionVisitor(ParsingSymbolManager* _manager, ParsingSymbol* _scope, List<Ptr<ParsingError>>& _errors)
-					:manager(_manager)
-					,scope(_scope)
-					,errors(_errors)
-				{
-				}
-
-				bool EnsureNameNotExists(ParsingDefinitionTypeDefinition* node, const WString& subjectName)
-				{
-					if(scope->SearchClassSubSymbol(node->name))
-					{
-						errors.Add(new ParsingError(node, L"Cannot redefine \""+node->name+L"\" to be "+subjectName+L"."));
-						return false;
-					}
-					else
-					{
-						return true;
-					}
-				}
-
-				void Visit(ParsingDefinitionClassMemberDefinition* node)override
-				{
-					if(EnsureNameNotExists(node, L"a class field"))
-					{
-						ParsingSymbol* fieldType=FindType(node->type.Obj(), manager, scope, errors);
-						if(fieldType)
-						{
-							ParsingSymbol* field=manager->AddField(node->name, scope, fieldType);
-							if(!field)
-							{
-								errors.Add(new ParsingError(node, L"A class field cannot be defined here."));
-							}
-						}
-					}
-				}
-
-				void Visit(ParsingDefinitionClassDefinition* node)override
-				{
-					if(EnsureNameNotExists(node, L"a class type"))
-					{
-						ParsingSymbol* baseType=0;
-						if(node->parentType)
-						{
-							baseType=FindType(node->parentType.Obj(), manager, scope, errors);
-						}
-						ParsingSymbol* classType=manager->AddClass(node, baseType, (scope->GetType()==ParsingSymbol::Global?0:scope));
-						if(classType)
-						{
-							PrepareSymbolsTypeDefinitionVisitor visitor(manager, classType, errors);
-							FOREACH(Ptr<ParsingDefinitionTypeDefinition>, subType, node->subTypes)
-							{
-								subType->Accept(&visitor);
-							}
-							FOREACH(Ptr<ParsingDefinitionClassMemberDefinition>, member, node->members)
-							{
-								member->Accept(&visitor);
-							}
-						}
-						else
-						{
-							errors.Add(new ParsingError(node, L"A class type cannot be defined here."));
-						}
-					}
-				}
-
-				void Visit(ParsingDefinitionEnumMemberDefinition* node)override
-				{
-					if(EnsureNameNotExists(node, L"an enum item"))
-					{
-						ParsingSymbol* enumItem=manager->AddEnumItem(node->name, scope);
-						if(!enumItem)
-						{
-							errors.Add(new ParsingError(node, L"An enum item cannot be defined here."));
-						}
-					}
-				}
-
-				void Visit(ParsingDefinitionEnumDefinition* node)override
-				{
-					if(EnsureNameNotExists(node, L"an enum type"))
-					{
-						ParsingSymbol* enumType=manager->AddEnum(node->name, (scope->GetType()==ParsingSymbol::Global?0:scope));
-						if(enumType)
-						{
-							PrepareSymbolsTypeDefinitionVisitor visitor(manager, enumType, errors);
-							FOREACH(Ptr<ParsingDefinitionEnumMemberDefinition>, member, node->members)
-							{
-								member->Accept(&visitor);
-							}
-						}
-						else
-						{
-							errors.Add(new ParsingError(node, L"An enum type cannot be defined here."));
-						}
-					}
-				}
-			};
-
-			void PrepareSymbols(Ptr<definitions::ParsingDefinition> definition, ParsingSymbolManager* manager, collections::List<Ptr<ParsingError>>& errors)
-			{
-				{
-					PrepareSymbolsTypeDefinitionVisitor visitor(manager, manager->GetGlobal(), errors);
-					FOREACH(Ptr<ParsingDefinitionTypeDefinition>, typeDefinition, definition->types)
-					{
-						typeDefinition->Accept(&visitor);
-					}
-				}
-
-				FOREACH(Ptr<ParsingDefinitionTokenDefinition>, token, definition->tokens)
-				{
-					if(manager->GetGlobal()->GetSubSymbolByName(token->name))
-					{
-						errors.Add(new ParsingError(token.Obj(), L"Cannot redefine \""+token->name+L"\" to be a token definition."));
-					}
-					else
-					{
-						manager->AddTokenDefinition(token->name, token->regex);
-						try
-						{
-							regex_internal::ParseRegexExpression(token->regex);
-						}
-						catch(const ParsingException& ex)
-						{
-							errors.Add(new ParsingError(token.Obj(), L"Wrong token definition for \""+token->name+L"\": "+ex.Message()));
-						}
-					}
-				}
-
-				FOREACH(Ptr<ParsingDefinitionRuleDefinition>, rule, definition->rules)
-				{
-					if(manager->GetGlobal()->GetSubSymbolByName(rule->name))
-					{
-						errors.Add(new ParsingError(rule.Obj(), L"Cannot redefine \""+rule->name+L"\" to be a rule definition."));
-					}
-					else
-					{
-						ParsingSymbol* type=FindType(rule->type.Obj(), manager, 0, errors);
-						if(type)
-						{
-							if(type->GetType()!=ParsingSymbol::ClassType)
-							{
-								errors.Add(new ParsingError(rule.Obj(), L"\""+GetTypeFullName(type)+L"\" cannot be a type of a rule because this is not a class type."));
-							}
-							manager->AddRuleDefinition(rule->name, type);
-						}
-					}
-				}
-			}
-
-/***********************************************************************
-ValidateRuleStructure
-***********************************************************************/
-
-			class ValidateRuleStructureVisitor : public Object, public ParsingDefinitionGrammar::IVisitor
-			{
-			public:
-				Ptr<ParsingDefinition>				definition;
-				ParsingSymbolManager*				manager;
-				ParsingDefinitionRuleDefinition*	rule;
-				List<Ptr<ParsingError>>&			errors;
-				vint								loopCount;
-
-				ValidateRuleStructureVisitor(Ptr<ParsingDefinition> _definition, ParsingSymbolManager* _manager, ParsingDefinitionRuleDefinition* _rule, List<Ptr<ParsingError>>& _errors)
-					:definition(_definition)
-					,manager(_manager)
-					,errors(_errors)
-					,rule(_rule)
-					,loopCount(0)
-				{
-				}
-
-				void CheckCreationType(ParsingDefinitionGrammar* node, ParsingSymbol* nodeType)
-				{
-					if(nodeType->GetType()==ParsingSymbol::ClassType)
-					{
-						ParsingSymbol* ruleType=manager->GetGlobal()->GetSubSymbolByName(rule->name)->GetDescriptorSymbol();
-						ParsingSymbol* currentType=nodeType;
-						while(currentType && currentType!=ruleType)
-						{
-							currentType=currentType->GetDescriptorSymbol();
-						}
-						if(!currentType)
-						{
-							errors.Add(new ParsingError(node, L"Cannot create type \""+GetTypeFullName(nodeType)+L"\" in a rule of type \""+GetTypeFullName(ruleType)+L"\" because there are no implicit conversions from the created type to the rule type."));
-						}
-					}
-					else
-					{
-						errors.Add(new ParsingError(node, L"\""+GetTypeFullName(nodeType)+L"\" cannot be created because this is not a class type."));
-					}
-				}
-
-				void Visit(ParsingDefinitionPrimitiveGrammar* node)override
-				{
-					ParsingSymbol* symbol=manager->GetGlobal()->GetSubSymbolByName(node->name);
-					if(!symbol)
-					{
-						errors.Add(new ParsingError(node, L"Cannot find a token or a rule with name \""+node->name+L"\"."));
-					}
-					else switch(symbol->GetType())
-					{
-					case ParsingSymbol::TokenDef:
-						{
-							bool discard=false;
-							FOREACH(Ptr<ParsingDefinitionTokenDefinition>, token, definition->tokens)
-							{
-								if(token->name==symbol->GetName())
-								{
-									discard=token->discard;
-									break;
-								}
-							}
-							if(discard)
-							{
-								errors.Add(new ParsingError(node, L"Cannot use discard token \""+node->name+L"\" as input."));
-								break;
-							}
-						}
-					case ParsingSymbol::RuleDef:
-						{
-							ParsingSymbol* symbolType=symbol->GetDescriptorSymbol();
-							manager->CacheSetSymbol(node, symbol);
-							manager->CacheSetType(node, symbolType);
-						}
-						break;
-					default:
-						errors.Add(new ParsingError(node, L"\""+node->name+L"\" is not a token definition or rule definition."));
-					}
-				}
-
-				void Visit(ParsingDefinitionTextGrammar* node)override
-				{
-					WString regex=regex_internal::EscapeTextForRegex(node->text);
-					for(vint i=0;i<manager->GetGlobal()->GetSubSymbolCount();i++)
-					{
-						ParsingSymbol* symbol=manager->GetGlobal()->GetSubSymbol(i);
-						if(symbol->GetType()==ParsingSymbol::TokenDef)
-						{
-							WString normalizedRegex=regex_internal::NormalizeEscapedTextForRegex(symbol->GetDescriptorString());
-							if(normalizedRegex==regex)
-							{
-								manager->CacheSetSymbol(node, symbol);
-								manager->CacheSetType(node, manager->GetTokenType());
-								return;
-							}
-						}
-					}
-					errors.Add(new ParsingError(node, L"Cannot find a token whose definition is exactly \""+regex+L"\"."));
-				}
-
-				void Visit(ParsingDefinitionSequenceGrammar* node)override
-				{
-					node->first->Accept(this);
-					node->second->Accept(this);
-				}
-
-				void Visit(ParsingDefinitionAlternativeGrammar* node)override
-				{
-					node->first->Accept(this);
-					node->second->Accept(this);
-				}
-
-				void Visit(ParsingDefinitionLoopGrammar* node)override
-				{
-					loopCount++;
-					node->grammar->Accept(this);
-					loopCount--;
-				}
-
-				void Visit(ParsingDefinitionOptionalGrammar* node)override
-				{
-					node->grammar->Accept(this);
-				}
-
-				void Visit(ParsingDefinitionCreateGrammar* node)override
-				{
-					if(loopCount>0)
-					{
-						errors.Add(new ParsingError(node, L"Parsing tree node creation (the \"as\" operator) is not allowed inside loops."));
-					}
-					if(ParsingSymbol* nodeType=FindType(node->type.Obj(), manager, 0, errors))
-					{
-						CheckCreationType(node, nodeType);
-					}
-					node->grammar->Accept(this);
-				}
-
-				void Visit(ParsingDefinitionAssignGrammar* node)override
-				{
-					if(!node->grammar.Cast<ParsingDefinitionPrimitiveGrammar>() && !node->grammar.Cast<ParsingDefinitionTextGrammar>())
-					{
-						errors.Add(new ParsingError(node, L"Only parsing tree node returned from a rule or a token can be assigned to a class field."));
-					}
-					node->grammar->Accept(this);
-				}
-
-				void Visit(ParsingDefinitionUseGrammar* node)override
-				{
-					if(loopCount>0)
-					{
-						errors.Add(new ParsingError(node, L"Parsing tree node reusing (the \"!\" operator) is not allowed inside loops."));
-					}
-					if(!node->grammar.Cast<ParsingDefinitionPrimitiveGrammar>())
-					{
-						errors.Add(new ParsingError(node, L"Only parsing tree node returned from a rule can be reused."));
-					}
-					else if(ParsingSymbol* symbol=manager->CacheGetSymbol(node->grammar.Obj()))
-					{
-						if(symbol->GetType()!=ParsingSymbol::RuleDef)
-						{
-							errors.Add(new ParsingError(node, L"Only parsing tree node returned from a rule can be reused."));
-						}
-					}
-					if(ParsingSymbol* nodeType=manager->CacheGetType(node->grammar.Obj()))
-					{
-						CheckCreationType(node, nodeType);
-					}
-					node->grammar->Accept(this);
-				}
-
-				void Visit(ParsingDefinitionSetterGrammar* node)override
-				{
-					node->grammar->Accept(this);
-				}
-			};
-
-			void ValidateRuleStructure(Ptr<definitions::ParsingDefinition> definition, Ptr<definitions::ParsingDefinitionRuleDefinition> rule, ParsingSymbolManager* manager, collections::List<Ptr<ParsingError>>& errors)
-			{
-				FOREACH(Ptr<ParsingDefinitionGrammar>, grammar, rule->grammars)
-				{
-					ValidateRuleStructureVisitor visitor(definition, manager, rule.Obj(), errors);
-					grammar->Accept(&visitor);
-				}
-			}
-
-/***********************************************************************
-ResolveRuleSymbols
-***********************************************************************/
-
-			struct GrammarPathFragment
-			{
-				// primitive, text                            -> transition
-				// loop, optional, create, use assign, setter -> epsilon
-				GrammarPathFragment*						previousFragment;
-				ParsingDefinitionGrammar*					grammar;
-				bool										epsilon;
-				ParsingSymbol*								createdType;
-
-				GrammarPathFragment()
-					:previousFragment(0)
-					,grammar(0)
-					,epsilon(false)
-					,createdType(0)
-				{
-				}
-			};
-
-			struct GrammarPath
-			{
-				List<Ptr<GrammarPathFragment>>				fragments;
-				ParsingSymbol*								pathType;
-
-				GrammarPath()
-					:pathType(0)
-				{
-				}
-
-				WString ToString()
-				{
-					WString result;
-					FOREACH(Ptr<GrammarPathFragment>, fragment, fragments)
-					{
-						if(!fragment->epsilon)
-						{
-							if(result!=L"") result+=L" ";
-							result+=GrammarToString(fragment->grammar);
-						}
-					}
-					return result;
-				}
-			};
-
-			struct GrammarPathContainer
-			{
-				List<Ptr<GrammarPath>>						paths;
-			};
-
-			class EnumerateGrammarPathVisitor : public Object, public ParsingDefinitionGrammar::IVisitor
-			{
-			public:
-				ParsingSymbolManager*						manager;
-				ParsingDefinitionRuleDefinition*			rule;
-
-				List<Ptr<GrammarPathFragment>>				createdFragments;
-				List<GrammarPathFragment*>					currentFragmentEnds;
-
-				EnumerateGrammarPathVisitor(ParsingSymbolManager* _manager, ParsingDefinitionRuleDefinition* _rule)
-					:manager(_manager)
-					,rule(_rule)
-				{
-				}
-
-				EnumerateGrammarPathVisitor(const EnumerateGrammarPathVisitor& visitor)
-					:manager(visitor.manager)
-					,rule(visitor.rule)
-				{
-					CopyFrom(currentFragmentEnds, visitor.currentFragmentEnds);
-				}
-
-				void Join(const EnumerateGrammarPathVisitor& visitor)
-				{
-					CopyFrom(createdFragments, visitor.createdFragments, true);
-					CopyFrom(currentFragmentEnds, visitor.currentFragmentEnds, true);
-				}
-
-				void AddFragment(ParsingDefinitionGrammar* node, bool epsilon, ParsingSymbol* createdType)
-				{
-					if(currentFragmentEnds.Count()==0)
-					{
-						GrammarPathFragment* fragment=new GrammarPathFragment;
-						fragment->grammar=node;
-						fragment->epsilon=epsilon;
-						fragment->createdType=createdType;
-						createdFragments.Add(fragment);
-						currentFragmentEnds.Add(fragment);
-					}
-					else for(vint i=0;i<currentFragmentEnds.Count();i++)
-					{
-						GrammarPathFragment* fragment=new GrammarPathFragment;
-						fragment->grammar=node;
-						fragment->epsilon=epsilon;
-						fragment->createdType=createdType;
-						createdFragments.Add(fragment);
-						fragment->previousFragment=currentFragmentEnds[i];
-						currentFragmentEnds[i]=fragment;
-					}
-				}
-
-				void BuildPath(List<Ptr<GrammarPath>>& paths)
-				{
-					FOREACH(GrammarPathFragment*, fragment, currentFragmentEnds)
-					{
-						Ptr<GrammarPath> path=new GrammarPath;
-						paths.Add(path);
-
-						GrammarPathFragment* current=fragment;
-						while(current)
-						{
-							path->fragments.Insert(0, createdFragments[createdFragments.IndexOf(current)]);
-							current=current->previousFragment;
-						}
-					}
-				}
-
-				void Visit(ParsingDefinitionPrimitiveGrammar* node)override
-				{
-					AddFragment(node, false, 0);
-				}
-
-				void Visit(ParsingDefinitionTextGrammar* node)override
-				{
-					AddFragment(node, false, 0);
-				}
-
-				void Visit(ParsingDefinitionSequenceGrammar* node)override
-				{
-					node->first->Accept(this);
-					node->second->Accept(this);
-				}
-
-				void Visit(ParsingDefinitionAlternativeGrammar* node)override
-				{
-					EnumerateGrammarPathVisitor visitor(*this);
-					node->second->Accept(&visitor);
-					node->first->Accept(this);
-					Join(visitor);
-				}
-
-				void Visit(ParsingDefinitionLoopGrammar* node)override
-				{
-					EnumerateGrammarPathVisitor visitor(*this);
-					node->grammar->Accept(&visitor);
-					AddFragment(node, true, 0);
-					Join(visitor);
-				}
-
-				void Visit(ParsingDefinitionOptionalGrammar* node)override
-				{
-					EnumerateGrammarPathVisitor visitor(*this);
-					node->grammar->Accept(&visitor);
-					AddFragment(node, true, 0);
-					Join(visitor);
-				}
-
-				void Visit(ParsingDefinitionCreateGrammar* node)override
-				{
-					node->grammar->Accept(this);
-					AddFragment(node, true, manager->CacheGetType(node->type.Obj(), 0));
-				}
-
-				void Visit(ParsingDefinitionAssignGrammar* node)override
-				{
-					node->grammar->Accept(this);
-					AddFragment(node, true, 0);
-				}
-
-				void Visit(ParsingDefinitionUseGrammar* node)override
-				{
-					node->grammar->Accept(this);
-					AddFragment(node, true, manager->CacheGetSymbol(node->grammar.Obj())->GetDescriptorSymbol());
-				}
-
-				void Visit(ParsingDefinitionSetterGrammar* node)override
-				{
-					node->grammar->Accept(this);
-					AddFragment(node, true, 0);
-				}
-			};
-
-			class ResolveAssignerGrammarVisitor : public Object, public ParsingDefinitionGrammar::IVisitor
-			{
-			public:
-				typedef Dictionary<ParsingDefinitionGrammar*, Ptr<GrammarPathContainer>>	GrammarPathMap;
-				ParsingSymbolManager*			manager;
-				List<Ptr<ParsingError>>&		errors;
-				GrammarPathMap&					grammarPaths;
-
-				ResolveAssignerGrammarVisitor(ParsingSymbolManager* _manager, List<Ptr<ParsingError>>& _errors, GrammarPathMap& _grammarPaths)
-					:manager(_manager)
-					,errors(_errors)
-					,grammarPaths(_grammarPaths)
-				{
-				}
-
-				ParsingSymbol* GetFieldFromCombined(ParsingDefinitionGrammar* node, const WString& fieldName)
-				{
-					Ptr<GrammarPathContainer> paths=grammarPaths[node];
-					ParsingSymbol* pathType=paths->paths[0]->pathType;
-					for(vint i=1;i<paths->paths.Count();i++)
-					{
-						pathType=pathType->SearchCommonBaseClass(paths->paths[i]->pathType);
-						if(!pathType) break;
-					}
-
-					WString pathNames;
-					WString typeNames;
-					for(int i=0;i<paths->paths.Count();i++)
-					{
-						if(i>0)
-						{
-							pathNames+=L", ";
-							typeNames+=L", ";
-						}
-						pathNames+=L"{"+paths->paths[i]->ToString()+L"}";
-						typeNames+=L"\""+GetTypeFullName(paths->paths[i]->pathType)+L"\"";
-					}
-
-					if(pathType)
-					{
-						ParsingSymbol* field=pathType->SearchClassSubSymbol(fieldName);
-						if(!field)
-						{
-							errors.Add(new ParsingError(node, L"There are multiple grammar paths with different created types get through this operation for class field \""+fieldName+L"\", but the common base type \""+GetTypeFullName(pathType)+L"\" of these types doesn't contains the required class field. Types: "+typeNames+L"; Paths: "+pathNames+L"."));
-						}
-						else if(field->GetType()!=ParsingSymbol::ClassField)
-						{
-							errors.Add(new ParsingError(node, L"There are multiple grammar paths with different created types get through this operation for class field \""+fieldName+L"\", and the common base type \""+GetTypeFullName(pathType)+L"\" of these types contains a symbol called \""+fieldName+L"\", but this is not a class field. Types: "+typeNames+L"; Paths: "+pathNames+L"."));
-						}
-						else
-						{
-							return field;
-						}
-					}
-					else
-					{
-						errors.Add(new ParsingError(node, L"There are multiple grammar paths with different created types get through this operation for class field \""+fieldName+L"\", but these types don't have a common base type. Types: "+typeNames+L"; Paths: "+pathNames+L"."));
-					}
-					return 0;
-				}
-
-				void Visit(ParsingDefinitionPrimitiveGrammar* node)override
-				{
-				}
-
-				void Visit(ParsingDefinitionTextGrammar* node)override
-				{
-				}
-
-				void Visit(ParsingDefinitionSequenceGrammar* node)override
-				{
-				}
-
-				void Visit(ParsingDefinitionAlternativeGrammar* node)override
-				{
-				}
-
-				void Visit(ParsingDefinitionLoopGrammar* node)override
-				{
-				}
-
-				void Visit(ParsingDefinitionOptionalGrammar* node)override
-				{
-				}
-
-				void Visit(ParsingDefinitionCreateGrammar* node)override
-				{
-				}
-
-				void Visit(ParsingDefinitionAssignGrammar* node)override
-				{
-					if(ParsingSymbol* field=GetFieldFromCombined(node, node->memberName))
-					{
-						manager->CacheSetSymbol(node, field);
-						manager->CacheSetType(node, field->GetDescriptorSymbol());
-
-						ParsingSymbol* fieldType=field->GetDescriptorSymbol();
-						ParsingSymbol* valueType=manager->CacheGetType(node->grammar.Obj());
-						ParsingSymbol* targetFieldType=fieldType;
-						if(targetFieldType->GetType()==ParsingSymbol::ArrayType)
-						{
-							targetFieldType=targetFieldType->GetDescriptorSymbol();
-						}
-						if(targetFieldType!=valueType && valueType->SearchCommonBaseClass(targetFieldType)!=targetFieldType)
-						{
-							errors.Add(new ParsingError(node, L"Cannot assign value from grammar {"+GrammarToString(node->grammar.Obj())+L"} of type \""+GetTypeFullName(valueType)+L"\" to the field \""+node->memberName+L"\" of type \""+GetTypeFullName(fieldType)+L"\"."));
-						}
-					}
-				}
-
-				void Visit(ParsingDefinitionUseGrammar* node)override
-				{
-				}
-
-				void Visit(ParsingDefinitionSetterGrammar* node)override
-				{
-					if(ParsingSymbol* field=GetFieldFromCombined(node, node->memberName))
-					{
-						manager->CacheSetSymbol(node, field);
-						manager->CacheSetType(node, field->GetDescriptorSymbol());
-
-						if(field->GetDescriptorSymbol()->GetType()!=ParsingSymbol::EnumType)
-						{
-							errors.Add(new ParsingError(node, L"Setter operation (the \"with\" operator) can only specify the value of a class field of an enum type. But \""+GetTypeFullName(field->GetDescriptorSymbol())+L"\" is not a enum type."));
-						}
-						else
-						{
-							ParsingSymbol* enumType=field->GetDescriptorSymbol();
-							ParsingSymbol* enumItem=enumType->GetSubSymbolByName(node->value);
-							if(!enumItem)
-							{
-								errors.Add(new ParsingError(node, L"Type \""+GetTypeFullName(enumType)+L"\" from field \""+node->memberName+L"\" does not have an enum item called \""+node->value+L"\"."));
-							}
-							else if(enumItem->GetType()!=ParsingSymbol::EnumItem)
-							{
-								errors.Add(new ParsingError(node, L"Type \""+GetTypeFullName(enumType)+L"\" from field \""+node->memberName+L"\" has a symbol called \""+node->value+L"\", but this is not an enum item."));
-							}
-						}
-					}
-				}
-			};
-
-			void ResolveRuleSymbols(Ptr<definitions::ParsingDefinitionRuleDefinition> rule, ParsingSymbolManager* manager, collections::List<Ptr<ParsingError>>& errors)
-			{
-				ParsingSymbol* ruleType=manager->GetGlobal()->GetSubSymbolByName(rule->name)->GetDescriptorSymbol();
-
-				FOREACH(Ptr<ParsingDefinitionGrammar>, grammar, rule->grammars)
-				{
-					List<Ptr<GrammarPath>> paths;
-					{
-						EnumerateGrammarPathVisitor visitor(manager, rule.Obj());
-						grammar->Accept(&visitor);
-						visitor.BuildPath(paths);
-					}
-
-					FOREACH(Ptr<GrammarPath>, path, paths)
-					{
-						path->pathType=ruleType;
-						vint createdTypeCount=0;
-						vint transitionCount=0;
-						FOREACH(Ptr<GrammarPathFragment>, fragment, path->fragments)
-						{
-							if(fragment->createdType)
-							{
-								createdTypeCount++;
-								path->pathType=fragment->createdType;
-							}
-							if(!fragment->epsilon)
-							{
-								transitionCount++;
-							}
-						}
-
-						if(createdTypeCount==0)
-						{
-							errors.Add(new ParsingError(grammar.Obj(), L"No parsing tree node is created if the following path is chosen: \""+path->ToString()+L"\" in rule \""+rule->name+L"\"."));
-						}
-						else if(createdTypeCount>1)
-						{
-							errors.Add(new ParsingError(grammar.Obj(), L"Multiple parsing tree nodes are created if the following path is chosen: \""+path->ToString()+L"\" in rule \""+rule->name+L"\"."));
-						}
-						if(transitionCount==0)
-						{
-							errors.Add(new ParsingError(grammar.Obj(), L"Rule \""+rule->name+L"\" is not allowed to infer to an empty token sequence."));
-						}
-					}
-
-					ResolveAssignerGrammarVisitor::GrammarPathMap grammarPathMap;
-					FOREACH(Ptr<GrammarPath>, path, paths)
-					{
-						FOREACH(Ptr<GrammarPathFragment>, fragment, path->fragments)
-						{
-							ParsingDefinitionGrammar* grammar=fragment->grammar;
-							Ptr<GrammarPathContainer> container;
-							vint index=grammarPathMap.Keys().IndexOf(grammar);
-							if(index==-1)
-							{
-								container=new GrammarPathContainer;
-								grammarPathMap.Add(grammar, container);
-							}
-							else
-							{
-								container=grammarPathMap.Values().Get(index);
-							}
-							container->paths.Add(path);
-						}
-					}
-
-					ResolveAssignerGrammarVisitor visitor(manager, errors, grammarPathMap);
-					FOREACH(ParsingDefinitionGrammar*, grammar, grammarPathMap.Keys())
-					{
-						grammar->Accept(&visitor);
-					}
-				}
-			}
-
-/***********************************************************************
-ResolveSymbols
-***********************************************************************/
-
-			void ResolveTypeSymbols(Ptr<ParsingDefinitionTypeDefinition> type, ParsingSymbolManager* manager, ParsingSymbol* scope, collections::List<Ptr<ParsingError>>& errors)
-			{
-				if(Ptr<ParsingDefinitionClassDefinition> node=type.Cast<ParsingDefinitionClassDefinition>())
-				{
-					if(node->ambiguousType)
-					{
-						ParsingSymbol* ambigiousType=FindType(node->ambiguousType.Obj(), manager, scope, errors);
-						WString ambiguousTypeText=TypeToString(node->ambiguousType.Obj());
-						if(!ambigiousType)
-						{
-							errors.Add(new ParsingError(node.Obj(), L"Ambiguous type \""+ambiguousTypeText+L"\" for type \""+node->name+L"\" does not exist."));
-						}
-						else if(ambigiousType->GetType()!=ParsingSymbol::ClassType)
-						{
-							errors.Add(new ParsingError(node.Obj(), L"Ambiguous type \""+ambiguousTypeText+L"\" for type \""+node->name+L"\" is not a type."));
-						}
-						else if(ambigiousType->GetDescriptorSymbol()!=manager->GetGlobal()->GetSubSymbolByName(node->name))
-						{
-							errors.Add(new ParsingError(node.Obj(), L"Ambiguous type \""+ambiguousTypeText+L"\" for type \""+node->name+L"\" does not inherit from \""+node->name+L"\"."));
-						}
-						else
-						{
-							bool correct=false;
-							if(ambigiousType->GetSubSymbolCount()==1)
-							{
-								ParsingSymbol* field=ambigiousType->GetSubSymbol(0);
-								if(field->GetName()==L"items" && field->GetType()==ParsingSymbol::ClassField)
-								{
-									ParsingSymbol* fieldType=field->GetDescriptorSymbol();
-									if(fieldType->GetType()==ParsingSymbol::ArrayType && fieldType->GetDescriptorSymbol()==ambigiousType->GetDescriptorSymbol())
-									{
-										correct=true;
-									}
-								}
-							}
-							if(!correct)
-							{
-								errors.Add(new ParsingError(node.Obj(), L"Ambiguous type \""+ambiguousTypeText+L"\" for type \""+node->name+L"\" can only contains one field called \"item\" which should be an array of \""+node->name+L"\"."));
-							}
-						}
-					}
-
-					ParsingSymbol* classType=manager->CacheGetClassType(node.Obj());
-					if(classType)
-					{
-						FOREACH(Ptr<ParsingDefinitionTypeDefinition>, subType, node->subTypes)
-						{
-							ResolveTypeSymbols(subType, manager, classType, errors);
-						}
-					}
-				}
-			}
-
-			void ResolveSymbols(Ptr<definitions::ParsingDefinition> definition, ParsingSymbolManager* manager, collections::List<Ptr<ParsingError>>& errors)
-			{
-				FOREACH(Ptr<ParsingDefinitionTypeDefinition>, type, definition->types)
-				{
-					ResolveTypeSymbols(type, manager, manager->GetGlobal(), errors);
-				}
-
-				FOREACH(Ptr<ParsingDefinitionRuleDefinition>, rule, definition->rules)
-				{
-					vint errorCount=errors.Count();
-					ValidateRuleStructure(definition, rule, manager, errors);
-					if(errors.Count()==errorCount)
-					{
-						ResolveRuleSymbols(rule, manager, errors);
-					}
-				}
-			}
-
-/***********************************************************************
-ValidateDefinition
-***********************************************************************/
-
-			void ValidateDefinition(Ptr<definitions::ParsingDefinition> definition, ParsingSymbolManager* manager, collections::List<Ptr<ParsingError>>& errors)
-			{
-				PrepareSymbols(definition, manager, errors);
-				if(errors.Count()>0) return;
-				ResolveSymbols(definition, manager, errors);
-			}
-		}
-	}
-}
-
-/***********************************************************************
-.\PARSING\PARSINGLOGGING.CPP
-***********************************************************************/
-
-namespace vl
-{
-	using namespace stream;
-	using namespace collections;
-
-	namespace parsing
-	{
-		namespace definitions
-		{
-			void LogString(const WString& input, TextWriter& writer)
-			{
-				writer.WriteChar(L'\"');
-				for(int i=0;i<input.Length();i++)
-				{
-					if(input[i]==L'\"')
-					{
-						writer.WriteString(L"\"\"");
-					}
-					else
-					{
-						writer.WriteChar(input[i]);
-					}
-				}
-				writer.WriteChar(L'\"');
-			}
-
-			WString SerializeString(const WString& value)
-			{
-				MemoryStream stream;
-				{
-					StreamWriter writer(stream);
-					LogString(value, writer);
-				}
-				stream.SeekFromBegin(0);
-				StreamReader reader(stream);
-				return reader.ReadToEnd();
-			}
-
-			void LogAttributeList(ParsingDefinitionBase* definition, TextWriter& writer)
-			{
-				for(vint i=0;i<definition->attributes.Count();i++)
-				{
-					ParsingDefinitionAttribute* att=definition->attributes[i].Obj();
-					if(i>0) writer.WriteChar(L',');
-					writer.WriteString(L" @");
-					writer.WriteString(att->name);
-					writer.WriteChar(L'(');
-					for(vint j=0;j<att->arguments.Count();j++)
-					{
-						if(j>0) writer.WriteString(L", ");
-						LogString(att->arguments[j], writer);
-					}
-					writer.WriteChar(L')');
-				}
-			}
-
-/***********************************************************************
-Logger (ParsingDefinitionType)
-***********************************************************************/
-
-			class ParsingDefinitionTypeLogger : public Object, public ParsingDefinitionType::IVisitor
-			{
-			public:
-				TextWriter&		writer;
-
-				ParsingDefinitionTypeLogger(TextWriter& _writer)
-					:writer(_writer)
-				{
-				}
-
-				static void LogInternal(ParsingDefinitionType* type, TextWriter& writer)
-				{
-					ParsingDefinitionTypeLogger visitor(writer);
-					type->Accept(&visitor);
-				}
-
-				void Visit(ParsingDefinitionPrimitiveType* node)override
-				{
-					writer.WriteString(node->name);
-				}
-
-				void Visit(ParsingDefinitionTokenType* node)override
-				{
-					writer.WriteString(L"token");
-				}
-
-				void Visit(ParsingDefinitionSubType* node)override
-				{
-					LogInternal(node->parentType.Obj(), writer);
-					writer.WriteString(L".");
-					writer.WriteString(node->subTypeName);
-				}
-
-				void Visit(ParsingDefinitionArrayType* node)override
-				{
-					LogInternal(node->elementType.Obj(), writer);
-					writer.WriteString(L"[]");
-				}
-			};
-
-			void Log(ParsingDefinitionType* type, TextWriter& writer)
-			{
-				ParsingDefinitionTypeLogger::LogInternal(type, writer);
-			}
-
-/***********************************************************************
-Logger (ParsingDefinitionTypeDefinition)
-***********************************************************************/
-
-			class ParsingDefinitionTypeDefinitionLogger : public Object, public ParsingDefinitionTypeDefinition::IVisitor
-			{
-			public:
-				WString			prefix;
-				TextWriter&		writer;
-
-				static void LogInternal(ParsingDefinitionTypeDefinition* definition, const WString& prefix, TextWriter& writer)
-				{
-					ParsingDefinitionTypeDefinitionLogger visitor(prefix, writer);
-					definition->Accept(&visitor);
-				}
-
-				ParsingDefinitionTypeDefinitionLogger(const WString& _prefix, TextWriter& _writer)
-					:prefix(_prefix)
-					,writer(_writer)
-				{
-				}
-
-				void Visit(ParsingDefinitionClassMemberDefinition* node)override
-				{
-					writer.WriteString(prefix);
-					Log(node->type.Obj(), writer);
-					writer.WriteString(L" ");
-					writer.WriteString(node->name);
-					if(node->unescapingFunction!=L"")
-					{
-						writer.WriteString(L" (");
-						writer.WriteString(node->unescapingFunction);
-						writer.WriteString(L")");
-					}
-					LogAttributeList(node, writer);
-					writer.WriteLine(L";");
-				}
-
-				void Visit(ParsingDefinitionClassDefinition* node)override
-				{
-					writer.WriteString(prefix);
-					writer.WriteString(L"class ");
-					writer.WriteString(node->name);
-					if(node->ambiguousType)
-					{
-						writer.WriteString(L" ambiguous(");
-						Log(node->ambiguousType.Obj(), writer);
-						writer.WriteString(L")");
-					}
-					if(node->parentType)
-					{
-						writer.WriteString(L" : ");
-						Log(node->parentType.Obj(), writer);
-					}
-					LogAttributeList(node, writer);
-					writer.WriteLine(L"");
-
-					writer.WriteString(prefix);
-					writer.WriteLine(L"{");
-
-					for(int i=0;i<node->subTypes.Count();i++)
-					{
-						LogInternal(node->subTypes[i].Obj(), prefix+L"    ", writer);
-						writer.WriteLine(L"");
-					}
-
-					for(int i=0;i<node->members.Count();i++)
-					{
-						LogInternal(node->members[i].Obj(), prefix+L"    ", writer);
-					}
-
-					writer.WriteString(prefix);
-					writer.WriteLine(L"}");
-				}
-
-				void Visit(ParsingDefinitionEnumMemberDefinition* node)override
-				{
-					writer.WriteString(prefix);
-					writer.WriteString(node->name);
-					LogAttributeList(node, writer);
-					writer.WriteLine(L",");
-				}
-
-				void Visit(ParsingDefinitionEnumDefinition* node)override
-				{
-					writer.WriteString(prefix);
-					writer.WriteString(L"enum ");
-					writer.WriteString(node->name);
-					LogAttributeList(node, writer);
-					writer.WriteLine(L"");
-
-					writer.WriteString(prefix);
-					writer.WriteLine(L"{");
-
-					for(int i=0;i<node->members.Count();i++)
-					{
-						LogInternal(node->members[i].Obj(), prefix+L"    ", writer);
-					}
-
-					writer.WriteString(prefix);
-					writer.WriteLine(L"}");
-				}
-			};
-
-			void Log(ParsingDefinitionTypeDefinition* definition, const WString& prefix, TextWriter& writer)
-			{
-				ParsingDefinitionTypeDefinitionLogger::LogInternal(definition, prefix, writer);
-			}
-
-/***********************************************************************
-Logger (ParsingDefinitionGrammar)
-***********************************************************************/
-
-#define PRIORITY_NONE			0
-#define PRIORITY_CREATE			1
-#define PRIORITY_SET			1
-#define PRIORITY_ALTERNATIVE	2
-#define PRIORITY_SEQUENCE		3
-#define PRIORITY_USE			4
-#define PRIORITY_ASSIGN			4
-
-			class ParsingDefinitionGrammarLogger : public Object, public ParsingDefinitionGrammar::IVisitor
-			{
-			public:
-				TextWriter&					writer;
-				int							parentPriority;
-				ParsingDefinitionGrammar*	stateNode;
-				bool						beforeNode;
-
-				ParsingDefinitionGrammarLogger(TextWriter& _writer, int _parentPriority, ParsingDefinitionGrammar* _stateNode, bool _beforeNode)
-					:writer(_writer)
-					,parentPriority(_parentPriority)
-					,stateNode(_stateNode)
-					,beforeNode(_beforeNode)
-				{
-				}
-
-				static void LogInternal(ParsingDefinitionGrammar* grammar, int parentPriority, ParsingDefinitionGrammar* stateNode, bool beforeNode, TextWriter& writer)
-				{
-					if(grammar==stateNode && beforeNode)
-					{
-						writer.WriteString(L"@");
-					}
-					ParsingDefinitionGrammarLogger visitor(writer, parentPriority, stateNode, beforeNode);
-					grammar->Accept(&visitor);
-					if(grammar==stateNode && !beforeNode)
-					{
-						writer.WriteString(L"@");
-					}
-				}
-
-				void LogInternal(ParsingDefinitionGrammar* grammar, int parentPriority, TextWriter& writer)
-				{
-					LogInternal(grammar, parentPriority, stateNode, beforeNode, writer);
-				}
-
-				void Visit(ParsingDefinitionPrimitiveGrammar* node)override
-				{
-					writer.WriteString(node->name);
-				}
-
-				void Visit(ParsingDefinitionTextGrammar* node)override
-				{
-					LogString(node->text, writer);
-				}
-
-				void Visit(ParsingDefinitionSequenceGrammar* node)override
-				{
-					int priority=PRIORITY_SEQUENCE;
-					if(parentPriority>priority)
-					{
-						writer.WriteString(L"( ");
-					}
-					LogInternal(node->first.Obj(), priority, writer);
-					writer.WriteString(L" ");
-					LogInternal(node->second.Obj(), priority, writer);
-					if(parentPriority>priority)
-					{
-						writer.WriteString(L" )");
-					}
-				}
-
-				void Visit(ParsingDefinitionAlternativeGrammar* node)override
-				{
-					int priority=PRIORITY_ALTERNATIVE;
-					if(parentPriority>priority)
-					{
-						writer.WriteString(L"( ");
-					}
-					LogInternal(node->first.Obj(), priority, writer);
-					writer.WriteString(L" | ");
-					LogInternal(node->second.Obj(), priority, writer);
-					if(parentPriority>priority)
-					{
-						writer.WriteString(L" )");
-					}
-				}
-
-				void Visit(ParsingDefinitionLoopGrammar* node)override
-				{
-					writer.WriteString(L"{ ");
-					LogInternal(node->grammar.Obj(), PRIORITY_NONE, writer);
-					writer.WriteString(L" }");
-				}
-
-				void Visit(ParsingDefinitionOptionalGrammar* node)override
-				{
-					writer.WriteString(L"[ ");
-					LogInternal(node->grammar.Obj(), PRIORITY_NONE, writer);
-					writer.WriteString(L" ]");
-				}
-
-				void Visit(ParsingDefinitionCreateGrammar* node)override
-				{
-					int priority=PRIORITY_CREATE;
-					if(parentPriority>priority)
-					{
-						writer.WriteString(L"( ");
-					}
-					LogInternal(node->grammar.Obj(), priority, writer);
-					writer.WriteString(L" as ");
-					Log(node->type.Obj(), writer);
-					if(parentPriority>priority)
-					{
-						writer.WriteString(L" )");
-					}
-				}
-
-				void Visit(ParsingDefinitionAssignGrammar* node)override
-				{
-					int priority=PRIORITY_ASSIGN;
-					if(parentPriority>priority)
-					{
-						writer.WriteString(L"( ");
-					}
-					LogInternal(node->grammar.Obj(), priority, writer);
-					writer.WriteString(L" : ");
-					writer.WriteString(node->memberName);
-					if(parentPriority>priority)
-					{
-						writer.WriteString(L" )");
-					}
-				}
-
-				void Visit(ParsingDefinitionUseGrammar* node)override
-				{
-					int priority=PRIORITY_USE;
-					if(parentPriority>priority)
-					{
-						writer.WriteString(L"( ");
-					}
-					writer.WriteString(L"!");
-					LogInternal(node->grammar.Obj(), priority, writer);
-					if(parentPriority>priority)
-					{
-						writer.WriteString(L" )");
-					}
-				}
-
-				void Visit(ParsingDefinitionSetterGrammar* node)override
-				{
-					int priority=PRIORITY_SET;
-					if(parentPriority>priority)
-					{
-						writer.WriteString(L"( ");
-					}
-					LogInternal(node->grammar.Obj(), priority, writer);
-					writer.WriteString(L" with { ");
-					writer.WriteString(node->memberName);
-					writer.WriteString(L" = ");
-					LogString(node->value, writer);
-					writer.WriteString(L" }");
-					if(parentPriority>priority)
-					{
-						writer.WriteString(L" )");
-					}
-				}
-			};
-
-			void Log(ParsingDefinitionGrammar* grammar, TextWriter& writer)
-			{
-				ParsingDefinitionGrammarLogger::LogInternal(grammar, PRIORITY_NONE, 0, true, writer);
-			}
-
-			void Log(ParsingDefinitionGrammar* grammar, ParsingDefinitionGrammar* stateNode, bool beforeNode, TextWriter& writer)
-			{
-				ParsingDefinitionGrammarLogger::LogInternal(grammar, PRIORITY_NONE, stateNode, beforeNode, writer);
-			}
-
-#undef PRIORITY_NONE
-#undef PRIORITY_CREATE
-#undef PRIORITY_SET
-#undef PRIORITY_ALTERNATIVE
-#undef PRIORITY_SEQUENCE
-#undef PRIORITY_USE
-#undef PRIORITY_ASSIGN
-
-/***********************************************************************
-FindAppropriateGrammarState
-***********************************************************************/
-
-			class FindAppropriateGrammarStateVisitor : public Object, public ParsingDefinitionGrammar::IVisitor
-			{
-			public:
-				ParsingDefinitionGrammar*	stateNode;
-				bool						beforeNode;
-				ParsingDefinitionGrammar*	beforeReference;
-				ParsingDefinitionGrammar*	afterReference;
-				ParsingDefinitionGrammar*	result;
-
-				FindAppropriateGrammarStateVisitor(ParsingDefinitionGrammar* _stateNode, bool _beforeNode, ParsingDefinitionGrammar* _beforeReference, ParsingDefinitionGrammar* _afterReference)
-					:stateNode(_stateNode)
-					,beforeNode(_beforeNode)
-					,beforeReference(_beforeReference)
-					,afterReference(_afterReference)
-					,result(0)
-				{
-				}
-
-				static ParsingDefinitionGrammar* Find(ParsingDefinitionGrammar* grammar, ParsingDefinitionGrammar* stateNode, bool beforeNode, ParsingDefinitionGrammar* beforeReference, ParsingDefinitionGrammar* afterReference)
-				{
-					if(grammar==stateNode)
-					{
-						return
-							beforeNode
-							?(beforeReference?beforeReference:stateNode)
-							:(afterReference?afterReference:stateNode)
-							;
-					}
-					else
-					{
-						FindAppropriateGrammarStateVisitor visitor(stateNode, beforeNode, beforeReference, afterReference);
-						grammar->Accept(&visitor);
-						return visitor.result;
-					}
-				}
-
-				void Visit(ParsingDefinitionPrimitiveGrammar* node)override
-				{
-				}
-
-				void Visit(ParsingDefinitionTextGrammar* node)override
-				{
-				}
-
-				void Visit(ParsingDefinitionSequenceGrammar* node)override
-				{
-					result=Find(node->first.Obj(), stateNode, beforeNode, (beforeReference?beforeReference:node), 0);
-					if(!result)
-					{
-						result=Find(node->second.Obj(), stateNode, beforeNode, 0, (afterReference?afterReference:node));
-					}
-				}
-
-				void Visit(ParsingDefinitionAlternativeGrammar* node)override
-				{
-					result=Find(node->first.Obj(), stateNode, beforeNode, (beforeReference?beforeReference:node), (afterReference?afterReference:node));
-					if(!result)
-					{
-						result=Find(node->second.Obj(), stateNode, beforeNode, (beforeReference?beforeReference:node), (afterReference?afterReference:node));
-					}
-				}
-
-				void Visit(ParsingDefinitionLoopGrammar* node)override
-				{
-					result=Find(node->grammar.Obj(), stateNode, beforeNode, (beforeReference?beforeReference:node), (afterReference?afterReference:node));
-				}
-
-				void Visit(ParsingDefinitionOptionalGrammar* node)override
-				{
-					result=Find(node->grammar.Obj(), stateNode, beforeNode, (beforeReference?beforeReference:node), (afterReference?afterReference:node));
-				}
-
-				void Visit(ParsingDefinitionCreateGrammar* node)override
-				{
-					result=Find(node->grammar.Obj(), stateNode, beforeNode, (beforeReference?beforeReference:node), (afterReference?afterReference:node));
-				}
-
-				void Visit(ParsingDefinitionAssignGrammar* node)override
-				{
-					result=Find(node->grammar.Obj(), stateNode, beforeNode, (beforeReference?beforeReference:node), (afterReference?afterReference:node));
-				}
-
-				void Visit(ParsingDefinitionUseGrammar* node)override
-				{
-					result=Find(node->grammar.Obj(), stateNode, beforeNode, (beforeReference?beforeReference:node), (afterReference?afterReference:node));
-				}
-
-				void Visit(ParsingDefinitionSetterGrammar* node)override
-				{
-					result=Find(node->grammar.Obj(), stateNode, beforeNode, beforeReference, afterReference);
-				}
-			};
-
-/***********************************************************************
-Logger (ParsingDefinitionGrammar)
-***********************************************************************/
-
-			WString TypeToString(ParsingDefinitionType* type)
-			{
-				MemoryStream stream(64);
-				{
-					StreamWriter writer(stream);
-					Log(type, writer);
-				}
-				stream.SeekFromBegin(0);
-				{
-					StreamReader reader(stream);
-					return reader.ReadToEnd();
-				}
-			}
-
-			WString GrammarToString(ParsingDefinitionGrammar* grammar)
-			{
-				return GrammarStateToString(grammar, 0, true);
-			}
-
-			WString GrammarStateToString(ParsingDefinitionGrammar* grammar, ParsingDefinitionGrammar* stateNode, bool beforeNode)
-			{
-				MemoryStream stream(64);
-				{
-					StreamWriter writer(stream);
-					Log(grammar, stateNode, beforeNode, writer);
-				}
-				stream.SeekFromBegin(0);
-				{
-					StreamReader reader(stream);
-					return reader.ReadToEnd();
-				}
-			}
-
-			ParsingDefinitionGrammar* FindAppropriateGrammarState(ParsingDefinitionGrammar* grammar, ParsingDefinitionGrammar* stateNode, bool beforeNode)
-			{
-				return FindAppropriateGrammarStateVisitor::Find(grammar, stateNode, beforeNode, 0, 0);
-			}
-
-			void Log(Ptr<ParsingDefinition> definition, TextWriter& writer)
-			{
-				FOREACH(Ptr<ParsingDefinitionTypeDefinition>, type, definition->types)
-				{
-					Log(type.Obj(), L"", writer);
-					writer.WriteLine(L"");
-				}
-
-				FOREACH(Ptr<ParsingDefinitionTokenDefinition>, token, definition->tokens)
-				{
-					if(token->discard)
-					{
-						writer.WriteString(L"discardtoken ");
-					}
-					else
-					{
-						writer.WriteString(L"token ");
-					}
-					writer.WriteString(token->name);
-					writer.WriteString(L" = ");
-					LogString(token->regex, writer);
-					LogAttributeList(token.Obj(), writer);
-					writer.WriteLine(L";");
-				}
-				writer.WriteLine(L"");
-
-				FOREACH(Ptr<ParsingDefinitionRuleDefinition>, rule, definition->rules)
-				{
-					writer.WriteString(L"rule ");
-					Log(rule->type.Obj(), writer);
-					writer.WriteString(L" ");
-					writer.WriteString(rule->name);
-					LogAttributeList(rule.Obj(), writer);
-					writer.WriteLine(L"");
-
-					FOREACH(Ptr<ParsingDefinitionGrammar>, grammar, rule->grammars)
-					{
-						writer.WriteString(L"        = ");
-						Log(grammar.Obj(), writer);
-						writer.WriteLine(L"");
-					}
-					writer.WriteLine(L"        ;");
-				}
-			}
-		}
-
-		namespace analyzing
-		{
-/***********************************************************************
-Logger (Automaton)
-***********************************************************************/
-
-			void LogTransitionSymbol(ParsingSymbol* symbol, stream::TextWriter& writer)
-			{
-				if(symbol->GetType()==ParsingSymbol::TokenDef)
-				{
-					writer.WriteString(L"[");
-					writer.WriteString(symbol->GetName());
-
-					WString regex=symbol->GetDescriptorString();
-					if(regex_internal::IsRegexEscapedLiteralString(regex))
-					{
-						writer.WriteString(L" ");
-						definitions::LogString(regex_internal::UnescapeTextForRegex(regex), writer);
-					}
-					writer.WriteString(L"]");
-				}
-				else
-				{
-					writer.WriteString(L"<");
-					writer.WriteString(symbol->GetName());
-					writer.WriteString(L">");
-				}
-			}
-
-			void Log(Ptr<Automaton> automaton, stream::TextWriter& writer)
-			{
-				FOREACH(Ptr<RuleInfo>, ruleInfo, automaton->ruleInfos)
-				{
-					writer.WriteString(L"Root Rule Start: ");
-					writer.WriteLine(ruleInfo->rootRuleStartState->stateName);
-
-					writer.WriteString(L"Root Rule End: ");
-					writer.WriteLine(ruleInfo->rootRuleEndState->stateName);
-
-					writer.WriteString(L"Rule Start: ");
-					writer.WriteLine(ruleInfo->startState->stateName);
-
-					FOREACH(State*, endState, ruleInfo->endStates)
-					{
-						writer.WriteString(L"Rule End: ");
-						writer.WriteLine(endState->stateName);
-					}
-
-					writer.WriteLine(L"");
-				}
-
-				List<State*> states;
-				FOREACH(Ptr<RuleInfo>, ruleInfo, automaton->ruleInfos)
-				{
-					vint currentState=states.Count();
-					states.Add(ruleInfo->rootRuleStartState);
-
-					while(currentState<states.Count())
-					{
-						State* state=states[currentState++];
-						writer.WriteLine(state->stateExpression);
-						if(state->endState)
-						{
-							writer.WriteString(L"END STATE ");
-						}
-						else
-						{
-							writer.WriteString(L"STATE ");
-						}
-						writer.WriteLine(state->stateName);
-
-						FOREACH(Transition*, transition, state->transitions)
-						{
-							if(!states.Contains(transition->target))
-							{
-								states.Add(transition->target);
-							}
-							switch(transition->transitionType)
-							{
-							case Transition::Epsilon:
-								writer.WriteString(L"    EPSILON");
-								break;
-							case Transition::TokenBegin:
-								writer.WriteString(L"    TOKEN-BEGIN");
-								break;
-							case Transition::TokenFinish:
-								writer.WriteString(L"    TOKEN-FINISH");
-								break;
-							case Transition::NormalReduce:
-								writer.WriteString(L"    NORMAL-REDUCE");
-								break;
-							case Transition::LeftRecursiveReduce:
-								writer.WriteString(L"    LREC-REDUCE");
-								break;
-							case Transition::Symbol:
-								{
-									writer.WriteString(L"    ");
-									if(transition->transitionSymbol)
-									{
-										LogTransitionSymbol(transition->transitionSymbol, writer);
-									}
-								}
-								break;
-							}
-							switch(transition->stackOperationType)
-							{
-							case Transition::None:
-								writer.WriteString(L" => ");
-								break;
-							case Transition::ShiftReduceCompacted:
-								writer.WriteString(L" [SHIFT-REDUCE-COMPACTED] => ");
-								break;
-							case Transition::LeftRecursive:
-								writer.WriteString(L" [LEFT-RECURSIVE] => ");
-								break;
-							}
-							writer.WriteLine(transition->target->stateName);
-
-							FOREACH(Ptr<Action>, action, transition->actions)
-							{
-								switch(action->actionType)
-								{
-								case Action::Create:
-									writer.WriteString(L"        CREATE ");
-									break;
-								case Action::Assign:
-									writer.WriteString(L"        ASSIGN ");
-									break;
-								case Action::Using:
-									writer.WriteString(L"        USING ");
-									break;
-								case Action::Setter:
-									writer.WriteString(L"        SET ");
-									break;
-								case Action::Shift:
-									writer.WriteString(L"        SHIFT ");
-									break;
-								case Action::Reduce:
-									writer.WriteString(L"        REDUCE ");
-									break;
-								case Action::LeftRecursiveReduce:
-									writer.WriteString(L"        LR-REDUCE ");
-									break;
-								}
-
-								if(action->shiftReduceSource && action->shiftReduceTarget)
-								{
-									writer.WriteString(L"[");
-									writer.WriteString(action->shiftReduceSource->stateName);
-									writer.WriteString(L" => ");
-									writer.WriteString(action->shiftReduceTarget->stateName);
-									writer.WriteString(L"] ");
-								}
-
-								if(action->actionSource)
-								{
-									writer.WriteString(action->actionSource->GetName());
-								}
-								if(action->actionTarget)
-								{
-									writer.WriteString(L" => ");
-									writer.WriteString(action->actionTarget->GetName());
-								}
-								writer.WriteLine(L"");
-							}
-						}
-						writer.WriteLine(L"");
-					}
-					writer.WriteLine(L"--------------------------------");
-				}
-			}
-		}
-
-		namespace tabling
-		{
-/***********************************************************************
-Logger (ParsingTable)
-***********************************************************************/
-
-			void LogAttributeList(Ptr<ParsingTable> table, vint attributeIndex, const WString& prefix, stream::TextWriter& writer)
-			{
-				if(attributeIndex!=-1)
-				{
-					Ptr<ParsingTable::AttributeInfoList> atts=table->GetAttributeInfo(attributeIndex);
-					FOREACH(Ptr<ParsingTable::AttributeInfo>, att, atts->attributes)
-					{
-						writer.WriteString(prefix);
-						writer.WriteString(L"@");
-						writer.WriteString(att->name);
-						writer.WriteString(L"(");
-						for(vint i=0;i<att->arguments.Count();i++)
-						{
-							if(i>0) writer.WriteString(L", ");
-							definitions::LogString(att->arguments[i], writer);
-						}
-						writer.WriteLine(L")");
-					}
-				}
-			}
-
-			void Log(Ptr<ParsingTable> table, stream::TextWriter& writer)
-			{
-				vint rows=table->GetStateCount()+1;
-				vint columns=table->GetTokenCount()+1;
-				Array<WString> stringTable(rows*columns);
-
-				stringTable[0]=L"<Parsing Table>";
-
-				for(vint row=0; row<table->GetStateCount();row++)
-				{
-					stringTable[(row+1)*columns]=itow(row)+L": "+table->GetStateInfo(row).stateName;
-				}
-
-				for(vint column=0;column<table->GetTokenCount();column++)
-				{
-					WString content=
-						column==ParsingTable::TokenBegin?L"0: $TokenBegin":
-						column==ParsingTable::TokenFinish?L"1: $TokenFinish":
-						column==ParsingTable::NormalReduce?L"2: $NormalReduce":
-						column==ParsingTable::LeftRecursiveReduce?L"3: $LeftRecursiveReduce":
-						itow(column)+L": "+table->GetTokenInfo(column).name+L"\r\n  "+table->GetTokenInfo(column).regex;
-					stringTable[column+1]=content;
-				}
-
-				for(vint row=0; row<table->GetStateCount();row++)
-				{
-					for(vint column=0;column<table->GetTokenCount();column++)
-					{
-						Ptr<ParsingTable::TransitionBag> bag=table->GetTransitionBag(row, column);
-						if(bag)
-						{
-							WString content;
-							FOREACH(Ptr<ParsingTable::TransitionItem>, item, bag->transitionItems)
-							{
-								if(content!=L"") content+=L"\r\n";
-								content+=itow(item->targetState);
-								FOREACH_INDEXER(vint, state, index, item->stackPattern)
-								{
-									content+=(index==0?L" : ":L", ");
-									content+=itow(state);
-								}
-								content+=L"\r\n";
-
-								FOREACH(Ptr<ParsingTable::LookAheadInfo>, lookAhead, item->lookAheads)
-								{
-									content+=L"  ";
-									FOREACH_INDEXER(vint, token, index, lookAhead->tokens)
-									{
-										content+=(index==0?L"> ":L", ");
-										content+=itow(token);
-									}
-									content+=L"\r\n";
-								}
-
-								content+=L"  ";
-								FOREACH(ParsingTable::Instruction, ins, item->instructions)
-								{
-									switch(ins.instructionType)
-									{
-									case ParsingTable::Instruction::Create:
-										content+=L"C";
-										break;
-									case ParsingTable::Instruction::Using:
-										content+=L"U";
-										break;
-									case ParsingTable::Instruction::Assign:
-										content+=L"A";
-										break;
-									case ParsingTable::Instruction::Item:
-										content+=L"I";
-										break;
-									case ParsingTable::Instruction::Setter:
-										content+=L"S";
-										break;
-									case ParsingTable::Instruction::Shift:
-										content+=L"[+"+itow(ins.stateParameter)+L"]";
-										break;
-									case ParsingTable::Instruction::Reduce:
-										content+=L"[-"+itow(ins.stateParameter)+L"]";
-										break;
-									case ParsingTable::Instruction::LeftRecursiveReduce:
-										content+=L"[!"+itow(ins.stateParameter)+L"]";
-										break;
-									}
-								}
-							}
-							stringTable[(row+1)*columns+(column+1)]=content;
-						}
-					}
-				}
-
-				writer.WriteLine(L"Target-State : Stack-Pattern ...");
-				writer.WriteLine(L"> Look-Ahead ...");
-				writer.WriteLine(L"C: Create");
-				writer.WriteLine(L"U: Using");
-				writer.WriteLine(L"A: Assign");
-				writer.WriteLine(L"I: Item");
-				writer.WriteLine(L"S: Setter");
-				writer.WriteLine(L"[+s]: Shift[push s]");
-				writer.WriteLine(L"[-s]: Reduce[pop s]");
-				writer.WriteLine(L"[!s]: Left-Recursive-Reduce[fake s]");
-				writer.WriteLine(L"");
-
-				for(vint i=0;i<table->GetRuleCount();i++)
-				{
-					const ParsingTable::RuleInfo& ruleInfo=table->GetRuleInfo(i);
-					writer.WriteString(ruleInfo.name);
-					writer.WriteChar(L'<');
-					writer.WriteString(ruleInfo.type);
-					if(ruleInfo.ambiguousType!=L"")
-					{
-						writer.WriteString(L", ");
-						writer.WriteString(ruleInfo.ambiguousType);
-					}
-					writer.WriteString(L">: ");
-					writer.WriteString(itow(ruleInfo.rootStartState));
-					writer.WriteChar(L'[');
-					writer.WriteString(table->GetStateInfo(ruleInfo.rootStartState).stateName);
-					writer.WriteChar(L']');
-					writer.WriteLine(L"");
-				}
-
-				writer.WriteMonospacedEnglishTable(stringTable, rows, columns);
-				writer.WriteLine(L"");
-
-				writer.WriteLine(L"Metadata(Tokens):");
-				for(vint i=0;i<table->GetTokenCount();i++)
-				{
-					const ParsingTable::TokenInfo& info=table->GetTokenInfo(i);
-					writer.WriteString(L"    ");
-					writer.WriteString(info.name);
-					writer.WriteString(L"=");
-					writer.WriteLine(info.regex);
-					LogAttributeList(table, info.attributeIndex, L"        ", writer);
-				}
-				writer.WriteLine(L"");
-
-				writer.WriteLine(L"Metadata(Rules):");
-				for(vint i=0;i<table->GetRuleCount();i++)
-				{
-					const ParsingTable::RuleInfo& info=table->GetRuleInfo(i);
-					writer.WriteString(L"    ");
-					writer.WriteLine(info.name);
-					LogAttributeList(table, info.attributeIndex, L"        ", writer);
-				}
-				writer.WriteLine(L"");
-
-				writer.WriteLine(L"Metadata(Classes):");
-				for(vint i=0;i<table->GetTreeTypeInfoCount();i++)
-				{
-					const ParsingTable::TreeTypeInfo& info=table->GetTreeTypeInfo(i);
-					writer.WriteString(L"    ");
-					writer.WriteLine(info.type);
-					LogAttributeList(table, info.attributeIndex, L"        ", writer);
-				}
-				writer.WriteLine(L"");
-
-				writer.WriteLine(L"Metadata(Class Members):");
-				for(vint i=0;i<table->GetTreeFieldInfoCount();i++)
-				{
-					const ParsingTable::TreeFieldInfo& info=table->GetTreeFieldInfo(i);
-					writer.WriteString(L"    ");
-					writer.WriteString(info.type);
-					writer.WriteString(L".");
-					writer.WriteLine(info.field);
-					LogAttributeList(table, info.attributeIndex, L"        ", writer);
-				}
-				writer.WriteLine(L"");
-			}
-		}
-
-/***********************************************************************
-Logger (ParsingTreeNode)
-***********************************************************************/
-
-		class LogParsingTreeNodeVisitor : public Object, public ParsingTreeNode::IVisitor
-		{
-		protected:
-			TextWriter&				writer;
-			WString					prefix;
-			WString					originalInput;
-		public:
-			LogParsingTreeNodeVisitor(TextWriter& _writer, const WString& _originalInput, const WString& _prefix)
-				:writer(_writer)
-				,prefix(_prefix)
-				,originalInput(_originalInput)
-			{
-			}
-
-			void Write(ParsingTreeNode* node)
-			{
-				if(node)
-				{
-					node->Accept(this);
-				}
-				else
-				{
-					writer.WriteString(L"null");
-				}
-			}
-
-			void WriteInput(ParsingTreeNode* node)
-			{
-				if(originalInput!=L"")
-				{
-					ParsingTextRange range=node->GetCodeRange();
-					if(range.start.index!=ParsingTextPos::UnknownValue && range.end.index!=ParsingTextPos::UnknownValue)
-					{
-						vint start=range.start.index;
-						vint length=range.end.index-start+1;
-						if(length>0)
-						{
-							writer.WriteString(L" // [");
-							writer.WriteString(originalInput.Sub(start, length));
-							writer.WriteString(L"]");
-						}
-					}
-				}
-			}
-
-			void Visit(ParsingTreeToken* node)
-			{
-				writer.WriteChar(L'[');
-				writer.WriteString(node->GetValue());
-				writer.WriteChar(L']');
-				WriteInput(node);
-			}
-
-			void Visit(ParsingTreeObject* node)
-			{
-				WString oldPrefix=prefix;
-				writer.WriteString(node->GetType());
-				writer.WriteString(L" <");
-				for(vint i=0;i<node->GetCreatorRules().Count();i++)
-				{
-					if(i!=0) writer.WriteString(L", ");
-					writer.WriteString(node->GetCreatorRules()[i]);
-				}
-				writer.WriteString(L"> {");
-				WriteInput(node);
-				writer.WriteLine(L"");
-				prefix+=L"    ";
-				for(vint i=0;i<node->GetMembers().Count();i++)
-				{
-					writer.WriteString(prefix);
-					writer.WriteString(node->GetMembers().Keys().Get(i));
-					writer.WriteString(L" = ");
-					Write(node->GetMembers().Values().Get(i).Obj());
-					writer.WriteLine(L"");
-				}
-				prefix=oldPrefix;
-				writer.WriteString(prefix);
-				writer.WriteString(L"}");
-			}
-
-			void Visit(ParsingTreeArray* node)
-			{
-				WString oldPrefix=prefix;
-				writer.WriteString(node->GetElementType());
-				writer.WriteString(L"[] {");
-				WriteInput(node);
-				writer.WriteLine(L"");
-				prefix+=L"    ";
-				for(vint i=0;i<node->Count();i++)
-				{
-					writer.WriteString(prefix);
-					Write(node->GetItem(i).Obj());
-					writer.WriteLine(L",");
-				}
-				prefix=oldPrefix;
-				writer.WriteString(prefix);
-				writer.WriteString(L"}");
-			}
-		};
-
-		void Log(ParsingTreeNode* node, const WString& originalInput, stream::TextWriter& writer, const WString& prefix)
-		{
-			writer.WriteString(prefix);
-			LogParsingTreeNodeVisitor visitor(writer, originalInput, prefix);
-			node->Accept(&visitor);
+			return RegexLexerColorizer(Walk(), proc);
 		}
 	}
 }
@@ -21418,6 +21098,94 @@ Helpers
 
 			return target;
 		}
+	}
+}
+
+/***********************************************************************
+.\REGEX\REGEXDATA.CPP
+***********************************************************************/
+
+namespace vl
+{
+	namespace regex_internal
+	{
+
+/***********************************************************************
+CharRange
+***********************************************************************/
+
+		CharRange::CharRange()
+			:begin(L'\0')
+			,end(L'\0')
+		{
+		}
+
+		CharRange::CharRange(wchar_t _begin, wchar_t _end)
+			:begin(_begin)
+			,end(_end)
+		{
+		}
+
+		bool CharRange::operator<(CharRange item)const
+		{
+			return end<item.begin;
+		}
+
+		bool CharRange::operator<=(CharRange item)const
+		{
+			return *this<item || *this==item;
+		}
+
+		bool CharRange::operator>(CharRange item)const
+		{
+			return item.end<begin;
+		}
+
+		bool CharRange::operator>=(CharRange item)const
+		{
+			return *this>item || *this==item;
+		}
+
+		bool CharRange::operator==(CharRange item)const
+		{
+			return begin==item.begin && end==item.end;
+		}
+
+		bool CharRange::operator!=(CharRange item)const
+		{
+			return begin!=item.begin || item.end!=end;
+		}
+
+		bool CharRange::operator<(wchar_t item)const
+		{
+			return end<item;
+		}
+
+		bool CharRange::operator<=(wchar_t item)const
+		{
+			return begin<=item;
+		}
+
+		bool CharRange::operator>(wchar_t item)const
+		{
+			return item<begin;
+		}
+
+		bool CharRange::operator>=(wchar_t item)const
+		{
+			return item<=end;
+		}
+
+		bool CharRange::operator==(wchar_t item)const
+		{
+			return begin<=item && item<=end;
+		}
+
+		bool CharRange::operator!=(wchar_t item)const
+		{
+			return item<begin || end<item;
+		}
+
 	}
 }
 
@@ -23054,1098 +22822,6 @@ Helper Functions
 }
 
 /***********************************************************************
-.\PARSING\XML\PARSINGXML.CPP
-***********************************************************************/
-
-namespace vl
-{
-	namespace parsing
-	{
-		namespace xml
-		{
-			using namespace stream;
-			using namespace collections;
-			using namespace regex;
-
-/***********************************************************************
-Unescaping Function Foward Declarations
-***********************************************************************/
-
-			void XmlMergeTextFragment(vl::collections::List<vl::Ptr<XmlNode>>& value, const vl::collections::List<vl::regex::RegexToken>& tokens)
-			{
-				vint begin=-1;
-				vint end=-1;
-				for(vint i=value.Count()-1;i>=-1;i--)
-				{
-					if(i==-1)
-					{
-						if(end!=-1) begin=0;
-					}
-					else if(value[i].Cast<XmlText>())
-					{
-						if(end==-1) end=i;
-					}
-					else
-					{
-						if(end!=-1) begin=i+1;
-					}
-					if(begin!=-1 && end!=-1)
-					{
-						vint tokenBegin=value[begin].Cast<XmlText>()->content.tokenIndex;
-						vint tokenEnd=value[end].Cast<XmlText>()->content.tokenIndex;
-						while(tokenBegin>0)
-						{
-							if(tokens.Get(tokenBegin-1).token==(vint)XmlParserTokenIndex::SPACE || tokens.Get(tokenBegin-1).token==-1)
-							{
-								tokenBegin--;
-							}
-							else
-							{
-								break;
-							}
-						}
-						while(tokenEnd<tokens.Count()-1)
-						{
-							if(tokens.Get(tokenEnd+1).token==(vint)XmlParserTokenIndex::SPACE || tokens.Get(tokenEnd+1).token==-1)
-							{
-								tokenEnd++;
-							}
-							else
-							{
-								break;
-							}
-						}
-
-						const RegexToken& beginToken=tokens.Get(tokenBegin);
-						const RegexToken& endToken=tokens.Get(tokenEnd);
-						const wchar_t* textBegin=beginToken.reading;
-						const wchar_t* textEnd=endToken.reading+endToken.length;
-						WString text(textBegin, vint(textEnd-textBegin));
-						ParsingTextRange range(&beginToken, &endToken);
-
-						Ptr<XmlText> xmlText=new XmlText;
-						xmlText->codeRange=range;
-						xmlText->content.codeRange=range;
-						xmlText->content.value=XmlUnescapeValue(text);
-
-						value.RemoveRange(begin, end-begin+1);
-						value.Insert(begin, xmlText);
-
-						begin=-1;
-						end=-1;
-					}
-				}
-			}
-
-			void XmlUnescapeAttributeValue(vl::parsing::ParsingToken& value, const vl::collections::List<vl::regex::RegexToken>& tokens)
-			{
-				value.value=XmlUnescapeValue(value.value.Sub(1, value.value.Length()-2));
-			}
-
-			void XmlUnescapeCData(vl::parsing::ParsingToken& value, const vl::collections::List<vl::regex::RegexToken>& tokens)
-			{
-				value.value=XmlUnescapeCData(value.value);
-			}
-
-			void XmlUnescapeComment(vl::parsing::ParsingToken& value, const vl::collections::List<vl::regex::RegexToken>& tokens)
-			{
-				value.value=XmlUnescapeComment(value.value);
-			}
-
-/***********************************************************************
-XmlPrintVisitor
-***********************************************************************/
-
-			class XmlPrintVisitor : public Object, public XmlNode::IVisitor
-			{
-			public:
-				TextWriter&					writer;
-
-				XmlPrintVisitor(TextWriter& _writer)
-					:writer(_writer)
-				{
-				}
-
-				void Visit(XmlText* node)
-				{
-					writer.WriteString(XmlEscapeValue(node->content.value));
-				}
-
-				void Visit(XmlCData* node)
-				{
-					writer.WriteString(XmlEscapeCData(node->content.value));
-				}
-
-				void Visit(XmlAttribute* node)
-				{
-					writer.WriteString(node->name.value);
-					writer.WriteString(L"=\"");
-					writer.WriteString(XmlEscapeValue(node->value.value));
-					writer.WriteString(L"\"");
-				}
-
-				void Visit(XmlComment* node)
-				{
-					writer.WriteString(XmlEscapeComment(node->content.value));
-				}
-
-				void Visit(XmlElement* node)
-				{
-					writer.WriteChar(L'<');
-					writer.WriteString(node->name.value);
-					FOREACH(Ptr<XmlAttribute>, att, node->attributes)
-					{
-						writer.WriteChar(L' ');
-						att->Accept(this);
-					}
-					if(node->subNodes.Count()==0)
-					{
-						writer.WriteString(L"/>");
-					}
-					else
-					{
-						writer.WriteChar(L'>');
-						FOREACH(Ptr<XmlNode>, subNode, node->subNodes)
-						{
-							subNode->Accept(this);
-						}
-						writer.WriteString(L"</");
-						writer.WriteString(node->name.value);
-						writer.WriteChar(L'>');
-					}
-				}
-
-				void Visit(XmlInstruction* node)
-				{
-					writer.WriteString(L"<?");
-					writer.WriteString(node->name.value);
-					FOREACH(Ptr<XmlAttribute>, att, node->attributes)
-					{
-						writer.WriteChar(L' ');
-						att->Accept(this);
-					}
-					writer.WriteString(L"?>");
-				}
-
-				void Visit(XmlDocument* node)
-				{
-					FOREACH(Ptr<XmlNode>, prolog, node->prologs)
-					{
-						prolog->Accept(this);
-					}
-					node->rootElement->Accept(this);
-				}
-			};
-
-/***********************************************************************
-API
-***********************************************************************/
-
-			WString XmlEscapeValue(const WString& value)
-			{
-				WString result;
-				const wchar_t* reading=value.Buffer();
-				while(wchar_t c=*reading++)
-				{
-					switch(c)
-					{
-					case L'<':
-						result+=L"&lt;";
-						break;
-					case L'>':
-						result+=L"&gt;";
-						break;
-					case L'&':
-						result+=L"&amp;";
-						break;
-					case L'\'':
-						result+=L"&apos;";
-						break;
-					case L'\"':
-						result+=L"&quot;";
-						break;
-					default:
-						result+=c;
-					}
-				}
-				return result;
-			}
-
-			WString XmlUnescapeValue(const WString& value)
-			{
-				WString result;
-				const wchar_t* reading=value.Buffer();
-				while(*reading)
-				{
-					if(wcsncmp(reading, L"&lt;", 4)==0)
-					{
-						result+=L'<';
-						reading+=4;
-					}
-					else if(wcsncmp(reading, L"&gt;", 4)==0)
-					{
-						result+=L'>';
-						reading+=4;
-					}
-					else if(wcsncmp(reading, L"&amp;", 5)==0)
-					{
-						result+=L'&';
-						reading+=5;
-					}
-					else if(wcsncmp(reading, L"&apos;", 6)==0)
-					{
-						result+=L'\'';
-						reading+=6;
-					}
-					else if(wcsncmp(reading, L"&quot;", 6)==0)
-					{
-						result+=L'\"';
-						reading+=6;
-					}
-					else
-					{
-						result+=*reading++;
-					}
-				}
-				return result;
-			}
-
-			WString XmlEscapeCData(const WString& value)
-			{
-				return L"<![CDATA["+value+L"]]>";
-			}
-
-			WString XmlUnescapeCData(const WString& value)
-			{
-				return value.Sub(9, value.Length()-12);
-			}
-
-			WString XmlEscapeComment(const WString& value)
-			{
-				return L"<!--"+value+L"-->";
-			}
-
-			WString XmlUnescapeComment(const WString& value)
-			{
-				return value.Sub(4, value.Length()-7);
-			}
-
-			void XmlPrint(Ptr<XmlNode> node, stream::TextWriter& writer)
-			{
-				XmlPrintVisitor visitor(writer);
-				node->Accept(&visitor);
-			}
-
-			void XmlPrintContent(Ptr<XmlElement> element, stream::TextWriter& writer)
-			{
-				XmlPrintVisitor visitor(writer);
-				FOREACH(Ptr<XmlNode>, node, element->subNodes)
-				{
-					node->Accept(&visitor);
-				}
-			}
-
-			WString XmlToString(Ptr<XmlNode> node)
-			{
-				MemoryStream stream;
-				{
-					StreamWriter writer(stream);
-					XmlPrint(node, writer);
-				}
-				stream.SeekFromBegin(0);
-				{
-					StreamReader reader(stream);
-					return reader.ReadToEnd();
-				}
-			}
-
-/***********************************************************************
-Linq To Xml
-***********************************************************************/
-
-			Ptr<XmlAttribute> XmlGetAttribute(Ptr<XmlElement> element, const WString& name)
-			{
-				return XmlGetAttribute(element.Obj(), name);
-			}
-
-			Ptr<XmlElement> XmlGetElement(Ptr<XmlElement> element, const WString& name)
-			{
-				return XmlGetElement(element.Obj(), name);
-			}
-
-			collections::LazyList<Ptr<XmlElement>> XmlGetElements(Ptr<XmlElement> element)
-			{
-				return XmlGetElements(element.Obj());
-			}
-
-			collections::LazyList<Ptr<XmlElement>> XmlGetElements(Ptr<XmlElement> element, const WString& name)
-			{
-				return XmlGetElements(element.Obj(), name);
-			}
-
-			WString XmlGetValue(Ptr<XmlElement> element)
-			{
-				return XmlGetValue(element.Obj());
-			}
-
-			Ptr<XmlAttribute> XmlGetAttribute(XmlElement* element, const WString& name)
-			{
-				FOREACH(Ptr<XmlAttribute>, att, element->attributes)
-				{
-					if(att->name.value==name)
-					{
-						return att;
-					}
-				}
-				return 0;
-			}
-
-			Ptr<XmlElement> XmlGetElement(XmlElement* element, const WString& name)
-			{
-				FOREACH(Ptr<XmlNode>, node, element->subNodes)
-				{
-					Ptr<XmlElement> subElement=node.Cast<XmlElement>();
-					if(subElement && subElement->name.value==name)
-					{
-						return subElement;
-					}
-				}
-				return 0;
-			}
-
-			collections::LazyList<Ptr<XmlElement>> XmlGetElements(XmlElement* element)
-			{
-				return From(element->subNodes)
-					.FindType<XmlElement>();
-			}
-
-			collections::LazyList<Ptr<XmlElement>> XmlGetElements(XmlElement* element, const WString& name)
-			{
-				return From(element->subNodes)
-					.FindType<XmlElement>()
-					.Where([name](Ptr<XmlElement> e){return e->name.value==name;});
-			}
-
-			WString XmlGetValue(XmlElement* element)
-			{
-				WString result;
-				FOREACH(Ptr<XmlNode>, node, element->subNodes)
-				{
-					if(Ptr<XmlText> text=node.Cast<XmlText>())
-					{
-						result+=text->content.value;
-					}
-					else if(Ptr<XmlCData> text=node.Cast<XmlCData>())
-					{
-						result+=text->content.value;
-					}
-				}
-				return result;
-			}
-
-/***********************************************************************
-XmlElementWriter
-***********************************************************************/
-
-			XmlElementWriter::XmlElementWriter(Ptr<XmlElement> _element, const XmlElementWriter* _previousWriter)
-				:element(_element)
-				,previousWriter(_previousWriter)
-			{
-			}
-
-			XmlElementWriter::~XmlElementWriter()
-			{
-			}
-
-			const XmlElementWriter& XmlElementWriter::Attribute(const WString& name, const WString& value)const
-			{
-				Ptr<XmlAttribute> node=new XmlAttribute;
-				node->name.value=name;
-				node->value.value=value;
-				element->attributes.Add(node);
-				return *this;
-			}
-
-			XmlElementWriter XmlElementWriter::Element(const WString& name)const
-			{
-				Ptr<XmlElement> node=new XmlElement;
-				node->name.value=name;
-				element->subNodes.Add(node);
-				return XmlElementWriter(node, this);
-			}
-
-			const XmlElementWriter& XmlElementWriter::End()const
-			{
-				return *previousWriter;
-			}
-
-			const XmlElementWriter& XmlElementWriter::Text(const WString& value)const
-			{
-				Ptr<XmlText> node=new XmlText;
-				node->content.value=value;
-				element->subNodes.Add(node);
-				return *this;
-			}
-
-			const XmlElementWriter& XmlElementWriter::CData(const WString& value)const
-			{
-				Ptr<XmlCData> node=new XmlCData;
-				node->content.value=value;
-				element->subNodes.Add(node);
-				return *this;
-			}
-
-			const XmlElementWriter& XmlElementWriter::Comment(const WString& value)const
-			{
-				Ptr<XmlComment> node=new XmlComment;
-				node->content.value=value;
-				element->subNodes.Add(node);
-				return *this;
-			}
-		}
-	}
-}
-
-
-/***********************************************************************
-.\PARSING\XML\PARSINGXML_AST.CPP
-***********************************************************************/
-/***********************************************************************
-Vczh Library++ 3.0
-Developer: Zihan Chen(vczh)
-Parser::ParsingXml.parser.txt
-
-This file is generated by: Vczh Parser Generator
-***********************************************************************/
-
-
-namespace vl
-{
-	namespace parsing
-	{
-		namespace xml
-		{
-/***********************************************************************
-Visitor Pattern Implementation
-***********************************************************************/
-
-			void XmlText::Accept(XmlNode::IVisitor* visitor)
-			{
-				visitor->Visit(this);
-			}
-
-			void XmlCData::Accept(XmlNode::IVisitor* visitor)
-			{
-				visitor->Visit(this);
-			}
-
-			void XmlAttribute::Accept(XmlNode::IVisitor* visitor)
-			{
-				visitor->Visit(this);
-			}
-
-			void XmlComment::Accept(XmlNode::IVisitor* visitor)
-			{
-				visitor->Visit(this);
-			}
-
-			void XmlElement::Accept(XmlNode::IVisitor* visitor)
-			{
-				visitor->Visit(this);
-			}
-
-			void XmlInstruction::Accept(XmlNode::IVisitor* visitor)
-			{
-				visitor->Visit(this);
-			}
-
-			void XmlDocument::Accept(XmlNode::IVisitor* visitor)
-			{
-				visitor->Visit(this);
-			}
-
-		}
-	}
-}
-namespace vl
-{
-	namespace reflection
-	{
-		namespace description
-		{
-#ifndef VCZH_DEBUG_NO_REFLECTION
-			using namespace vl::parsing::xml;
-
-#define PARSING_TOKEN_FIELD(NAME)\
-			CLASS_MEMBER_EXTERNALMETHOD_TEMPLATE(get_##NAME, NO_PARAMETER, vl::WString(ClassType::*)(), [](ClassType* node) { return node->NAME.value; }, L"*", L"*")\
-			CLASS_MEMBER_EXTERNALMETHOD_TEMPLATE(set_##NAME, { L"value" }, void(ClassType::*)(const vl::WString&), [](ClassType* node, const vl::WString& value) { node->NAME.value = value; }, L"*", L"*")\
-			CLASS_MEMBER_PROPERTY_REFERENCETEMPLATE(NAME, get_##NAME, set_##NAME, L"$This->$Name.value")\
-
-			IMPL_TYPE_INFO_RENAME(vl::parsing::xml::XmlNode, system::XmlNode)
-			IMPL_TYPE_INFO_RENAME(vl::parsing::xml::XmlText, system::XmlText)
-			IMPL_TYPE_INFO_RENAME(vl::parsing::xml::XmlCData, system::XmlCData)
-			IMPL_TYPE_INFO_RENAME(vl::parsing::xml::XmlAttribute, system::XmlAttribute)
-			IMPL_TYPE_INFO_RENAME(vl::parsing::xml::XmlComment, system::XmlComment)
-			IMPL_TYPE_INFO_RENAME(vl::parsing::xml::XmlElement, system::XmlElement)
-			IMPL_TYPE_INFO_RENAME(vl::parsing::xml::XmlInstruction, system::XmlInstruction)
-			IMPL_TYPE_INFO_RENAME(vl::parsing::xml::XmlDocument, system::XmlDocument)
-			IMPL_TYPE_INFO_RENAME(vl::parsing::xml::XmlNode::IVisitor, system::XmlNode::IVisitor)
-
-			BEGIN_CLASS_MEMBER(XmlNode)
-				CLASS_MEMBER_METHOD_OVERLOAD(Accept, {L"visitor"}, void(XmlNode::*)(XmlNode::IVisitor* visitor))
-			END_CLASS_MEMBER(XmlNode)
-
-			BEGIN_CLASS_MEMBER(XmlText)
-				CLASS_MEMBER_BASE(XmlNode)
-
-				CLASS_MEMBER_CONSTRUCTOR(vl::Ptr<XmlText>(), NO_PARAMETER)
-
-				PARSING_TOKEN_FIELD(content)
-			END_CLASS_MEMBER(XmlText)
-
-			BEGIN_CLASS_MEMBER(XmlCData)
-				CLASS_MEMBER_BASE(XmlNode)
-
-				CLASS_MEMBER_CONSTRUCTOR(vl::Ptr<XmlCData>(), NO_PARAMETER)
-
-				PARSING_TOKEN_FIELD(content)
-			END_CLASS_MEMBER(XmlCData)
-
-			BEGIN_CLASS_MEMBER(XmlAttribute)
-				CLASS_MEMBER_BASE(XmlNode)
-
-				CLASS_MEMBER_CONSTRUCTOR(vl::Ptr<XmlAttribute>(), NO_PARAMETER)
-
-				PARSING_TOKEN_FIELD(name)
-				PARSING_TOKEN_FIELD(value)
-			END_CLASS_MEMBER(XmlAttribute)
-
-			BEGIN_CLASS_MEMBER(XmlComment)
-				CLASS_MEMBER_BASE(XmlNode)
-
-				CLASS_MEMBER_CONSTRUCTOR(vl::Ptr<XmlComment>(), NO_PARAMETER)
-
-				PARSING_TOKEN_FIELD(content)
-			END_CLASS_MEMBER(XmlComment)
-
-			BEGIN_CLASS_MEMBER(XmlElement)
-				CLASS_MEMBER_BASE(XmlNode)
-
-				CLASS_MEMBER_CONSTRUCTOR(vl::Ptr<XmlElement>(), NO_PARAMETER)
-
-				PARSING_TOKEN_FIELD(name)
-				PARSING_TOKEN_FIELD(closingName)
-				CLASS_MEMBER_FIELD(attributes)
-				CLASS_MEMBER_FIELD(subNodes)
-			END_CLASS_MEMBER(XmlElement)
-
-			BEGIN_CLASS_MEMBER(XmlInstruction)
-				CLASS_MEMBER_BASE(XmlNode)
-
-				CLASS_MEMBER_CONSTRUCTOR(vl::Ptr<XmlInstruction>(), NO_PARAMETER)
-
-				PARSING_TOKEN_FIELD(name)
-				CLASS_MEMBER_FIELD(attributes)
-			END_CLASS_MEMBER(XmlInstruction)
-
-			BEGIN_CLASS_MEMBER(XmlDocument)
-				CLASS_MEMBER_BASE(XmlNode)
-
-				CLASS_MEMBER_CONSTRUCTOR(vl::Ptr<XmlDocument>(), NO_PARAMETER)
-
-				CLASS_MEMBER_FIELD(prologs)
-				CLASS_MEMBER_FIELD(rootElement)
-			END_CLASS_MEMBER(XmlDocument)
-
-			BEGIN_INTERFACE_MEMBER(XmlNode::IVisitor)
-				CLASS_MEMBER_METHOD_OVERLOAD(Visit, {L"node"}, void(XmlNode::IVisitor::*)(XmlText* node))
-				CLASS_MEMBER_METHOD_OVERLOAD(Visit, {L"node"}, void(XmlNode::IVisitor::*)(XmlCData* node))
-				CLASS_MEMBER_METHOD_OVERLOAD(Visit, {L"node"}, void(XmlNode::IVisitor::*)(XmlAttribute* node))
-				CLASS_MEMBER_METHOD_OVERLOAD(Visit, {L"node"}, void(XmlNode::IVisitor::*)(XmlComment* node))
-				CLASS_MEMBER_METHOD_OVERLOAD(Visit, {L"node"}, void(XmlNode::IVisitor::*)(XmlElement* node))
-				CLASS_MEMBER_METHOD_OVERLOAD(Visit, {L"node"}, void(XmlNode::IVisitor::*)(XmlInstruction* node))
-				CLASS_MEMBER_METHOD_OVERLOAD(Visit, {L"node"}, void(XmlNode::IVisitor::*)(XmlDocument* node))
-			END_INTERFACE_MEMBER(XmlNode)
-
-#undef PARSING_TOKEN_FIELD
-
-			class XmlTypeLoader : public vl::Object, public ITypeLoader
-			{
-			public:
-				void Load(ITypeManager* manager)
-				{
-					ADD_TYPE_INFO(vl::parsing::xml::XmlNode)
-					ADD_TYPE_INFO(vl::parsing::xml::XmlText)
-					ADD_TYPE_INFO(vl::parsing::xml::XmlCData)
-					ADD_TYPE_INFO(vl::parsing::xml::XmlAttribute)
-					ADD_TYPE_INFO(vl::parsing::xml::XmlComment)
-					ADD_TYPE_INFO(vl::parsing::xml::XmlElement)
-					ADD_TYPE_INFO(vl::parsing::xml::XmlInstruction)
-					ADD_TYPE_INFO(vl::parsing::xml::XmlDocument)
-					ADD_TYPE_INFO(vl::parsing::xml::XmlNode::IVisitor)
-				}
-
-				void Unload(ITypeManager* manager)
-				{
-				}
-			};
-#endif
-
-			bool XmlLoadTypes()
-			{
-#ifndef VCZH_DEBUG_NO_REFLECTION
-				ITypeManager* manager=GetGlobalTypeManager();
-				if(manager)
-				{
-					Ptr<ITypeLoader> loader=new XmlTypeLoader;
-					return manager->AddTypeLoader(loader);
-				}
-#endif
-				return false;
-			}
-		}
-	}
-}
-
-
-/***********************************************************************
-.\PARSING\XML\PARSINGXML_PARSER.CPP
-***********************************************************************/
-/***********************************************************************
-Vczh Library++ 3.0
-Developer: Zihan Chen(vczh)
-Parser::ParsingXml.parser.txt
-
-This file is generated by: Vczh Parser Generator
-***********************************************************************/
-
-
-namespace vl
-{
-	namespace parsing
-	{
-		namespace xml
-		{
-/***********************************************************************
-ParserText
-***********************************************************************/
-
-const wchar_t* const parserTextBuffer[] = {
-  L"" L"\r\n"
-, L"//////////////////////////////////////////////////////////////////" L"\r\n"
-, L"// AST" L"\r\n"
-, L"//////////////////////////////////////////////////////////////////" L"\r\n"
-, L"" L"\r\n"
-, L"class Node" L"\r\n"
-, L"{" L"\r\n"
-, L"}" L"\r\n"
-, L"" L"\r\n"
-, L"class Text : Node" L"\r\n"
-, L"{" L"\r\n"
-, L"\ttoken content;" L"\r\n"
-, L"}" L"\r\n"
-, L"" L"\r\n"
-, L"class CData : Node" L"\r\n"
-, L"{" L"\r\n"
-, L"\ttoken content (XmlUnescapeCData);" L"\r\n"
-, L"}" L"\r\n"
-, L"" L"\r\n"
-, L"class Attribute : Node" L"\r\n"
-, L"{" L"\r\n"
-, L"\ttoken name\t\t\t\t\t\t\t\t\t@Color(\"AttName\");" L"\r\n"
-, L"\ttoken value (XmlUnescapeAttributeValue)\t\t@Color(\"AttValue\");" L"\r\n"
-, L"}" L"\r\n"
-, L"" L"\r\n"
-, L"class Comment : Node" L"\r\n"
-, L"{" L"\r\n"
-, L"\ttoken content (XmlUnescapeComment);" L"\r\n"
-, L"}" L"\r\n"
-, L"" L"\r\n"
-, L"class Element : Node" L"\r\n"
-, L"{" L"\r\n"
-, L"\ttoken name\t\t\t\t\t\t\t\t\t@Color(\"TagName\");" L"\r\n"
-, L"\ttoken closingName\t\t\t\t\t\t\t@Color(\"TagName\");" L"\r\n"
-, L"\tAttribute[] attributes;" L"\r\n"
-, L"\tNode[] subNodes (XmlMergeTextFragment);" L"\r\n"
-, L"}" L"\r\n"
-, L"" L"\r\n"
-, L"class Instruction : Node" L"\r\n"
-, L"{" L"\r\n"
-, L"\ttoken name\t\t\t\t\t\t\t\t\t@Color(\"TagName\");" L"\r\n"
-, L"\tAttribute[] attributes;" L"\r\n"
-, L"}" L"\r\n"
-, L"" L"\r\n"
-, L"class Document : Node" L"\r\n"
-, L"{" L"\r\n"
-, L"\tNode[] prologs;" L"\r\n"
-, L"\tElement rootElement;" L"\r\n"
-, L"}" L"\r\n"
-, L"" L"\r\n"
-, L"//////////////////////////////////////////////////////////////////" L"\r\n"
-, L"// Lexer" L"\r\n"
-, L"//////////////////////////////////////////////////////////////////" L"\r\n"
-, L"" L"\r\n"
-, L"token INSTRUCTION_OPEN = \"/</?\"\t\t\t@Color(\"Boundary\");" L"\r\n"
-, L"token INSTRUCTION_CLOSE = \"/?/>\"\t\t@Color(\"Boundary\");" L"\r\n"
-, L"token COMPLEX_ELEMENT_OPEN = \"/<//\"\t\t@Color(\"Boundary\");" L"\r\n"
-, L"token SINGLE_ELEMENT_CLOSE = \"///>\"\t\t@Color(\"Boundary\");" L"\r\n"
-, L"token ELEMENT_OPEN = \"/<\"\t\t\t\t@Color(\"Boundary\");" L"\r\n"
-, L"token ELEMENT_CLOSE = \"/>\"\t\t\t\t@Color(\"Boundary\");" L"\r\n"
-, L"token EQUAL = \"/=\";" L"\r\n"
-, L"" L"\r\n"
-, L"token NAME = \"[a-zA-Z0-9:._/-]+\"\t\t\t\t\t\t\t\t@ContextColor();" L"\r\n"
-, L"token ATTVALUE = \"\"\"[^<>\"\"]*\"\"|\'[^<>\']*\'\"\t\t\t\t\t\t@ContextColor();" L"\r\n"
-, L"token COMMENT = \"/</!--([^/->]|-[^/->]|--[^>])*--/>\"\t\t\t@Color(\"Comment\");" L"\r\n"
-, L"token CDATA = \"/</!/[CDATA/[([^/]]|/][^/]]|/]/][^>])*/]/]/>\";" L"\r\n"
-, L"token TEXT = \"([^<>=\"\"\' /r/n/ta-zA-Z0-9:._/-])+|\"\"|\'\";" L"\r\n"
-, L"" L"\r\n"
-, L"discardtoken SPACE = \"/s+\";" L"\r\n"
-, L"" L"\r\n"
-, L"//////////////////////////////////////////////////////////////////" L"\r\n"
-, L"// Rules" L"\r\n"
-, L"//////////////////////////////////////////////////////////////////" L"\r\n"
-, L"" L"\r\n"
-, L"rule Attribute XAttribute = NAME:name \"=\" ATTVALUE:value as Attribute;" L"\r\n"
-, L"rule Text XText = (NAME:content | EQUAL:content | ATTVALUE:content | TEXT:content) as Text;" L"\r\n"
-, L"rule CData XCData = CDATA:content as CData;" L"\r\n"
-, L"rule Comment XComment = COMMENT:content as Comment;" L"\r\n"
-, L"rule Element XElement = \"<\" NAME:name {XAttribute:attributes} (\"/>\" | \">\" {XSubNode:subNodes} \"</\" NAME:closingName \">\") as Element;" L"\r\n"
-, L"rule Node XSubNode = !XText | !XCData | !XComment | !XElement;" L"\r\n"
-, L"rule Instruction XInstruction = \"<?\" NAME:name {XAttribute:attributes} \"?>\" as Instruction;" L"\r\n"
-, L"rule Document XDocument = {XInstruction:prologs | XComment:prologs} XElement:rootElement as Document;" L"\r\n"
-};
-const vint lengthTextBuffer[] = {
-  2, 68, 8, 68, 2, 12, 3, 3, 2, 19, 3, 17, 3, 2, 20, 3, 36, 3, 2, 24, 3, 40, 63, 3, 2, 22, 3, 38, 3, 2, 22, 3
-, 40, 45, 26, 42, 3, 2, 26, 3, 40, 26, 3, 2, 23, 3, 18, 23, 3, 2, 68, 10, 68, 2, 55, 55, 58, 58, 50, 51, 21, 2, 58, 65
-, 75, 63, 56, 2, 29, 2, 68, 10, 68, 2, 72, 93, 45, 53, 134, 64, 93, 103
-};
-const vint lengthTextBufferTotal = 2487;
-
-			vl::WString XmlGetParserTextBuffer()
-			{
-				vl::collections::Array<wchar_t> textBuffer(lengthTextBufferTotal + 1);
-				wchar_t* reading = &textBuffer[0];
-				for(vint i = 0; i < sizeof(parserTextBuffer) / sizeof(*parserTextBuffer); i++)
-				{
-					memcpy(reading, parserTextBuffer[i], lengthTextBuffer[i] * sizeof(wchar_t));
-					reading += lengthTextBuffer[i];
-				}
-				*reading = 0;
-				return &textBuffer[0];
-			}
-
-/***********************************************************************
-SerializedTable
-***********************************************************************/
-
-const vint parserBufferLength = 4440; // 18926 bytes before compressing
-const vint parserBufferBlock = 1024;
-const vint parserBufferRemain = 344;
-const vint parserBufferRows = 5;
-const char* const parserBuffer[] = {
-"\x00\x0E\x00\x02\x83\x80\x07\x7D\x00\x82\x03\xFF\x45\x08\x82\x83\x86\x81\x21\x6F\x6C\x2F\x32\x37\x84\x87\x02\x86\x00\x17\x82\x81\x24\x3C\x3A\x27\x30\x6D\x65\x06\x98\x8A\x80\x8E\x86\x00\x10\x92\x94\x98\x88\x04\x97\x80\x8E\x74\x56\x21\x2C\x35\x3A\x91\x8A\x84\x25\x8C\xA7\x89\x93\x8F\x98\x82\x8D\x08\xC0\x94\x21\x37\x37\x8D\x91\x91\x0C\xB9\x88\x9B\x91\x8D\x9C\x8C\xA0\x3F\x83\x83\xA5\xA0\x96\x98\x93\x93\x04\xCC\xAA\x9E\x93\x80\xA9\xAE\xA9\x44\xC6\x96\xA9\xA8\xAB\x82\xAC\xA7\x0C\xAD\xA9\xA3\x82\x27\x35\x3A\x37\x64\x61\x32\x39\x38\xA0\x9D\xB3\x86\x03\xBC\xAB\x8B\xBC\xB8\x01\xB7\xB7\x71\xF3\xB5\xA4\x8A\xA1\xAD\xBD\xA6\x7B\x88\xAA\xAA\xCC\xB6\xB4\xB8\xB9\x74\xDC\x82\x85\xC6\xB7\xC3\xAC\x97\x7D\xFF\x8F\xC2\xC2\xCD\x83\xBA\x00\x67\x89\xC4\x8B\xC3\xD5\xC4\xC0\xC8\x83\x89\x9F\xC1\xDD\xCC\xD3\x81\xC5\x9A\x81\xD1\xC4\x9C\x00\x8D\xDB\x87\x6F\x6E\x34\x25\x38\x3C\x3A\xBC\x8C\x05\x9D\xFF\x77\xD8\x84\xE0\x88\xDD\xBC\xBE\xC8\xC0\xE9\xD3\xCB\xD4\xCB\x68\xC1\x8F\xA7\xCD\x31\x92\xDC\xD7\x02\x89\x18\x9A\xEB\x8D\x8E\x39\x34\x62\x75\x3B\xDF\x74\xF5\xF0\xF3\xE7\x0F\xC4\x21\x34\x31\x36\xF2\xF2\xAF\x02\xC0\x90\x95\xE5\x32\xDE\xF7\xF2\xD8\x80\x0B\xC4\x2F\x33\x31\x3A\xEB\x74\x37\x74\x78\x7C\x19\x43\x45\x10\x1B\x65\x00\x82\x83\x3F\x0B\x18\x4D\x82\x40\x49\x2E\x13\x1C\x1D\x72\x35\x13\x18\x1D\x69\x39\x6B\x80\x01\x18\x5C\x82\x42\x13\x6F\x24\x12\x4A\x80\x1E\x88\x45\x88\x15\xC9\x4B\x8D\x03\x76\x2C\x9D\x74\x84\x78\xE2\x65\x15\x88\x41\x25\xAE\x15\x54\x70\xDC\x48\x49\x8C\x4C\xDF\x61\x7B\x6C\x7A\x00\x36\x13\x4D\x4D\x9D\x40\x93\x12\x7A\xEC\x44\x80\x53\x18\xB9\x7B\x66\x7E\x80\x4A\x94\x70\x81\x94\x02\x4C\x98\x73\x93\xF7\x79\x7B\x7D\x7F\xFF\x75\x74\x1C\x95\x00\x30\x12\x1D\x53\x67\x33\x1B\x82\x96\x03\x7C\x7E\x7C\x80\x0F\x88\x4D\x9B\x98\x6F\x34\x17\x81\x82\x5E\x8B\x80\x9B\x9C\x00\x8A\x08\x46\x9E\x02\x6B\x7F\x8A\x8F\x65\x26\x90\x97\x74\x02\x78\x9E\x95\x9B\x04\x6D\x93\x1A\x44\x73\x29\x1E\x18\x55\x21\x43\x04\xA2\x74\x85\x88\x80\x83\x8C\x03\x75\x85\x56\x00\x93\x91\x55\xA4\x9D\xD7\x58\x60\x03\x1C\x75\x22\x10\x8A\x88\x82\xB7\x78\xA3\x40\x6D\x91\x83\x85\x85\x17\x99\x8E\x18\x9F\x08\x74\xAE\x9D\x8F\x31\xA9\xAE\x7B\xAA\x02\x6D\xA2\x84\x85\x16\x98\x89\x6C\xA6\x02\x5A\xA1\x48\xB1\x00\x08\xB7\x89\x72\x60\x96\x9E\x91\x80\x02\x90\x08\x45\x0C\x18\x52\xB0\x73\xB5\x38\x4B\x82\x80\xB6\x49\x5A\xB7\x7C\xB7\xD9\x9E\xB6\x78\xB8\x84\x62\xB6\x7A\xB5\x08\x68\xB9\x12\x13\x53\x14\x12\x15\x15\x43\x14\x19\x13\x13\x4E\x1F\x1F\x10\x14\x45\x0E\x1A\xB3\x40\x2F\x3C\x0F\x0B\x0F\xC0\x5F\x61\x04\x46\x03\xD0\x8C\xBA\xBB\xF0\xB2\xB4\xBF\x17\x43\x0C\x1F\x13\x14\x45\x3B\xB2\x43\xBF\x2F\x3E\x0D\x66\x01\x18\x54\x09\xC5\x5E\x4F\x0D\x10\x14\x13\x45\x18\x1F\x15\x11\x20\xCD\x19\xBC\x15\xF6\xB8\xBA\xBD\x87\xFC\xBE\xBF\x08\xA7\x16\x5B\xCC\x42\xC6\x02\x53\x1B\xBB\x11\x20\xE3\xC5\xCB\xC9\x0C\xCE\xC0\xC6\xC4\x00\x2F\x02\xD2\x0F\x92\xBD\x54\x40\x71\x47\xC6\x8B\xCE\x13\x28\xF7\xB9\xBC\xCC\x08\x50\xDD\xBC\xB2\x39\x84\x4B\x88\x43\x57\xC0\x04\xC9\x11\x26\xCC\xDD\xCF\xC3\x45\x10\xD4\x42\xD4\x3E\x1F\x64\xAE\x61\x3A\x46\x81\x15\x15\x41\x0C\x12\xDB\x40\x52\xFD\x08\xC5\xB7\xF7\x40\xDE\x11\x10\x26\xC5\xC8\x42\xDE\x5B\x21\x1D\x0A\x1E\x41\x2D\x0A\x14\x0C\x2D\x39\x0A\x0E\x0B\x5F\x2F\x0D\x09\x17\x2B\x04\x8C\xAE\x7E\xA2\x81\x14\x14\x15\x56\x2D\xD5\x15\x11\x13\x18\x49\xE6\x40\x22\x1B\x1E\x14\x0F\x3E\x22\x0D\x16\x0A\x22\x3C\x17\x0A\xE7\xA0\xE7\x03\xEB\x09\xF9\x48\xDF\x55\xCC\x0F\x5D\xCD\xD4\x15\x22\x18\x45\xEF\xC4\xFE\xA1\x0D\x09\x0B\x28\x1E\xEA\xE2\x0F\x5D\x3C\x1D\x0A\xEF\x2D\x00\xF2\xF3\xF0\x5E\x00\xF9\x0A\x0A\xBB\xD5\xC5\xD7\x40\x59\xE8\xDB\x51\x5E\x44\x12\xE1\x10\x0B\x18\x58\xF8\xEF\x0B\x21\x2F\x0B\x17\x91\xD6\xDE\xFD\xEE\x17\x2F\x1D\x11\xF1\xF9\xBE\xE6\xFC\x1D\xF9\xE8\xC9\xFD\x17\xF2\xEC\xDD\x15\xC7\xD9\x09\x64\x8C\xCA\x40\x54\x21\xC4\x14\x09\x18\x7C\xF2\x43\xF8\xA0\x7D\x06\x08\x27\x00\x05\x17\x32\x0F\x05\x6E\x0F\x04\x7B\x7F\x61\x71\xC1\x45\x77\x70\x89\x6B\x71\x0A\x2B\x0C\x0F\xD2\x67\x07\x71\x0B\x45\x4A\x49\x03\x23\x0A\x28\x01\x0B\x08\x45\x05\x68\x42\x22\x8F\x05\x39\x2B\x06\x75\x93\x22\x40\xB5\x0C\x24\x7E\x81\x34\x50\x0B\x3C\x50\x47\x6E\x34\x68\x20\x1A\xB0\x86\x3B\x32\x85\x0E\x0B\x52\x0F\x0D\x38\x53\x0C\x3D\x72\x14\x0F\x03\x18\x23\x88",
-"\x81\x00\x08\x04\x24\x1C\x07\x0D\xFF\x41\x46\x1F\x2D\x80\x00\x2F\x91\x84\xA0\x68\x54\x20\x74\x4B\x88\x57\xBB\x2E\x07\x0F\xF2\x24\x0F\x80\x0C\x26\x8B\x00\x07\x8A\x12\xD2\x8D\x89\x27\x91\x88\x87\x80\x48\x84\x00\x44\x37\x8B\x1C\xAE\x01\x06\x3C\x18\x21\x1C\x82\x23\x8C\x34\x8D\x8A\x07\x20\x17\x6E\xC9\x20\x08\x8E\x1B\x61\x27\x88\x22\x02\x80\x08\x12\x74\x72\xCB\x45\x0C\x8F\x20\x02\x48\x4D\x65\x00\x05\x30\x33\x0B\x90\x76\x9B\x36\x19\x83\x2D\x8D\x34\xB6\x34\x92\x64\x99\x8A\x0C\x73\x88\x20\x4E\xB5\x8C\x89\xBB\x3E\x04\x1E\xFA\x87\x91\x3E\x95\x28\x04\x81\x82\x07\x11\x84\x95\x72\x26\x17\x70\x91\x8A\x95\x25\x23\x8F\x99\x93\x32\x13\x92\x20\x95\x91\x46\x1A\xEC\x85\x96\x17\x33\x04\x93\x04\x3E\x91\x2E\xA1\x93\x94\xBC\x65\x90\x04\x7E\x8C\x91\x2A\x83\x93\x73\x56\xAF\x90\x8F\xB1\x8C\x92\x23\x90\x90\x95\x32\x00\x0F\x96\x00\x03\x99\x19\x12\x08\x22\x6E\xB8\x95\x97\x3C\x91\x4D\x11\x70\x25\x88\x84\x25\x99\x89\xDA\x9E\x04\x08\x40\x08\x4C\x5C\x86\x52\x37\xD8\x98\x0B\x3B\xF4\x0E\x04\x19\x0E\x02\x32\xF7\x94\x8E\x3C\x96\x5E\x4A\x51\xA8\x94\x07\x22\x19\x8E\x31\x88\x99\x99\x23\xBB\x08\x04\xDA\x88\x93\xAD\x39\x8F\x91\x3E\x20\x00\x05\xA8\x95\x61\x40\xFC\x08\x95\xD0\x60\x07\xA0\x58\x13\x09\xA9\x27\x5C\x90\x3C\xA4\x56\x54\x21\x41\x50\x08\x0E\xA2\x04\x7F\x41\xA4\x94\x88\x8B\x53\x1B\x0D\x5F\x50\xB1\x15\xA1\xA0\x29\x13\x94\x08\x73\x9D\x00\x05\x0A\x8B\x9E\xFE\x85\xA7\x49\x83\xA6\x95\x90\x2B\x98\xA3\xB5\x8A\xA1\x24\xA2\xAE\xA0\x88\xA2\x02\xA2\x20\x14\xA2\x08\x16\xA8\xA2\x8D\xA0\xA2\x44\x88\x9F\xA0\x47\x8D\xAF\x9F\x17\x3B\xA3\x8F\x78\x8A\xA4\x4B\x90\x5A\x98\x8B\xB1\xA3\x9A\xF3\x9B\x94\x25\xAE\x50\x59\x58\x79\x30\x8C\x04\x20\x8C\x16\x64\xA0\x56\x61\x6E\x0D\x9E\xA4\x18\x21\x5C\xFA\x9C\xAD\x60\x72\x51\xA7\x3C\x1F\x07\x55\xC7\x95\xA1\x8B\x88\xA1\xA8\x78\x8B\xA0\xA0\x54\xA2\x05\x1F\x16\xA3\x9A\x75\xA6\xAE\x1B\x35\xAA\x89\xC4\xAE\xA8\xAF\x7A\xA2\xA0\x56\xC8\x97\x94\x20\x00\xAB\xA8\x42\xB5\x98\x61\x86\xB1\xA0\xC4\xBF\x55\xAD\xB2\x4D\x9D\x36\xF3\x91\x9F\x79\xAE\x04\x06\xF9\x88\x21\x6A\xB7\xAC\x9E\xDD\x38\xAB\xAF\x04\xA7\x97\x65\xD5\x99\xB2\x2C\x84\xAF\xA1\x11\xB6\xA2\x52\xA1\x76\xA0\x84\x8E\xAC\xA3\x51\xBB\xA1\x48\x84\xB6\xA4\xC9\x87\x9A\xAB\x8E\x5C\xAB\x4B\xA0\x0F\xAB\x47\xB4\xA6\xA6\xFB\x80\x54\x1D\x2F\xB6\xB9\xD8\xBE\xA3\xB6\xB6\xB5\xB4\x43\xA3\xA8\xB7\xA3\xBA\xB3\xB9\x96\xBE\xB6\x70\xD0\xAE\xA3\xF1\xB7\xB5\xA4\x56\xB5\xB9\x56\x8C\x59\xB8\x97\x8B\xA8\xA6\x32\xB3\x9E\x68\xD1\xB9\x4F\x3D\x54\x96\xB4\x33\x06\x10\x46\x7A\xBA\x9E\x9C\xB8\x8A\xA7\xEA\xB4\xB3\x75\xFF\xA8\xB3\xC0\x83\xAC\xAA\x46\xA8\xAB\x6E\x81\xAD\xA8\xF3\x81\xBF\xA9\xE7\xA5\xB8\x4A\xEB\xBB\xA5\xF6\xA7\x97\xBD\xCC\xB1\xBD\x6B\xF4\x00\x08\xB1\xB8\x96\xB1\xB2\x48\xAF\x40\x6A\xA0\xC5\xDC\x3E\x91\x0A\x18\x28\xC4\x5D\x9F\xB6\xAF\xDC\x10\xB0\xB6\x3D\xAC\x90\x76\xB9\x8A\xBB\xC1\x9C\xBD\xB0\x87\xAF\x91\x89\xEE\x0C\x9C\x51\x74\xBE\x4B\xA5\xBB\xC2\x0B\x36\x0C\xBE\x84\x05\xCC\xB5\xD2\xB4\xBB\x84\x82\xC2\xC6\x02\xF4\xB6\xC0\x9A\xBC\xB9\x82\xDF\xB8\xC3\x06\xD0\xC7\xC1\x53\xB7\xC6\x49\xC7\x8B\xC8\xE4\xAD\xA7\xC2\x5E\xBA\xC2\x74\xC0\x48\x0A\x14\x7D\x30\x4C\x65\xC9\x3B\x1B\xD8\x08\x22\x36\xFA\x9E\xCC\xD3\xA5\x9B\x64\xCE\x5E\x4B\xA4\xB3\xA3\x6D\x6D\x69\xA5\x93\x75\xC4\xA2\x56\x86\x92\xCF\x57\x54\x0E\x9D\xF9\x75\xCC\x40\xCF\x5A\xA6\x70\xC0\x0B\xDC\x08\x2B\xD0\x2C\x07\x4B\x3D\x61\x13\xBF\xA3\xEC\x3F\x8D\x11\x18\x26\xD2\xFA\x93\xD1\x18\x7E\x90\x7C\x2A\x01\x0E\xD0\x75\xD3\x9A\xA6\xBD\xCD\x2E\x47\xEF\x0C\x3E\xF0\x96\xBC\x2E\xF3\x30\x41\x37\xA9\x00\x23\xAF\xD9\xD3\xA9\x80\x4C\xD2\xD9\x67\x60\xD4\xBA\x32\xA4\xAB\xDE\x44\xD4\xC6\x2E\x9B\xC3\x41\xD2\xBB\x1B\xC5\xC4\x21\x23\xFF\xC6\xB5\xFF\xA0\xA0\x97\xBC\xAC\xC8\xBF\x89\xA0\xCA\xB6\xA8\xC1\x6E\x93\xAB\xB8\x2B\xC0\xBD\xBC\x10\xC4\xB9\x7A\xDD\xCC\xBD\x2F\xFE\xA0\xC3\xCD\xB3\xA7\x86\xF3\xB3\x9E\x2A\x83\x26\x8A\xA6\xA1\x9E\x9C\x70\x21\x7A\xE8\x43\x20\x9D\x38\xAB\x9F\x7C\xBF\xB1\xA5\x78\xB4\xDA\x44\x6F\x95\x04\x46\x7A\xDA\x9F\x7B\xE5\x0E\x9F\x21\x09\xCD\x6F\x76\xC1\xE0\x4D\xC4\xE6\xD4\xA8\xC2\xD0\x45\x81\xE3\x9E\x20\x0F\x79\x3B\x94\x8A\x4D\x97\x3A\x3F\x71\x36\x58\x0A\xE2\xAD\xD1\x04\x18\x18\x2B\xE2\x7D\x98\xE5\x9F\x78\x98\xA3\x8E\x88\x92\x4C\x32\x4F\x94\xA2\x08\xE0\x40\xC9\xE3\x42\x23\x32",
-"\x5C\xBF\xD8\x82\xD8\x8C\x9C\x72\x4B\xC2\x99\x9F\xE2\x37\x1D\xD7\x93\x87\xAC\xCA\xB0\x1A\x84\x26\x86\x3B\xDB\x85\x0F\xEB\xD4\x0C\xBD\x44\x22\x6F\xE8\x9B\xC6\x3A\x8E\xED\x45\x6C\xB7\xE4\x0E\x15\xF1\xE0\x97\x2D\xD2\x07\x8E\xC8\x26\xEA\x4A\x8F\xEA\x3F\xE1\xBB\xAC\x9E\xEE\xAB\xE5\x26\xF6\xCD\xCA\xF5\xC8\x8F\x92\xED\xE4\xAA\x30\xE8\x93\xCC\xF3\x96\xE7\xA9\xDE\x4C\xDC\xC0\xCA\xD7\x68\xC2\xC7\x06\x62\xC3\x26\xD8\xFE\xBF\x9C\x8C\xCD\xD3\xC6\x40\x75\xC1\x57\x52\xD3\xDA\x9D\xD5\xC2\xBD\x2B\xD8\xD9\xCB\x24\xB2\xC0\xB3\xDE\xCC\xAA\x40\xA1\xC8\xAC\x1B\xC4\xCC\x9C\xED\xD2\x21\xAC\x42\xE4\x9E\xEA\xC3\x9C\x19\x58\x98\x9C\x38\xCB\xEB\xD1\x04\x2D\xD2\xA6\xA2\xC2\x20\xB5\x9A\xD2\xE8\xE2\x90\x2D\xD4\x82\x28\x9C\x4D\xCB\xEA\xD2\xB3\xDE\x4A\xB9\x82\x26\x8B\x5D\xFA\x30\xF5\x44\xF4\xF0\x00\x59\x6D\xF5\xD8\xEE\xB2\xDE\x3E\xDE\xDF\xEC\x80\x06\x8A\x7F\xF8\xF2\xF3\xBA\xFC\xF6\x12\xFE\xDB\xE9\x87\xC0\x01\x47\x17\xEE\xEE\x6E\x46\xE3\x20\xBD\x51\xFB\x4D\x5E\x47\xF8\x5C\x24\xF0\x21\x77\xD9\xEA\xFA\xD3\xAB\x9E\x87\xD9\x9B\xC6\xEE\xE4\xC6\xEB\xB2\x4F\x8E\x8A\x88\x2B\xFD\xC6\xA8\xFE\xC5\xC9\xDA\xAF\xB2\x93\xB9\x98\x67\xC0\xB5\x91\x07\xD7\xC4\x67\xB2\xAB\xC6\xC9\xC9\x3D\x9C\x04\x15\x4E\x97\x78\x7B\x5B\x41\x44\xD8\x47\x44\x9D\x79\x1C\x65\x3B\x41\xB8\x40\x67\xAB\x79\x4D\x70\x6A\x45\x40\x44\x07\xCE\x79\x23\x62\x47\x79\x3E\x00\x7A\x03\x12\x7A\x48\x21\x06\xC3\x75\x7B\x1D\x84\x80\x13\x8F\x80\x08\x8A\x44\xAE\x7A\x81\x02\x1C\x81\x90\x63\x7E\x8E\x61\x82\x05\x84\x07\x07\x80\x02\x26\x8D\x81\x3E\x00\x7B\x09\x7E\x4D\x08\x18\x83\x63\x77\x7B\xEA\x6F\x82\xC9\x73\x10\x25\x8B\x83\xD3\x56\x83\x00\x26\x7E\x94\x46\x7B\xF4\x4F\x82\xE3\x77\x81\x48\x85\x83\x3E\x63\x4F\x38\x84\x10\x3A\x89\x6E\x43\x7E\x83\x18\x19\x35\x41\x88\x53\x70\x72\x5D\x46\x8F\x6B\xC2\x6A\x84\x3A\x71\x46\x32\x80\x73\x4E\x85\x6A\xFE\x61\x85\x03\x1A\x83\xC6\x7D\x83\x13\x8F\x83\x46\x48\x44\xCB\x76\x5E\x65\x8E\x6B\xD9\x4E\x6F\x5D\x85\x87\xE6\x52\x81\x5C\x4B\x84\x63\x8C\x7C\x2C\x8B\x63\x16\x08\x11\x81\x8B\x73\xAF\x2D\x62\x6F\x5C\x86\x5C\x44\x7D\x02\x1A\x37\x41\x8A\x74\x7F\x8F\x7E\x6E\x08\x86\x02\x1A\x83\x41\x7F\x82\x1F\x80\x84\x63\x8A\x74\x15\x82\x75\xD8\x7A\x1B\x9B\x38\x10\x9F\x87\x7D\x13\x78\x79\x55\x83\x81\x77\x81\x84\x5A\x7B\x89\xB8\x4F\x74\x00\x83\x10\x02\x8F\x74\x7A\x81\x44\x6E\x82\x86\xDF\x7D\x89\xD3\x51\x4F\xB5\x4C\x82\xBD\x44\x03\xC0\x43\x10\xC2\x45\x4B\xFE\x4B\x64\xF5\x7B\x4C\x7E\x6E\x4A\xC7\x41\x4D\x32\x55\x4B\x40\x0E\x7F\x67\x63\x29\x03\x82\x03\x6E\x68\x10\xD1\x8A\x44\x9E\x72\x67\xC7\x5B\x67\xB9\x64\x51\x45\x08\x67\x4C\x08\x6B\x0A\x7C\x4C\x85\x46\x8C\xDE\x83\x68\xFA\x33\x8E\xD3\x49\x68\x28\x80\x00\x2A\x8C\x1E\x92\x61\x82\x32\x08\x69\x08\x10\x8F\x33\x80\x69\x9C\x65\x3D\x9E\x66\x8E\x8F\x43\x6A\x44\x80\x64\x72\x72\x84\xF5\x41\x6B\x08\x10\x90\x26\x8E\x7B\x71\x60\x02\x43\x06\x6B\x4C\x38\x8F\x06\x94\x90\xBD\x65\x1A\x5E\x85\x5F\x2C\x47\x5F\x42\x65\x03\x76\x72\x10\x78\x7B\x61\x4A\x6C\x6C\xF5\x7D\x77\x31\x2F\x77\xBB\x12\x6D\xDE\x54\x6D\x84\x79\x51\x0E\x67\x78\xC3\x5A\x65\xDB\x6B\x78\xDD\x6A\x5C\xE0\x62\x66\x00\x29\x73\x0C\x1C\x46\xE5\x78\x11\xE7\x75\x88\x8A\x57\x5A\xEB\x74\x10\xED\x7D\x75\x36\x9F\x58\xF1\x7B\x77\x1B\x9E\x64\xD9\x50\x6D\xDB\x54\x52\xFB\x7E\x59\x3D\x92\x2B\x4C\x7C\x10\xD0\x7F\x74\x0F\x82\x8A\xAD\x63\x03\x56\x74\x10\x58\x70\x95\x20\x7E\x6C\x23\x75\x76\x2C\x7F\x06\x2E\x78\x72\x48\x80\x76\x67\x7F\x72\x6C\x72\x73\x43\x7C\x76\xD3\x4F\x74\x0D\x93\x10\xB8\x83\x54\xAA\x80\x00\xB5\x44\x2E\xF5\x37\x1F\xCC\x84\x07\x40\x30\x67\xC0\x1C\x01\x24\x12\x20\xE9\x8B\x8E\x61\x06\x24\x1D\x80\x1C\x1E\x09\x97\x59\x2E\x63\x48\x80\x26\x48\x80\x1C\x20\x02\x98\xEE\x1B\x85\x53\x23\x29\xF3\x40\x1C\xB7\x31\x2E\x8B\x91\x7C\xE6\x56\x37\x21\x50\x1C\xFE\x32\x99\xE6\x1F\x88\x49\x99\x1B\x0F\x8B\x63\xC0\x16\x02\x8A\x96\x1E\x6D\x96\x95\xA1\x2D\x17\x4F\x70\x1C\x28\x03\x9A\xE5\x10\x01\x22\x49\x10\xC2\x10\x1C\x9D\x10\x97\xB4\x95\x9B\x38\x12\x1C\x8F\x3F\x36\xB6\x90\x00\x9D\x13\x9B\xF7\x36\x22\x03\x19\x4C\xC0\x1B\x96\xD5\x40\x97\xCD\x15\x10\x4F\x4F\x9A\xBB\x9B\x9C\x24\x12\x1C\x6A\x48\x2C\xB5\x9D\x9B\xB4\x90\x24\xD1\x43\x9C\xFD\x8F\x96\xB0\x9D\x9C\x0C\x8C\x9C\xBC\x9C\x9D\x10\x7C\x94\x2F\x13\x54\xD6\x91\x91\xDF\x43\x54\xFF\x0A\x9B\x05\x18\x9E",
-"\x04\x22\x9B\x9D\x23\x10\xCA\x9B\x9B\x6D\x98\x9D\xE4\x95\x2B\x98\x43\x54\xE9\x8B\x9E\xB4\x94\x9C\xB6\x58\x9E\xE3\x94\x9F\x7D\x27\x60\xC0\x1C\x99\x65\x5E\x56\xE7\x98\x11\xE9\x8C\x9E\x0C\x19\x8E\xEF\x96\x9B\xF1\x92\x9E\x72\x74\x10\x67\x45\x4D\x7B\x9E\x9D\x50\x47\x9D\x43\x5C\x9F\x0F\xAA\x96\x03\x12\x58\xB9\x20\x1C\x8C\x9E\x25\x14\xA4\x2E\xC7\x9F\x0F\x04\x2E\x7C\x21\xA1\x1C\x24\x1E\x7C\xF9\x17\xA2\x23\xA9\x9B\x14\xA8\x9E\x9F\x17\xA0\xB4\x9F\xA1\xBA\x1E\x9B\x0C\x10\x34\xC2\x99\xA1\x2E\x45\x9F\xC5\x9C\x1C\xC2\x16\x36\x27\xAC\x2D\x2D\xA8\x11\x18\xA0\x97\x30\xAD\x9E\xBB\x92\xA0\xA0\x59\x1B\x36\xA0\x9C\x37\xA1\x9C\x37\x2A\xA3\x15\xA5\x9E\x3D\xAE\xA3\x24\x19\x8E\x8F\x3C\xA2\xC2\x19\x1F\xAD\x8B\x9B\x47\xA6\x34\xCB\x94\xA3\x74\x0F\x19\x25\x04\xA1\xF3\x66\x5E\x28\xA9\x14\x4F\x4A\x46\xB5\x9B\xA0\x9F\x1B\xA2\x33\xAF\x84\x91\x78\x11\x65\xAE\x9D\x67\xA0\x61\x4D\xAE\x29\x94\x20\x00\x74\x6A\x1B\x01\x3B\x9D\x97\x73\xA4\x31\x94\xA1\x6E\xA2\x2A\xCC\x92\xA6\x64\xA6\xA6\x94\x98\xA7\xB4\x9D\x2C\xD8\x84\x07\x7F\xA9\x36\x0D\x89\x22\xCE\x91\x86\xCC\x95\xA8\x60\xAB\x9B\x88\xA4\xA7\x8A\xA6\x86\xE6\x59\xA7\xAF\x3B\xA7\x7D\xA0\xA9\xDB\x92\x3D\x81\xA2\x1C\xBA\x7C\x7D\x6D\xA5\xAA\xAF\x1D\xA9\x74\x80\x73\x89\xA6\xA7\x8B\xAC\x51\xA0\xA1\x1F\x93\x23\xAA\x1E\xA4\x98\x04\x93\xA2\xDC\x7A\x7B\xAB\xA2\xA9\x74\x87\xA8\x72\xA3\x66\x9C\xA2\xAB\x9E\xAC\xA8\x70\x9E\xA8\x81\x60\x1C\x13\xAB\x6A\x1D\x83\xA2\x5D\xAB\x46\x84\xAC\xAA\x02\x10\xA7\x70\x9B\xA9\x0C\x15\xA7\xDC\x97\xA7\xB4\xAD\xA8\xB7\xAF\xA8\x91\xA3\x3D\x93\xAD\x1B\x69\xA7\x9B\xD5\x24\xA1\xB5\xA7\x2D\x77\x2B\x61\xB9\xA5\x6A\xF3\x4F\x0F\x0B\xA5\xA0\x0C\x12\x89\xD7\x2D\x19\x00\x94\x10\x0B\xA5\x9B\xEB\xA2\x5D\xED\xAF\xAA\xF3\x49\x8E\xF7\xA1\xA6\xC3\xA0\x20\xE9\xAF\x80\x6B\x7C\xAE\x4D\x74\x10\x4D\x90\x7E\xF2\xAB\x37\xB4\x9D\x19\xDA\xA8\xAF\x14\xAB\xAF\x00\x2D\xAF\x0E\x93\x77\xD2\x59\x8E\x11\xB2\xB0\xEE\xAB\x61\xF9\xAE\xAA\x17\xB4\x92\x10\x6D\xB0\x52\x8F\xB0\x32\x33\x42\x13\xBE\x98\x08\xB9\xA9\x90\x3F\x90\x5E\x29\x8E\x3E\x7C\xB1\xFE\xAB\x61\x05\xBE\x20\x03\x17\xB0\xFC\xA9\xB0\x03\x1B\xB0\xB6\x86\x9C\xC2\x1D\x19\x9F\x8C\x9C\xE9\xA0\x1C\x9F\x90\x89\x01\xA1\x86\x3C\x93\xA0\xB2\x24\xB2\x09\x18\x9E\x31\xB8\x2D\xF6\xA8\x11\x1F\xB0\x97\x45\xBD\x99\x6E\x07\xB4\x83\xA4\x88\x4A\xB9\x1B\x00\xB4\xA1\x4A\xA6\x88\x45\xAB\xA7\x7A\xA6\x76\x5C\x93\x07\x38\x2D\x74\xA6\x91\x20\x4E\xB6\xB2\x33\x32\xB5\x14\xA5\xB5\x5B\xB7\xB5\x96\xA3\x10\x32\x90\x89\x30\xBE\xB5\x48\xBB\x63\x61\xBA\xA7\x63\xBB\x95\x65\x27\xB6\xE0\x9B\x8A\xE0\x71\xA2\x82\xA8\x10\x15\x08\xAE\x18\x15\xB3\x0C\x1A\x28\x2B\x92\x16\x16\xBD\xAA\x2E\xBE\xA7\x84\x1F\xB3\x82\x88\xB8\xDE\x95\x97\xC9\x11\xAE\xA6\xA0\x67\x23\xA8\x9E\x8A\x85\xAF\xC5\xA8\xB2\x97\xBF\x9B\x76\x94\xAD\xA0\x14\x49\x70\x6A\xB1\x14\xA3\x97\x53\xBB\xAD\xB3\xA7\x99\x22\xA4\xB9\x0C\x17\x01\x96\xBC\x9D\x7E\x90\x69\xCC\xA6\xA0\x47\x8F\xAC\xC2\x1E\xB9\x6C\xB8\x10\x1B\xB2\x10\xAD\xB0\x2E\xB7\xBC\x1E\xB9\xB9\xA0\xBB\xB0\x69\xAA\xBE\x9D\xCD\xA9\x4D\x9A\x63\xBC\x32\xB1\xB2\xFE\x6E\xB3\xDA\x9C\x10\x18\x05\xBB\xCC\x96\x98\x04\x9F\xB8\xD5\xA7\x84\xBB\xA1\xAF\x6B\xB0\x97\x51\xBC\x10\xD0\xB8\x2D\xDA\xB9\x70\xDC\xBD\xB2\xCE\xB4\x90\x5D\xB6\xAC\xAF\xA8\x84\x7B\xB1\xAA\x7D\xB6\x72\x80\xBA\x23\x9C\x83\x8A\x4C\xBB\x88\xBF\xB4\x10\xC1\xB0\x00\xE5\xBA\xAE\x93\x27\x98\x86\xA0\xB9\xEB\xB9\x70\xCB\xBE\xBA\xA5\x68\x84\xFF\xB5\x9B\xDC\xA1\x52\xF9\xB0\x00\x4F\xB0\xBA\x6D\xB4\xBE\x29\xB0\x3B\x28\x1B\xBD\x03\xCD\xBD\xAB\x6C\xBE\x27\xB2\xAC\x09\xC4\x90\xF1\xB6\xAB\x16\xC4\xB6\x7F\xBA\xB3\xDF\x9E\x74\x83\xB4\xA1\x85\xB1\x7A\xD8\xB3\x10\xE9\xA8\xA3\x51\xAC\xB2\x8B\x10\x73\xDC\x93\xA2\x9D\x19\x01\x41\xA6\xAE\x49\x18\x9E\xD6\xA8\x10\xAD\x14\xA4\xBA\xBC\xB2\x0C\xCF\xBA\x22\x21\xC2\xEA\xB7\xB1\x52\x53\x5C\xE9\xB3\xC3\x8F\x91\xBB\xD5\xB8\x10\x1A\x0D\xC2\x9A\xA2\x2A\xA9\x96\xC2\xCF\x77\xBF\x15\xB9\xC3\x49\x12\x1C\xC8\x2B\x01\x52\xC7\xBA\x13\xCC\x9D\xA5\x95\xC5\xE5\xA4\x18\x5C\xAF\xC5\x9F\x11\xC1\xB5\x93\xC6\x29\xC3\x19\xA8\xA4\x93\x2F\xA6\xBA\x6A\xC4\x9B\x6C\xC6\x8B\xE9\xAA\xAC\xCF\x2B\xC4\xDE\xB8\xBE\xD8\x23\xA2\x6D\x9A\xC5\x80\xC1\xC8\x82\xCF\xC4\x84\x1F\x38\xF8\x92\xBE\x89\xB4\x9B\x30\xC1\x12\x58\xB5\x1C\x63\x56\xB4\xD9\x99\x14\xC0\x1D\x01\x83",
-"\xC4\xB8\xC2\x1B\xA6\x5F\xC7\xC7\xDF\xAB\xAC\xA6\xB7\x12\xA7\xA4\x12\x8F\x3C\xA6\xFB\xBE\xC2\xDE\xA6\xC1\xB8\xAD\xC9\xA8\xB4\xA9\xB4\x13\xB7\xBB\x92\x9D\xC9\xAB\xC9\x79\xC8\xCA\xE3\xA4\xAA\xD0\xAC\xCA\xB6\x9E\xCA\xE4\x28\xC7\x20\xA2\xCB\x10\x8A\xCA\x92\xC8\x11\x1F\x05\xC9\x39\xCC\xAB\x57\x89\xC9\xA5\xC2\xAA\xE0\xA1\xC4\x8C\x69\xBC\xC6\xB3\xA2\xC0\x11\x02\xC2\xCA\xA5\x24\x19\xAA\xC6\xCF\xCA\xA6\xC9\xCC\x32\xCB\xC7\x59\xCE\xCC\x97\x61\xCD\xCB\x93\xA2\x67\xCE\xCD\x65\xC9\x10\xC0\x1D\xBF\xE2\xCD\xC7\x5B\xA4\x44\x68\xC1\xBA\x1E\xCF\xAA\xD3\xB3\xA2\x98\xCE\x9D\x5F\xA0\xBC\x20\xB4\xC0\x22\xBD\xAD\xD6\xC8\xCC\x9C\xC0\xAC\x9B\xBE\xCB\x38\x11\xCA\x71\xCC\xCF\x03\x16\xCE\x71\xA7\xAC\xF8\xC9\xCB\xB0\xCB\xCB\x02\xD8\x17\xB3\xC3\xA2\xE3\x7C\x9C\xF3\xCC\xBF\xF5\xCA\xC1\x78\x88\xAC\x08\xD7\xCD\xFB\xC2\xAE\x1A\xDF\xC9\x49\x14\xCD\xF2\xC6\xBA\x04\xD7\xAD\x44\xC5\x06\x9A\xC8\xD1\xB1\xC9\xCD\x1B\xC9\x70\xC4\xC8\x35\x01\xDA\xD1\x12\xDE\xBE\xD2\xBF\xA9\xC7\xCA\xA7\xA7\xC8\xBC\x36\xDE\xBC\xBC\xB4\x12\xD1\xA2\xCA\x46\xA0\xD2\x13\xDA\xBE\xF7\xC1\x52\x25\xDA\xCF\x27\xDE\xD2\x95\x1D\xD0\xB1\x98\x11\x27\x07\xCE\xE0\x23\xA2\x5D\xCC\xD4\x91\xC8\x13\xC0\x11\xB0\x50\xDA\xC3\x38\x1F\xD4\xDE\x9A\x41\x0C\x14\xD5\x0C\xA8\xB6\x64\xC0\xCE\xEA\xC9\xD5\xA6\xBC\xD5\x6B\xCE\xD5\x6D\xC3\xCE\x93\x1E\xD1\xDC\x91\xD1\x03\x14\xD6\x74\xC6\xD6\x76\xC3\xD3\xA1\xA5\xD3\xC1\xA6\xCF\x02\xC5\xD5\x78\xD0\xC8",
-};
-
-			void XmlGetParserBuffer(vl::stream::MemoryStream& stream)
-			{
-				vl::stream::MemoryStream compressedStream;
-				for (vint i = 0; i < parserBufferRows; i++)
-				{
-					vint size = i == parserBufferRows - 1 ? parserBufferRemain : parserBufferBlock;
-					compressedStream.Write((void*)parserBuffer[i], size);
-				}
-				compressedStream.SeekFromBegin(0);
-				vl::stream::LzwDecoder decoder;
-				vl::stream::DecoderStream decoderStream(compressedStream, decoder);
-				vl::collections::Array<vl::vuint8_t> buffer(65536);
-				while (true)
-				{
-					vl::vint size = decoderStream.Read(&buffer[0], 65536);
-					if (size == 0) break;
-					stream.Write(&buffer[0], size);
-				}
-				stream.SeekFromBegin(0);
-			}
-/***********************************************************************
-Unescaping Function Foward Declarations
-***********************************************************************/
-
-			extern void XmlMergeTextFragment(vl::collections::List<vl::Ptr<XmlNode>>& value, const vl::collections::List<vl::regex::RegexToken>& tokens);
-			extern void XmlUnescapeAttributeValue(vl::parsing::ParsingToken& value, const vl::collections::List<vl::regex::RegexToken>& tokens);
-			extern void XmlUnescapeCData(vl::parsing::ParsingToken& value, const vl::collections::List<vl::regex::RegexToken>& tokens);
-			extern void XmlUnescapeComment(vl::parsing::ParsingToken& value, const vl::collections::List<vl::regex::RegexToken>& tokens);
-
-/***********************************************************************
-Parsing Tree Conversion Driver Implementation
-***********************************************************************/
-
-			class XmlTreeConverter : public vl::parsing::ParsingTreeConverter
-			{
-			public:
-				using vl::parsing::ParsingTreeConverter::SetMember;
-
-				void Fill(vl::Ptr<XmlNode> tree, vl::Ptr<vl::parsing::ParsingTreeObject> obj, const TokenList& tokens)
-				{
-				}
-
-				void Fill(vl::Ptr<XmlText> tree, vl::Ptr<vl::parsing::ParsingTreeObject> obj, const TokenList& tokens)
-				{
-					SetMember(tree->content, obj->GetMember(L"content"), tokens);
-				}
-
-				void Fill(vl::Ptr<XmlCData> tree, vl::Ptr<vl::parsing::ParsingTreeObject> obj, const TokenList& tokens)
-				{
-					if(SetMember(tree->content, obj->GetMember(L"content"), tokens))
-					{
-						XmlUnescapeCData(tree->content, tokens);
-					}
-				}
-
-				void Fill(vl::Ptr<XmlAttribute> tree, vl::Ptr<vl::parsing::ParsingTreeObject> obj, const TokenList& tokens)
-				{
-					SetMember(tree->name, obj->GetMember(L"name"), tokens);
-					if(SetMember(tree->value, obj->GetMember(L"value"), tokens))
-					{
-						XmlUnescapeAttributeValue(tree->value, tokens);
-					}
-				}
-
-				void Fill(vl::Ptr<XmlComment> tree, vl::Ptr<vl::parsing::ParsingTreeObject> obj, const TokenList& tokens)
-				{
-					if(SetMember(tree->content, obj->GetMember(L"content"), tokens))
-					{
-						XmlUnescapeComment(tree->content, tokens);
-					}
-				}
-
-				void Fill(vl::Ptr<XmlElement> tree, vl::Ptr<vl::parsing::ParsingTreeObject> obj, const TokenList& tokens)
-				{
-					SetMember(tree->name, obj->GetMember(L"name"), tokens);
-					SetMember(tree->closingName, obj->GetMember(L"closingName"), tokens);
-					SetMember(tree->attributes, obj->GetMember(L"attributes"), tokens);
-					if(SetMember(tree->subNodes, obj->GetMember(L"subNodes"), tokens))
-					{
-						XmlMergeTextFragment(tree->subNodes, tokens);
-					}
-				}
-
-				void Fill(vl::Ptr<XmlInstruction> tree, vl::Ptr<vl::parsing::ParsingTreeObject> obj, const TokenList& tokens)
-				{
-					SetMember(tree->name, obj->GetMember(L"name"), tokens);
-					SetMember(tree->attributes, obj->GetMember(L"attributes"), tokens);
-				}
-
-				void Fill(vl::Ptr<XmlDocument> tree, vl::Ptr<vl::parsing::ParsingTreeObject> obj, const TokenList& tokens)
-				{
-					SetMember(tree->prologs, obj->GetMember(L"prologs"), tokens);
-					SetMember(tree->rootElement, obj->GetMember(L"rootElement"), tokens);
-				}
-
-				vl::Ptr<vl::parsing::ParsingTreeCustomBase> ConvertClass(vl::Ptr<vl::parsing::ParsingTreeObject> obj, const TokenList& tokens)override
-				{
-					if(obj->GetType()==L"Text")
-					{
-						vl::Ptr<XmlText> tree = new XmlText;
-						vl::collections::CopyFrom(tree->creatorRules, obj->GetCreatorRules());
-						Fill(tree, obj, tokens);
-						Fill(tree.Cast<XmlNode>(), obj, tokens);
-						return tree;
-					}
-					else if(obj->GetType()==L"CData")
-					{
-						vl::Ptr<XmlCData> tree = new XmlCData;
-						vl::collections::CopyFrom(tree->creatorRules, obj->GetCreatorRules());
-						Fill(tree, obj, tokens);
-						Fill(tree.Cast<XmlNode>(), obj, tokens);
-						return tree;
-					}
-					else if(obj->GetType()==L"Attribute")
-					{
-						vl::Ptr<XmlAttribute> tree = new XmlAttribute;
-						vl::collections::CopyFrom(tree->creatorRules, obj->GetCreatorRules());
-						Fill(tree, obj, tokens);
-						Fill(tree.Cast<XmlNode>(), obj, tokens);
-						return tree;
-					}
-					else if(obj->GetType()==L"Comment")
-					{
-						vl::Ptr<XmlComment> tree = new XmlComment;
-						vl::collections::CopyFrom(tree->creatorRules, obj->GetCreatorRules());
-						Fill(tree, obj, tokens);
-						Fill(tree.Cast<XmlNode>(), obj, tokens);
-						return tree;
-					}
-					else if(obj->GetType()==L"Element")
-					{
-						vl::Ptr<XmlElement> tree = new XmlElement;
-						vl::collections::CopyFrom(tree->creatorRules, obj->GetCreatorRules());
-						Fill(tree, obj, tokens);
-						Fill(tree.Cast<XmlNode>(), obj, tokens);
-						return tree;
-					}
-					else if(obj->GetType()==L"Instruction")
-					{
-						vl::Ptr<XmlInstruction> tree = new XmlInstruction;
-						vl::collections::CopyFrom(tree->creatorRules, obj->GetCreatorRules());
-						Fill(tree, obj, tokens);
-						Fill(tree.Cast<XmlNode>(), obj, tokens);
-						return tree;
-					}
-					else if(obj->GetType()==L"Document")
-					{
-						vl::Ptr<XmlDocument> tree = new XmlDocument;
-						vl::collections::CopyFrom(tree->creatorRules, obj->GetCreatorRules());
-						Fill(tree, obj, tokens);
-						Fill(tree.Cast<XmlNode>(), obj, tokens);
-						return tree;
-					}
-					else 
-						return 0;
-				}
-			};
-
-			vl::Ptr<vl::parsing::ParsingTreeCustomBase> XmlConvertParsingTreeNode(vl::Ptr<vl::parsing::ParsingTreeNode> node, const vl::collections::List<vl::regex::RegexToken>& tokens)
-			{
-				XmlTreeConverter converter;
-				vl::Ptr<vl::parsing::ParsingTreeCustomBase> tree;
-				converter.SetMember(tree, node, tokens);
-				return tree;
-			}
-
-/***********************************************************************
-Parsing Tree Conversion Implementation
-***********************************************************************/
-
-			vl::Ptr<XmlText> XmlText::Convert(vl::Ptr<vl::parsing::ParsingTreeNode> node, const vl::collections::List<vl::regex::RegexToken>& tokens)
-			{
-				return XmlConvertParsingTreeNode(node, tokens).Cast<XmlText>();
-			}
-
-			vl::Ptr<XmlCData> XmlCData::Convert(vl::Ptr<vl::parsing::ParsingTreeNode> node, const vl::collections::List<vl::regex::RegexToken>& tokens)
-			{
-				return XmlConvertParsingTreeNode(node, tokens).Cast<XmlCData>();
-			}
-
-			vl::Ptr<XmlAttribute> XmlAttribute::Convert(vl::Ptr<vl::parsing::ParsingTreeNode> node, const vl::collections::List<vl::regex::RegexToken>& tokens)
-			{
-				return XmlConvertParsingTreeNode(node, tokens).Cast<XmlAttribute>();
-			}
-
-			vl::Ptr<XmlComment> XmlComment::Convert(vl::Ptr<vl::parsing::ParsingTreeNode> node, const vl::collections::List<vl::regex::RegexToken>& tokens)
-			{
-				return XmlConvertParsingTreeNode(node, tokens).Cast<XmlComment>();
-			}
-
-			vl::Ptr<XmlElement> XmlElement::Convert(vl::Ptr<vl::parsing::ParsingTreeNode> node, const vl::collections::List<vl::regex::RegexToken>& tokens)
-			{
-				return XmlConvertParsingTreeNode(node, tokens).Cast<XmlElement>();
-			}
-
-			vl::Ptr<XmlInstruction> XmlInstruction::Convert(vl::Ptr<vl::parsing::ParsingTreeNode> node, const vl::collections::List<vl::regex::RegexToken>& tokens)
-			{
-				return XmlConvertParsingTreeNode(node, tokens).Cast<XmlInstruction>();
-			}
-
-			vl::Ptr<XmlDocument> XmlDocument::Convert(vl::Ptr<vl::parsing::ParsingTreeNode> node, const vl::collections::List<vl::regex::RegexToken>& tokens)
-			{
-				return XmlConvertParsingTreeNode(node, tokens).Cast<XmlDocument>();
-			}
-
-/***********************************************************************
-Parser Function
-***********************************************************************/
-
-			vl::Ptr<vl::parsing::ParsingTreeNode> XmlParseDocumentAsParsingTreeNode(const vl::WString& input, vl::Ptr<vl::parsing::tabling::ParsingTable> table, vl::collections::List<vl::Ptr<vl::parsing::ParsingError>>& errors, vl::vint codeIndex)
-			{
-				vl::parsing::tabling::ParsingState state(input, table, codeIndex);
-				state.Reset(L"XDocument");
-				vl::Ptr<vl::parsing::tabling::ParsingGeneralParser> parser=vl::parsing::tabling::CreateStrictParser(table);
-				vl::Ptr<vl::parsing::ParsingTreeNode> node=parser->Parse(state, errors);
-				return node;
-			}
-
-			vl::Ptr<vl::parsing::ParsingTreeNode> XmlParseDocumentAsParsingTreeNode(const vl::WString& input, vl::Ptr<vl::parsing::tabling::ParsingTable> table, vl::vint codeIndex)
-			{
-				vl::collections::List<vl::Ptr<vl::parsing::ParsingError>> errors;
-				return XmlParseDocumentAsParsingTreeNode(input, table, errors, codeIndex);
-			}
-
-			vl::Ptr<XmlDocument> XmlParseDocument(const vl::WString& input, vl::Ptr<vl::parsing::tabling::ParsingTable> table, vl::collections::List<vl::Ptr<vl::parsing::ParsingError>>& errors, vl::vint codeIndex)
-			{
-				vl::parsing::tabling::ParsingState state(input, table, codeIndex);
-				state.Reset(L"XDocument");
-				vl::Ptr<vl::parsing::tabling::ParsingGeneralParser> parser=vl::parsing::tabling::CreateStrictParser(table);
-				vl::Ptr<vl::parsing::ParsingTreeNode> node=parser->Parse(state, errors);
-				if(node && errors.Count()==0)
-				{
-					return XmlConvertParsingTreeNode(node, state.GetTokens()).Cast<XmlDocument>();
-				}
-				return 0;
-			}
-
-			vl::Ptr<XmlDocument> XmlParseDocument(const vl::WString& input, vl::Ptr<vl::parsing::tabling::ParsingTable> table, vl::vint codeIndex)
-			{
-				vl::collections::List<vl::Ptr<vl::parsing::ParsingError>> errors;
-				return XmlParseDocument(input, table, errors, codeIndex);
-			}
-
-			vl::Ptr<vl::parsing::ParsingTreeNode> XmlParseElementAsParsingTreeNode(const vl::WString& input, vl::Ptr<vl::parsing::tabling::ParsingTable> table, vl::collections::List<vl::Ptr<vl::parsing::ParsingError>>& errors, vl::vint codeIndex)
-			{
-				vl::parsing::tabling::ParsingState state(input, table, codeIndex);
-				state.Reset(L"XElement");
-				vl::Ptr<vl::parsing::tabling::ParsingGeneralParser> parser=vl::parsing::tabling::CreateStrictParser(table);
-				vl::Ptr<vl::parsing::ParsingTreeNode> node=parser->Parse(state, errors);
-				return node;
-			}
-
-			vl::Ptr<vl::parsing::ParsingTreeNode> XmlParseElementAsParsingTreeNode(const vl::WString& input, vl::Ptr<vl::parsing::tabling::ParsingTable> table, vl::vint codeIndex)
-			{
-				vl::collections::List<vl::Ptr<vl::parsing::ParsingError>> errors;
-				return XmlParseElementAsParsingTreeNode(input, table, errors, codeIndex);
-			}
-
-			vl::Ptr<XmlElement> XmlParseElement(const vl::WString& input, vl::Ptr<vl::parsing::tabling::ParsingTable> table, vl::collections::List<vl::Ptr<vl::parsing::ParsingError>>& errors, vl::vint codeIndex)
-			{
-				vl::parsing::tabling::ParsingState state(input, table, codeIndex);
-				state.Reset(L"XElement");
-				vl::Ptr<vl::parsing::tabling::ParsingGeneralParser> parser=vl::parsing::tabling::CreateStrictParser(table);
-				vl::Ptr<vl::parsing::ParsingTreeNode> node=parser->Parse(state, errors);
-				if(node && errors.Count()==0)
-				{
-					return XmlConvertParsingTreeNode(node, state.GetTokens()).Cast<XmlElement>();
-				}
-				return 0;
-			}
-
-			vl::Ptr<XmlElement> XmlParseElement(const vl::WString& input, vl::Ptr<vl::parsing::tabling::ParsingTable> table, vl::vint codeIndex)
-			{
-				vl::collections::List<vl::Ptr<vl::parsing::ParsingError>> errors;
-				return XmlParseElement(input, table, errors, codeIndex);
-			}
-
-/***********************************************************************
-Table Generation
-***********************************************************************/
-
-			vl::Ptr<vl::parsing::tabling::ParsingTable> XmlLoadTable()
-			{
-				vl::stream::MemoryStream stream;
-				XmlGetParserBuffer(stream);
-				vl::Ptr<vl::parsing::tabling::ParsingTable> table=new vl::parsing::tabling::ParsingTable(stream);
-				table->Initialize();
-				return table;
-			}
-
-		}
-	}
-}
-
-
-/***********************************************************************
 .\REGEX\REGEXPURE.CPP
 ***********************************************************************/
 
@@ -24373,906 +23049,6 @@ PureInterpretor
 		vint PureInterpretor::GetRelatedFinalState(vint state)
 		{
 			return relatedFinalState?relatedFinalState[state]:-1;
-		}
-	}
-}
-
-/***********************************************************************
-.\REGEX\REGEX.CPP
-***********************************************************************/
-
-namespace vl
-{
-	namespace regex
-	{
-		using namespace collections;
-		using namespace regex_internal;
-
-/***********************************************************************
-RegexString
-***********************************************************************/
-
-		RegexString::RegexString(vint _start)
-			:start(_start)
-			,length(0)
-		{
-		}
-
-		RegexString::RegexString(const WString& _string, vint _start, vint _length)
-			:value(_length==0?L"":_string.Sub(_start, _length))
-			,start(_start)
-			,length(_length)
-		{
-		}
-
-		vint RegexString::Start()const
-		{
-			return start;
-		}
-
-		vint RegexString::Length()const
-		{
-			return length;
-		}
-
-		const WString& RegexString::Value()const
-		{
-			return value;
-		}
-
-		bool RegexString::operator==(const RegexString& string)const
-		{
-			return start==string.start && length==string.length && value==string.value;
-		}
-
-/***********************************************************************
-RegexMatch
-***********************************************************************/
-		
-		RegexMatch::RegexMatch(const WString& _string, PureResult* _result)
-			:success(true)
-			,result(_string, _result->start, _result->length)
-		{
-		}
-
-		RegexMatch::RegexMatch(const WString& _string, RichResult* _result, RichInterpretor* _rich)
-			:success(true)
-			,result(_string, _result->start, _result->length)
-		{
-			for(vint i=0;i<_result->captures.Count();i++)
-			{
-				CaptureRecord& capture=_result->captures[i];
-				if(capture.capture==-1)
-				{
-					captures.Add(RegexString(_string, capture.start, capture.length));
-				}
-				else
-				{
-					groups.Add(_rich->CaptureNames().Get(capture.capture), RegexString(_string, capture.start, capture.length));
-				}
-			}
-		}
-
-		RegexMatch::RegexMatch(const RegexString& _result)
-			:success(false)
-			,result(_result)
-		{
-		}
-			
-		bool RegexMatch::Success()const
-		{
-			return success;
-		}
-
-		const RegexString& RegexMatch::Result()const
-		{
-			return result;
-		}
-
-		const RegexMatch::CaptureList& RegexMatch::Captures()const
-		{
-			return captures;
-		}
-
-		const RegexMatch::CaptureGroup& RegexMatch::Groups()const
-		{
-			return groups;
-		}
-
-/***********************************************************************
-Regex
-***********************************************************************/
-
-		void Regex::Process(const WString& text, bool keepEmpty, bool keepSuccess, bool keepFail, RegexMatch::List& matches)const
-		{
-			if(rich)
-			{
-				const wchar_t* start=text.Buffer();
-				const wchar_t* input=start;
-				RichResult result;
-				while(rich->Match(input, start, result))
-				{
-					vint offset=input-start;
-					if(keepFail)
-					{
-						if(result.start>offset || keepEmpty)
-						{
-							matches.Add(new RegexMatch(RegexString(text, offset, result.start-offset)));
-						}
-					}
-					if(keepSuccess)
-					{
-						matches.Add(new RegexMatch(text, &result, rich));
-					}
-					input=start+result.start+result.length;
-				}
-				if(keepFail)
-				{
-					vint remain=input-start;
-					vint length=text.Length()-remain;
-					if(length || keepEmpty)
-					{
-						matches.Add(new RegexMatch(RegexString(text, remain, length)));
-					}
-				}
-			}
-			else
-			{
-				const wchar_t* start=text.Buffer();
-				const wchar_t* input=start;
-				PureResult result;
-				while(pure->Match(input, start, result))
-				{
-					vint offset=input-start;
-					if(keepFail)
-					{
-						if(result.start>offset || keepEmpty)
-						{
-							matches.Add(new RegexMatch(RegexString(text, offset, result.start-offset)));
-						}
-					}
-					if(keepSuccess)
-					{
-						matches.Add(new RegexMatch(text, &result));
-					}
-					input=start+result.start+result.length;
-				}
-				if(keepFail)
-				{
-					vint remain=input-start;
-					vint length=text.Length()-remain;
-					if(length || keepEmpty)
-					{
-						matches.Add(new RegexMatch(RegexString(text, remain, length)));
-					}
-				}
-			}
-		}
-		
-		Regex::Regex(const WString& code, bool preferPure)
-			:pure(0)
-			,rich(0)
-		{
-			CharRange::List subsets;
-			RegexExpression::Ref regex=ParseRegexExpression(code);
-			Expression::Ref expression=regex->Merge();
-			expression->NormalizeCharSet(subsets);
-
-			bool pureRequired=false;
-			bool richRequired=false;
-			if(preferPure)
-			{
-				if(expression->HasNoExtension())
-				{
-					pureRequired=true;
-				}
-				else
-				{
-					if(expression->CanTreatAsPure())
-					{
-						pureRequired=true;
-						richRequired=true;
-					}
-					else
-					{
-						richRequired=true;
-					}
-				}
-			}
-			else
-			{
-				richRequired=true;
-			}
-
-			try
-			{
-				if(pureRequired)
-				{
-					Dictionary<State*, State*> nfaStateMap;
-					Group<State*, State*> dfaStateMap;
-					Automaton::Ref eNfa=expression->GenerateEpsilonNfa();
-					Automaton::Ref nfa=EpsilonNfaToNfa(eNfa, PureEpsilonChecker, nfaStateMap);
-					Automaton::Ref dfa=NfaToDfa(nfa, dfaStateMap);
-					pure=new PureInterpretor(dfa, subsets);
-				}
-				if(richRequired)
-				{
-					Dictionary<State*, State*> nfaStateMap;
-					Group<State*, State*> dfaStateMap;
-					Automaton::Ref eNfa=expression->GenerateEpsilonNfa();
-					Automaton::Ref nfa=EpsilonNfaToNfa(eNfa, RichEpsilonChecker, nfaStateMap);
-					Automaton::Ref dfa=NfaToDfa(nfa, dfaStateMap);
-					rich=new RichInterpretor(dfa);
-				}
-			}
-			catch(...)
-			{
-				if(pure)delete pure;
-				if(rich)delete rich;
-				throw;
-			}
-		}
-
-		Regex::~Regex()
-		{
-			if(pure)delete pure;
-			if(rich)delete rich;
-		}
-
-		bool Regex::IsPureMatch()const
-		{
-			return rich?false:true;
-		}
-
-		bool Regex::IsPureTest()const
-		{
-			return pure?true:false;
-		}
-
-		RegexMatch::Ref Regex::MatchHead(const WString& text)const
-		{
-			if(rich)
-			{
-				RichResult result;
-				if(rich->MatchHead(text.Buffer(), text.Buffer(), result))
-				{
-					return new RegexMatch(text, &result, rich);
-				}
-				else
-				{
-					return 0;
-				}
-			}
-			else
-			{
-				PureResult result;
-				if(pure->MatchHead(text.Buffer(), text.Buffer(), result))
-				{
-					return new RegexMatch(text, &result);
-				}
-				else
-				{
-					return 0;
-				}
-			}
-		}
-
-		RegexMatch::Ref Regex::Match(const WString& text)const
-		{
-			if(rich)
-			{
-				RichResult result;
-				if(rich->Match(text.Buffer(), text.Buffer(), result))
-				{
-					return new RegexMatch(text, &result, rich);
-				}
-				else
-				{
-					return 0;
-				}
-			}
-			else
-			{
-				PureResult result;
-				if(pure->Match(text.Buffer(), text.Buffer(), result))
-				{
-					return new RegexMatch(text, &result);
-				}
-				else
-				{
-					return 0;
-				}
-			}
-		}
-
-		bool Regex::TestHead(const WString& text)const
-		{
-			if(pure)
-			{
-				PureResult result;
-				return pure->MatchHead(text.Buffer(), text.Buffer(), result);
-			}
-			else
-			{
-				RichResult result;
-				return rich->MatchHead(text.Buffer(), text.Buffer(), result);
-			}
-		}
-
-		bool Regex::Test(const WString& text)const
-		{
-			if(pure)
-			{
-				PureResult result;
-				return pure->Match(text.Buffer(), text.Buffer(), result);
-			}
-			else
-			{
-				RichResult result;
-				return rich->Match(text.Buffer(), text.Buffer(), result);
-			}
-		}
-
-		void Regex::Search(const WString& text, RegexMatch::List& matches)const
-		{
-			Process(text, false, true, false, matches);
-		}
-
-		void Regex::Split(const WString& text, bool keepEmptyMatch, RegexMatch::List& matches)const
-		{
-			Process(text, keepEmptyMatch, false, true, matches);
-		}
-
-		void Regex::Cut(const WString& text, bool keepEmptyMatch, RegexMatch::List& matches)const
-		{
-			Process(text, keepEmptyMatch, true, true, matches);
-		}
-
-/***********************************************************************
-RegexTokens
-***********************************************************************/
-
-		bool RegexToken::operator==(const RegexToken& _token)const
-		{
-			return length==_token.length && token==_token.token && reading==_token.reading;
-		}
-		
-		bool RegexToken::operator==(const wchar_t* _token)const
-		{
-			return wcslen(_token)==length && wcsncmp(reading, _token, length)==0;
-		}
-
-		class RegexTokenEnumerator : public Object, public IEnumerator<RegexToken>
-		{
-		protected:
-			RegexToken				token;
-			vint					index;
-
-			PureInterpretor*		pure;
-			const Array<vint>&		stateTokens;
-			const wchar_t*			start;
-			vint					codeIndex;
-
-			const wchar_t*			reading;
-			vint					rowStart;
-			vint					columnStart;
-			bool					cacheAvailable;
-			RegexToken				cacheToken;
-
-		public:
-			RegexTokenEnumerator(const RegexTokenEnumerator& enumerator)
-				:token(enumerator.token)
-				,index(enumerator.index)
-				,pure(enumerator.pure)
-				,stateTokens(enumerator.stateTokens)
-				,reading(enumerator.reading)
-				,start(enumerator.start)
-				,rowStart(enumerator.rowStart)
-				,columnStart(enumerator.columnStart)
-				,codeIndex(enumerator.codeIndex)
-				,cacheAvailable(enumerator.cacheAvailable)
-				,cacheToken(enumerator.cacheToken)
-			{
-			}
-
-			RegexTokenEnumerator(PureInterpretor* _pure, const Array<vint>& _stateTokens, const wchar_t* _start, vint _codeIndex)
-				:index(-1)
-				,pure(_pure)
-				,stateTokens(_stateTokens)
-				,reading(_start)
-				,start(_start)
-				,rowStart(0)
-				,columnStart(0)
-				,codeIndex(_codeIndex)
-				,cacheAvailable(false)
-			{
-			}
-
-			IEnumerator<RegexToken>* Clone()const
-			{
-				return new RegexTokenEnumerator(*this);
-			}
-
-			const RegexToken& Current()const
-			{
-				return token;
-			}
-
-			vint Index()const
-			{
-				return index;
-			}
-
-			bool Next()
-			{
-				if(!cacheAvailable && !*reading) return false;
-				if(cacheAvailable)
-				{
-					token=cacheToken;
-					cacheAvailable=false;
-				}
-				else
-				{
-					token.reading=reading;
-					token.start=0;
-					token.length=0;
-					token.token=-2;
-					token.completeToken=true;
-				}
-				token.rowStart=rowStart;
-				token.columnStart=columnStart;
-				token.rowEnd=rowStart;
-				token.columnEnd=columnStart;
-				token.codeIndex=codeIndex;
-
-				PureResult result;
-				while(*reading)
-				{
-					vint id=-1;
-					bool completeToken=true;
-					if(!pure->MatchHead(reading, start, result))
-					{
-						result.start=reading-start;
-
-						if(id==-1 && result.terminateState!=-1)
-						{
-							vint state=pure->GetRelatedFinalState(result.terminateState);
-							if(state!=-1)
-							{
-								id=stateTokens[state];
-							}
-						}
-
-						if(id==-1)
-						{
-							result.length=1;
-						}
-						else
-						{
-							completeToken=false;
-						}
-					}
-					else
-					{
-						id=stateTokens.Get(result.finalState);
-					}
-					if(token.token==-2)
-					{
-						token.start=result.start;
-						token.length=result.length;
-						token.token=id;
-						token.completeToken=completeToken;
-					}
-					else if(token.token==id && id==-1)
-					{
-						token.length+=result.length;
-					}
-					else
-					{
-						cacheAvailable=true;
-						cacheToken.reading=reading;
-						cacheToken.start=result.start;
-						cacheToken.length=result.length;
-						cacheToken.codeIndex=codeIndex;
-						cacheToken.token=id;
-						cacheToken.completeToken=completeToken;
-					}
-					reading+=result.length;
-					if(cacheAvailable)
-					{
-						break;
-					}
-				}
-
-				index++;
-
-				for(vint i=0;i<token.length;i++)
-				{
-					token.rowEnd=rowStart;
-					token.columnEnd=columnStart;
-					if(token.reading[i]==L'\n')
-					{
-						rowStart++;
-						columnStart=0;
-					}
-					else
-					{
-						columnStart++;
-					}
-				}
-				return true;
-			}
-
-			void Reset()
-			{
-				index=-1;
-				reading=start;
-				cacheAvailable=false;
-			}
-
-			void ReadToEnd(List<RegexToken>& tokens, bool(*discard)(vint))
-			{
-				while(Next())
-				{
-					if(!discard(token.token))
-					{
-						tokens.Add(token);
-					}
-				}
-			}
-		};
-
-		RegexTokens::RegexTokens(PureInterpretor* _pure, const Array<vint>& _stateTokens, const WString& _code, vint _codeIndex)
-			:pure(_pure)
-			,stateTokens(_stateTokens)
-			,code(_code)
-			,codeIndex(_codeIndex)
-		{
-		}
-
-		RegexTokens::RegexTokens(const RegexTokens& tokens)
-			:pure(tokens.pure)
-			,stateTokens(tokens.stateTokens)
-			,code(tokens.code)
-			,codeIndex(tokens.codeIndex)
-		{
-		}
-
-		IEnumerator<RegexToken>* RegexTokens::CreateEnumerator()const
-		{
-			return new RegexTokenEnumerator(pure, stateTokens, code.Buffer(), codeIndex);
-		}
-
-		bool DefaultDiscard(vint token)
-		{
-			return false;
-		}
-
-		void RegexTokens::ReadToEnd(collections::List<RegexToken>& tokens, bool(*discard)(vint))const
-		{
-			if(discard==0)
-			{
-				discard=&DefaultDiscard;
-			}
-			RegexTokenEnumerator(pure, stateTokens, code.Buffer(), codeIndex).ReadToEnd(tokens, discard);
-		}
-
-/***********************************************************************
-RegexLexerWalker
-***********************************************************************/
-
-		RegexLexerWalker::RegexLexerWalker(PureInterpretor* _pure, const Array<vint>& _stateTokens)
-			:pure(_pure)
-			,stateTokens(_stateTokens)
-		{
-		}
-
-		RegexLexerWalker::RegexLexerWalker(const RegexLexerWalker& walker)
-			:pure(walker.pure)
-			,stateTokens(walker.stateTokens)
-		{
-		}
-
-		RegexLexerWalker::~RegexLexerWalker()
-		{
-		}
-
-		vint RegexLexerWalker::GetStartState()const
-		{
-			return pure->GetStartState();
-		}
-
-		vint RegexLexerWalker::GetRelatedToken(vint state)const
-		{
-			vint finalState=pure->GetRelatedFinalState(state);
-			return finalState==-1?-1:stateTokens.Get(finalState);
-		}
-
-		void RegexLexerWalker::Walk(wchar_t input, vint& state, vint& token, bool& finalState, bool& previousTokenStop)const
-		{
-			vint previousState=state;
-			token=-1;
-			finalState=false;
-			previousTokenStop=false;
-			if(state==-1)
-			{
-				state=pure->GetStartState();
-				previousTokenStop=true;
-			}
-
-			state=pure->Transit(input, state);
-			if(state==-1)
-			{
-				previousTokenStop=true;
-				if(previousState==-1)
-				{
-					finalState=true;
-					return;
-				}
-				else if(pure->IsFinalState(previousState))
-				{
-					state=pure->Transit(input, pure->GetStartState());
-				}
-			}
-			if(pure->IsFinalState(state))
-			{
-				token=stateTokens.Get(state);
-				finalState=true;
-				return;
-			}
-			else
-			{
-				finalState=state==-1;
-				return;
-			}
-		}
-
-		vint RegexLexerWalker::Walk(wchar_t input, vint state)const
-		{
-			vint token=-1;
-			bool finalState=false;
-			bool previousTokenStop=false;
-			Walk(input, state, token, finalState, previousTokenStop);
-			return state;
-		}
-
-		bool RegexLexerWalker::IsClosedToken(const wchar_t* input, vint length)const
-		{
-			vint state=pure->GetStartState();
-			for(vint i=0;i<length;i++)
-			{
-				state=pure->Transit(input[i], state);
-				if(state==-1) return true;
-				if(pure->IsDeadState(state)) return true;
-			}
-			return false;
-		}
-
-		bool RegexLexerWalker::IsClosedToken(const WString& input)const
-		{
-			return IsClosedToken(input.Buffer(), input.Length());
-		}
-
-/***********************************************************************
-RegexLexerColorizer
-***********************************************************************/
-
-		RegexLexerColorizer::RegexLexerColorizer(const RegexLexerWalker& _walker)
-			:walker(_walker)
-			,currentState(_walker.GetStartState())
-		{
-		}
-
-		RegexLexerColorizer::RegexLexerColorizer(const RegexLexerColorizer& colorizer)
-			:walker(colorizer.walker)
-			,currentState(colorizer.currentState)
-		{
-		}
-
-		RegexLexerColorizer::~RegexLexerColorizer()
-		{
-		}
-
-		void RegexLexerColorizer::Reset(vint state)
-		{
-			currentState=state;
-		}
-
-		void RegexLexerColorizer::Pass(wchar_t input)
-		{
-			currentState=walker.Walk(input, currentState);
-		}
-
-		vint RegexLexerColorizer::GetStartState()const
-		{
-			return walker.GetStartState();
-		}
-
-		vint RegexLexerColorizer::GetCurrentState()const
-		{
-			return currentState;
-		}
-
-		void RegexLexerColorizer::Colorize(const wchar_t* input, vint length, TokenProc tokenProc, void* tokenProcArgument)
-		{
-			vint start=0;
-			vint stop=0;
-			vint state=-1;
-			vint token=-1;
-			
-			vint index=0;
-			vint currentToken=-1;
-			bool finalState=false;
-			bool previousTokenStop=false;
-
-			while(index<length)
-			{
-				currentToken=-1;
-				finalState=false;
-				previousTokenStop=false;
-				walker.Walk(input[index], currentState, currentToken, finalState, previousTokenStop);
-				
-				if(previousTokenStop)
-				{
-					vint tokenLength=stop-start;
-					if(tokenLength>0)
-					{
-						tokenProc(tokenProcArgument, start, tokenLength, token);
-						currentState=state;
-						start=stop;
-						index=stop-1;
-						state=-1;
-						token=-1;
-						finalState=false;
-					}
-					else if(stop<index)
-					{
-						stop=index+1;
-						tokenProc(tokenProcArgument, start, stop-start, -1);
-						start=index+1;
-						state=-1;
-						token=-1;
-					}
-				}
-				if(finalState)
-				{
-					stop=index+1;
-					state=currentState;
-					token=currentToken;
-				}
-
-				index++;
-			}
-			if(start<length)
-			{
-				if(finalState)
-				{
-					tokenProc(tokenProcArgument, start, length-start, token);
-				}
-				else
-				{
-					tokenProc(tokenProcArgument, start, length-start, walker.GetRelatedToken(currentState));
-				}
-			}
-		}
-
-/***********************************************************************
-RegexLexer
-***********************************************************************/
-
-		RegexLexer::RegexLexer(const collections::IEnumerable<WString>& tokens)
-			:pure(0)
-		{
-			// Build DFA for all tokens
-			List<Expression::Ref> expressions;
-			List<Automaton::Ref> dfas;
-			CharRange::List subsets;
-			Ptr<IEnumerator<WString>> enumerator=tokens.CreateEnumerator();
-			while(enumerator->Next())
-			{
-				const WString& code=enumerator->Current();
-
-				RegexExpression::Ref regex=ParseRegexExpression(code);
-				Expression::Ref expression=regex->Merge();
-				expression->CollectCharSet(subsets);
-				expressions.Add(expression);
-			}
-			for(vint i=0;i<expressions.Count();i++)
-			{
-				Dictionary<State*, State*> nfaStateMap;
-				Group<State*, State*> dfaStateMap;
-				Expression::Ref expression=expressions[i];
-				expression->ApplyCharSet(subsets);
-				Automaton::Ref eNfa=expression->GenerateEpsilonNfa();
-				Automaton::Ref nfa=EpsilonNfaToNfa(eNfa, PureEpsilonChecker, nfaStateMap);
-				Automaton::Ref dfa=NfaToDfa(nfa, dfaStateMap);
-				dfas.Add(dfa);
-			}
-
-			// Mark all states in DFAs
-			for(vint i=0;i<dfas.Count();i++)
-			{
-				Automaton::Ref dfa=dfas[i];
-				for(vint j=0;j<dfa->states.Count();j++)
-				{
-					if(dfa->states[j]->finalState)
-					{
-						dfa->states[j]->userData=(void*)i;
-					}
-					else
-					{
-						dfa->states[j]->userData=(void*)dfas.Count();
-					}
-				}
-			}
-
-			// Connect all DFAs to an e-NFA
-			Automaton::Ref bigEnfa=new Automaton;
-			for(vint i=0;i<dfas.Count();i++)
-			{
-				CopyFrom(bigEnfa->states, dfas[i]->states);
-				CopyFrom(bigEnfa->transitions, dfas[i]->transitions);
-			}
-			bigEnfa->startState=bigEnfa->NewState();
-			for(vint i=0;i<dfas.Count();i++)
-			{
-				bigEnfa->NewEpsilon(bigEnfa->startState, dfas[i]->startState);
-			}
-
-			// Build a single DFA out of the e-NFA
-			Dictionary<State*, State*> nfaStateMap;
-			Group<State*, State*> dfaStateMap;
-			Automaton::Ref bigNfa=EpsilonNfaToNfa(bigEnfa, PureEpsilonChecker, nfaStateMap);
-			for(vint i=0;i<nfaStateMap.Keys().Count();i++)
-			{
-				void* userData=nfaStateMap.Values().Get(i)->userData;
-				nfaStateMap.Keys()[i]->userData=userData;
-			}
-			Automaton::Ref bigDfa=NfaToDfa(bigNfa, dfaStateMap);
-			for(vint i=0;i<dfaStateMap.Keys().Count();i++)
-			{
-				void* userData=dfaStateMap.GetByIndex(i).Get(0)->userData;
-				for(vint j=1;j<dfaStateMap.GetByIndex(i).Count();j++)
-				{
-					void* newData=dfaStateMap.GetByIndex(i).Get(j)->userData;
-					if(userData>newData)
-					{
-						userData=newData;
-					}
-				}
-				dfaStateMap.Keys()[i]->userData=userData;
-			}
-
-			// Build state machine
-			pure=new PureInterpretor(bigDfa, subsets);
-			stateTokens.Resize(bigDfa->states.Count());
-			for(vint i=0;i<stateTokens.Count();i++)
-			{
-				void* userData=bigDfa->states[i]->userData;
-				stateTokens[i]=(vint)userData;
-			}
-		}
-
-		RegexLexer::~RegexLexer()
-		{
-			if(pure)delete pure;
-		}
-
-		RegexTokens RegexLexer::Parse(const WString& code, vint codeIndex)const
-		{
-			pure->PrepareForRelatedFinalStateTable();
-			return RegexTokens(pure, stateTokens, code, codeIndex);
-		}
-
-		RegexLexerWalker RegexLexer::Walk()const
-		{
-			pure->PrepareForRelatedFinalStateTable();
-			return RegexLexerWalker(pure, stateTokens);
-		}
-
-		RegexLexerColorizer RegexLexer::Colorize()const
-		{
-			return RegexLexerColorizer(Walk());
 		}
 	}
 }
@@ -25920,6 +23696,592 @@ Regex Writer
 }
 
 /***********************************************************************
+.\STREAM\ACCESSOR.CPP
+***********************************************************************/
+
+namespace vl
+{
+	namespace stream
+	{
+		using namespace collections;
+
+/***********************************************************************
+TextReader
+***********************************************************************/
+
+		WString TextReader::ReadString(vint length)
+		{
+			wchar_t* buffer=new wchar_t[length+1];
+			vint i=0;
+			for(;i<length;i++)
+			{
+				if((buffer[i]=ReadChar())==L'\0')
+				{
+					break;
+				}
+			}
+			buffer[i]=L'\0';
+			WString result(buffer);
+			delete[] buffer;
+			return result;
+		}
+
+		WString TextReader::ReadLine()
+		{
+			WString result;
+			auto buffer = new wchar_t[65537];
+			buffer[0]=L'\0';
+			vint i=0;
+			while(true)
+			{
+				wchar_t c=ReadChar();
+				if(c==L'\n' || c==L'\0')
+				{
+					buffer[i]=L'\0';
+					result+=buffer;
+					buffer[0]=L'\0';
+					i=0;
+					break;
+				}
+				else
+				{
+					if(i==65536)
+					{
+						buffer[i]=L'\0';
+						result+=buffer;
+						buffer[0]=L'\0';
+						i=0;
+					}
+					buffer[i++]=c;
+				}
+			}
+			result+=buffer;
+			delete[] buffer;
+			if(result.Length()>0 && result[result.Length()-1]==L'\r')
+			{
+				return result.Left(result.Length()-1);
+			}
+			else
+			{
+				return result;
+			}
+		}
+
+		WString TextReader::ReadToEnd()
+		{
+			WString result;
+			auto buffer = new wchar_t[65537];
+			buffer[0]=L'\0';
+			vint i=0;
+			while(true)
+			{
+				wchar_t c=ReadChar();
+				if(c==L'\0')
+				{
+					buffer[i]=L'\0';
+					result+=buffer;
+					buffer[0]=L'\0';
+					i=0;
+					break;
+				}
+				else
+				{
+					if(i==65536)
+					{
+						buffer[i]=L'\0';
+						result+=buffer;
+						buffer[0]=L'\0';
+						i=0;
+					}
+					buffer[i++]=c;
+				}
+			}
+			result+=buffer;
+			delete[] buffer;
+			return result;
+		}
+
+/***********************************************************************
+TextWriter
+***********************************************************************/
+
+		void TextWriter::WriteString(const wchar_t* string, vint charCount)
+		{
+			while(*string)
+			{
+				WriteChar(*string++);
+			}
+		}
+
+		void TextWriter::WriteString(const wchar_t* string)
+		{
+			WriteString(string, (vint)wcslen(string));
+		}
+
+		void TextWriter::WriteString(const WString& string)
+		{
+			if(string.Length())
+			{
+				WriteString(string.Buffer(), string.Length());
+			}
+		}
+
+		void TextWriter::WriteLine(const wchar_t* string, vint charCount)
+		{
+			WriteString(string, charCount);
+			WriteString(L"\r\n", 2);
+		}
+
+		void TextWriter::WriteLine(const wchar_t* string)
+		{
+			WriteString(string);
+			WriteString(L"\r\n", 2);
+		}
+
+		void TextWriter::WriteLine(const WString& string)
+		{
+			WriteString(string);
+			WriteString(L"\r\n", 2);
+		}
+
+		namespace monospace_tabling
+		{
+			void WriteBorderLine(TextWriter& writer, Array<vint>& columnWidths, vint columns)
+			{
+				writer.WriteChar(L'+');
+				for(vint i=0;i<columns;i++)
+				{
+					vint c=columnWidths[i];
+					for(vint j=0;j<c;j++)
+					{
+						writer.WriteChar(L'-');
+					}
+					writer.WriteChar(L'+');
+				}
+				writer.WriteLine(L"");
+			}
+
+			void WriteContentLine(TextWriter& writer, Array<vint>& columnWidths, vint rowHeight, vint columns, Array<WString>& tableByRow, vint startRow)
+			{
+				vint cellStart=startRow*columns;
+				for(vint r=0;r<rowHeight;r++)
+				{
+					writer.WriteChar(L'|');
+					for(vint c=0;c<columns;c++)
+					{
+						const wchar_t* cell=tableByRow[cellStart+c].Buffer();
+						for(vint i=0;i<r;i++)
+						{
+							if(cell) cell=::wcsstr(cell, L"\r\n");
+							if(cell) cell+=2;
+						}
+
+						writer.WriteChar(L' ');
+						vint length=0;
+						if(cell)
+						{
+							const wchar_t* end=::wcsstr(cell, L"\r\n");
+							length=end?end-cell:(vint)wcslen(cell);
+							writer.WriteString(cell, length);
+						}
+
+						for(vint i=columnWidths[c]-2;i>=length;i--)
+						{
+							writer.WriteChar(L' ');
+						}
+						writer.WriteChar(L'|');
+					}
+					writer.WriteLine(L"");
+				}
+			}
+		}
+		using namespace monospace_tabling;
+
+		void TextWriter::WriteMonospacedEnglishTable(collections::Array<WString>& tableByRow, vint rows, vint columns)
+		{
+			Array<vint> rowHeights(rows);
+			Array<vint> columnWidths(columns);
+			for(vint i=0;i<rows;i++) rowHeights[i]=0;
+			for(vint j=0;j<columns;j++) columnWidths[j]=0;
+
+			for(vint i=0;i<rows;i++)
+			{
+				for(vint j=0;j<columns;j++)
+				{
+					WString text=tableByRow[i*columns+j];
+					const wchar_t* reading=text.Buffer();
+					vint width=0;
+					vint height=0;
+
+					while(reading)
+					{
+						height++;
+						const wchar_t* crlf=::wcsstr(reading, L"\r\n");
+						if(crlf)
+						{
+							vint length=crlf-reading+2;
+							if(width<length) width=length;
+							reading=crlf+2;
+						}
+						else
+						{
+							vint length=(vint)wcslen(reading)+2;
+							if(width<length) width=length;
+							reading=0;
+						}
+					}
+
+					if(rowHeights[i]<height) rowHeights[i]=height;
+					if(columnWidths[j]<width) columnWidths[j]=width;
+				}
+			}
+
+			WriteBorderLine(*this, columnWidths, columns);
+			for(vint i=0;i<rows;i++)
+			{
+				WriteContentLine(*this, columnWidths, rowHeights[i], columns, tableByRow, i);
+				WriteBorderLine(*this, columnWidths, columns);
+			}
+		}
+
+/***********************************************************************
+StringReader
+***********************************************************************/
+
+		void StringReader::PrepareIfLastCallIsReadLine()
+		{
+			if(lastCallIsReadLine)
+			{
+				lastCallIsReadLine=false;
+				if(current<string.Length() && string[current]==L'\r') current++;
+				if(current<string.Length() && string[current]==L'\n') current++;
+			}
+		}
+
+		StringReader::StringReader(const WString& _string)
+			:string(_string)
+			,current(0)
+			,lastCallIsReadLine(false)
+		{
+		}
+
+		bool StringReader::IsEnd()
+		{
+			return current==string.Length();
+		}
+
+		wchar_t StringReader::ReadChar()
+		{
+			PrepareIfLastCallIsReadLine();
+			if(IsEnd())
+			{
+				return L'\0';
+			}
+			else
+			{
+				return string[current++];
+			}
+		}
+
+		WString StringReader::ReadString(vint length)
+		{
+			PrepareIfLastCallIsReadLine();
+			if(IsEnd())
+			{
+				return L"";
+			}
+			else
+			{
+				vint remain=string.Length()-current;
+				if(length>remain) length=remain;
+				WString result=string.Sub(current, length);
+				current+=length;
+				return result;
+			}
+		}
+
+		WString StringReader::ReadLine()
+		{
+			PrepareIfLastCallIsReadLine();
+			if(IsEnd())
+			{
+				return L"";
+			}
+			else
+			{
+				vint lineEnd=current;
+				while(lineEnd<string.Length())
+				{
+					wchar_t c=string[lineEnd];
+					if(c==L'\r' || c==L'\n') break;
+					lineEnd++;
+				}
+				WString result=string.Sub(current, lineEnd-current);
+				current=lineEnd;
+				lastCallIsReadLine=true;
+				return result;
+			}
+		}
+
+		WString StringReader::ReadToEnd()
+		{
+			return ReadString(string.Length()-current);
+		}
+
+/***********************************************************************
+StreamReader
+***********************************************************************/
+
+		StreamReader::StreamReader(IStream& _stream)
+			:stream(&_stream)
+		{
+		}
+
+		bool StreamReader::IsEnd()
+		{
+			return stream==0;
+		}
+
+		wchar_t StreamReader::ReadChar()
+		{
+			if(stream)
+			{
+				wchar_t buffer=0;
+				if(stream->Read(&buffer, sizeof(buffer))==0)
+				{
+					stream=0;
+					return 0;
+				}
+				else
+				{
+					return buffer;
+				}
+			}
+			else
+			{
+				return L'\0';
+			}
+		}
+
+/***********************************************************************
+StreamWriter
+***********************************************************************/
+
+		StreamWriter::StreamWriter(IStream& _stream)
+			:stream(&_stream)
+		{
+		}
+
+		void StreamWriter::WriteChar(wchar_t c)
+		{
+			stream->Write(&c, sizeof(c));
+		}
+
+		void StreamWriter::WriteString(const wchar_t* string, vint charCount)
+		{
+			stream->Write((void*)string, charCount*sizeof(*string));
+		}
+
+/***********************************************************************
+EncoderStream
+***********************************************************************/
+
+		EncoderStream::EncoderStream(IStream& _stream, IEncoder& _encoder)
+			:stream(&_stream)
+			,encoder(&_encoder)
+			,position(0)
+		{
+			encoder->Setup(stream);
+		}
+
+		EncoderStream::~EncoderStream()
+		{
+			Close();
+		}
+
+		bool EncoderStream::CanRead()const
+		{
+			return false;
+		}
+
+		bool EncoderStream::CanWrite()const
+		{
+			return IsAvailable();
+		}
+
+		bool EncoderStream::CanSeek()const
+		{
+			return false;
+		}
+
+		bool EncoderStream::CanPeek()const
+		{
+			return false;
+		}
+
+		bool EncoderStream::IsLimited()const
+		{
+			return stream!=0 && stream->IsLimited();
+		}
+
+		bool EncoderStream::IsAvailable()const
+		{
+			return stream!=0 && stream->IsAvailable();
+		}
+
+		void EncoderStream::Close()
+		{
+			encoder->Close();
+			stream=0;
+		}
+
+		pos_t EncoderStream::Position()const
+		{
+			return IsAvailable()?position:-1;
+		}
+
+		pos_t EncoderStream::Size()const
+		{
+			return -1;
+		}
+
+		void EncoderStream::Seek(pos_t _size)
+		{
+			CHECK_FAIL(L"EncoderStream::Seek(pos_t)#Operation not supported.");
+		}
+
+		void EncoderStream::SeekFromBegin(pos_t _size)
+		{
+			CHECK_FAIL(L"EncoderStream::SeekFromBegin(pos_t)#Operation not supported.");
+		}
+
+		void EncoderStream::SeekFromEnd(pos_t _size)
+		{
+			CHECK_FAIL(L"EncoderStream::SeekFromEnd(pos_t)#Operation not supported.");
+		}
+
+		vint EncoderStream::Read(void* _buffer, vint _size)
+		{
+			CHECK_FAIL(L"EncoderStream::Read(void*, vint)#Operation not supported.");
+		}
+
+		vint EncoderStream::Write(void* _buffer, vint _size)
+		{
+			vint result=encoder->Write(_buffer, _size);
+			if(result>=0)
+			{
+				position+=result;
+			}
+			return result;
+		}
+
+		vint EncoderStream::Peek(void* _buffer, vint _size)
+		{
+			CHECK_FAIL(L"EncoderStream::Peek(void*, vint)#Operation not supported.");
+		}
+
+/***********************************************************************
+DecoderStream
+***********************************************************************/
+
+		DecoderStream::DecoderStream(IStream& _stream, IDecoder& _decoder)
+			:stream(&_stream)
+			,decoder(&_decoder)
+			,position(0)
+		{
+			decoder->Setup(stream);
+		}
+
+		DecoderStream::~DecoderStream()
+		{
+			Close();
+		}
+
+		bool DecoderStream::CanRead()const
+		{
+			return IsAvailable();
+		}
+
+		bool DecoderStream::CanWrite()const
+		{
+			return false;
+		}
+
+		bool DecoderStream::CanSeek()const
+		{
+			return false;
+		}
+
+		bool DecoderStream::CanPeek()const
+		{
+			return false;
+		}
+
+		bool DecoderStream::IsLimited()const
+		{
+			return stream!=0 && stream->IsLimited();
+		}
+
+		bool DecoderStream::IsAvailable()const
+		{
+			return stream!=0 && stream->IsAvailable();
+		}
+
+		void DecoderStream::Close()
+		{
+			decoder->Close();
+			stream=0;
+		}
+
+		pos_t DecoderStream::Position()const
+		{
+			return IsAvailable()?position:-1;
+		}
+
+		pos_t DecoderStream::Size()const
+		{
+			return -1;
+		}
+
+		void DecoderStream::Seek(pos_t _size)
+		{
+			CHECK_FAIL(L"DecoderStream::Seek(pos_t)#Operation not supported.");
+		}
+
+		void DecoderStream::SeekFromBegin(pos_t _size)
+		{
+			CHECK_FAIL(L"DecoderStream::SeekFromBegin(pos_t)#Operation not supported.");
+		}
+
+		void DecoderStream::SeekFromEnd(pos_t _size)
+		{
+			CHECK_FAIL(L"DecoderStream::SeekFromEnd(pos_t)#Operation not supported.");
+		}
+
+		vint DecoderStream::Read(void* _buffer, vint _size)
+		{
+			vint result=decoder->Read(_buffer, _size);
+			if(result>=0)
+			{
+				position+=result;
+			}
+			return result;
+		}
+
+		vint DecoderStream::Write(void* _buffer, vint _size)
+		{
+			CHECK_FAIL(L"DecoderStream::Write(void*, vint)#Operation not supported.");
+		}
+
+		vint DecoderStream::Peek(void* _buffer, vint _size)
+		{
+			CHECK_FAIL(L"DecoderStream::Peek(void*, vint)#Operation not supported.");
+		}
+	}
+}
+
+
+/***********************************************************************
 .\STREAM\BROADCASTSTREAM.CPP
 ***********************************************************************/
 
@@ -26329,6 +24691,2096 @@ CacheStream
 			CHECK_ERROR(_size>=0, L"CacheStream::Read(void*, vint)#Argument size cannot be negative.");
 
 			return InternalRead(_buffer, _size);
+		}
+	}
+}
+
+/***********************************************************************
+.\STREAM\CHARFORMAT.CPP
+***********************************************************************/
+#if defined VCZH_MSVC
+#include <windows.h>
+#elif defined VCZH_GCC
+#endif
+
+namespace vl
+{
+	namespace stream
+	{
+
+/***********************************************************************
+CharEncoder
+***********************************************************************/
+
+		CharEncoder::CharEncoder()
+			:stream(0)
+			,cacheSize(0)
+		{
+		}
+
+		void CharEncoder::Setup(IStream* _stream)
+		{
+			stream=_stream;
+		}
+
+		void CharEncoder::Close()
+		{
+		}
+
+		vint CharEncoder::Write(void* _buffer, vint _size)
+		{
+			const vint all=cacheSize+_size;
+			const vint chars=all/sizeof(wchar_t);
+			const vint bytes=chars*sizeof(wchar_t);
+			wchar_t* unicode=0;
+			bool needToFree=false;
+			vint result=0;
+
+			if(chars)
+			{
+				if(cacheSize>0)
+				{
+					unicode=new wchar_t[chars];
+					memcpy(unicode, cacheBuffer, cacheSize);
+					memcpy(((vuint8_t*)unicode)+cacheSize, _buffer, bytes-cacheSize);
+					needToFree=true;
+				}
+				else
+				{
+					unicode=(wchar_t*)_buffer;
+				}
+				result=WriteString(unicode, chars)*sizeof(wchar_t)-cacheSize;
+				cacheSize=0;
+			}
+
+			if(needToFree)
+			{
+				delete[] unicode;
+			}
+			if(all-bytes>0)
+			{
+				cacheSize=all-bytes;
+				memcpy(cacheBuffer, (vuint8_t*)_buffer+_size-cacheSize, cacheSize);
+				result+=cacheSize;
+			}
+			return result;
+		}
+
+/***********************************************************************
+CharDecoder
+***********************************************************************/
+
+		CharDecoder::CharDecoder()
+			:stream(0)
+			,cacheSize(0)
+		{
+		}
+
+		void CharDecoder::Setup(IStream* _stream)
+		{
+			stream=_stream;
+		}
+
+		void CharDecoder::Close()
+		{
+		}
+
+		vint CharDecoder::Read(void* _buffer, vint _size)
+		{
+			vuint8_t* unicode=(vuint8_t*)_buffer;
+			vint result=0;
+			{
+				vint index=0;
+				while(cacheSize>0 && _size>0)
+				{
+					*unicode++=cacheBuffer[index]++;
+					cacheSize--;
+					_size--;
+					result++;
+				}
+			}
+
+			const vint chars=_size/sizeof(wchar_t);
+			vint bytes=ReadString((wchar_t*)unicode, chars)*sizeof(wchar_t);
+			result+=bytes;
+			_size-=bytes;
+			unicode+=bytes;
+
+			if(_size>0)
+			{
+				wchar_t c;
+				if(ReadString(&c, 1)==1)
+				{
+					cacheSize=sizeof(wchar_t)-_size;
+					memcpy(unicode, &c, _size);
+					memcpy(cacheBuffer, (vuint8_t*)&c+_size, cacheSize);
+					result+=_size;
+				}
+			}
+			return result;
+		}
+
+/***********************************************************************
+Mbcs
+***********************************************************************/
+
+		vint MbcsEncoder::WriteString(wchar_t* _buffer, vint chars)
+		{
+#if defined VCZH_MSVC
+			vint length=WideCharToMultiByte(CP_THREAD_ACP, 0, _buffer, (int)chars, NULL, NULL, NULL, NULL);
+			char* mbcs=new char[length];
+			WideCharToMultiByte(CP_THREAD_ACP, 0, _buffer, (int)chars, mbcs, (int)length, NULL, NULL);
+			vint result=stream->Write(mbcs, length);
+			delete[] mbcs;
+#elif defined VCZH_GCC
+			WString w(_buffer, chars);
+			AString a=wtoa(w);
+			vint length=a.Length();
+			vint result=stream->Write((void*)a.Buffer(), length);
+#endif
+			if(result==length)
+			{
+				return chars;
+			}
+			else
+			{
+				Close();
+				return 0;
+			}
+		}
+
+		vint MbcsDecoder::ReadString(wchar_t* _buffer, vint chars)
+		{
+			char* source=new char[chars*2];
+			char* reading=source;
+			vint readed=0;
+			while(readed<chars)
+			{
+				if(stream->Read(reading, 1)!=1)
+				{
+					break;
+				}
+#if defined VCZH_MSVC
+				if(IsDBCSLeadByte(*reading))
+#elif defined VCZH_GCC
+				if((vint8_t)*reading<0)
+#endif
+				{
+					if(stream->Read(reading+1, 1)!=1)
+					{
+						break;
+					}
+					reading+=2;
+				}
+				else
+				{
+					reading++;
+				}
+				readed++;
+			}
+#if defined VCZH_MSVC
+			MultiByteToWideChar(CP_THREAD_ACP, 0, source, (int)(reading-source), _buffer, (int)chars);
+#elif defined VCZH_GCC
+			AString a(source, (vint)(reading-source));
+			WString w=atow(a);
+			memcpy(_buffer, w.Buffer(), readed*sizeof(wchar_t));
+#endif
+			delete[] source;
+			return readed;
+		}
+
+/***********************************************************************
+Utf-16
+***********************************************************************/
+
+		vint Utf16Encoder::WriteString(wchar_t* _buffer, vint chars)
+		{
+#if defined VCZH_MSVC
+			return stream->Write(_buffer, chars*sizeof(wchar_t))/sizeof(wchar_t);
+#elif defined VCZH_GCC
+			vint writed = 0;
+			vuint16_t utf16 = 0;
+			vuint8_t* utf16buf = (vuint8_t*)&utf16;
+			while (writed < chars)
+			{
+				wchar_t w = *_buffer++;
+				if (w < 0x10000)
+				{
+					utf16 = (vuint16_t)w;
+					if (stream->Write(&utf16buf[0], 1) != 1) break;
+					if (stream->Write(&utf16buf[1], 1) != 1) break;
+				}
+				else if (w < 0x110000)
+				{
+					wchar_t inc = w - 0x10000;
+
+					utf16 = (vuint16_t)(inc / 0x400) + 0xD800;
+					if (stream->Write(&utf16buf[0], 1) != 1) break;
+					if (stream->Write(&utf16buf[1], 1) != 1) break;
+
+					utf16 = (vuint16_t)(inc % 0x400) + 0xDC00;
+					if (stream->Write(&utf16buf[0], 1) != 1) break;
+					if (stream->Write(&utf16buf[1], 1) != 1) break;
+				}
+				else
+				{
+					break;
+				}
+				writed++;
+			}
+			if(writed!=chars)
+			{
+				Close();
+			}
+			return writed;
+#endif
+		}
+
+		vint Utf16Decoder::ReadString(wchar_t* _buffer, vint chars)
+		{
+#if defined VCZH_MSVC
+			return stream->Read(_buffer, chars*sizeof(wchar_t))/sizeof(wchar_t);
+#elif defined VCZH_GCC
+			wchar_t* writing = _buffer;
+			while (writing - _buffer < chars)
+			{
+				vuint16_t utf16_1 = 0;
+				vuint16_t utf16_2 = 0;
+
+				if (stream->Read(&utf16_1, 2) != 2) break;
+				if (utf16_1 < 0xD800 || utf16_1 > 0xDFFF)
+				{
+					*writing++ = (wchar_t)utf16_1;
+				}
+				else if (utf16_1 < 0xDC00)
+				{
+					if (stream->Read(&utf16_2, 2) != 2) break;
+					if (0xDC00 <= utf16_2 && utf16_2 <= 0xDFFF)
+					{
+						*writing++ = (wchar_t)(utf16_1 - 0xD800) * 0x400 + (wchar_t)(utf16_2 - 0xDC00) + 0x10000;
+					}
+					else
+					{
+						break;
+					}
+				}
+				else
+				{
+					break;
+				}
+			}
+			return writing - _buffer;
+#endif
+		}
+
+/***********************************************************************
+Utf-16-be
+***********************************************************************/
+
+		vint Utf16BEEncoder::WriteString(wchar_t* _buffer, vint chars)
+		{
+#if defined VCZH_MSVC
+			vint writed=0;
+			while(writed<chars)
+			{
+				if(stream->Write(((unsigned char*)_buffer)+1, 1)!=1)
+				{
+					break;
+				}
+				if(stream->Write(_buffer, 1)!=1)
+				{
+					break;
+				}
+				_buffer++;
+				writed++;
+			}
+			if(writed!=chars)
+			{
+				Close();
+			}
+			return writed;
+#elif defined VCZH_GCC
+			vint writed = 0;
+			vuint16_t utf16 = 0;
+			vuint8_t* utf16buf = (vuint8_t*)&utf16;
+			while (writed < chars)
+			{
+				wchar_t w = *_buffer++;
+				if (w < 0x10000)
+				{
+					utf16 = (vuint16_t)w;
+					if (stream->Write(&utf16buf[1], 1) != 1) break;
+					if (stream->Write(&utf16buf[0], 1) != 1) break;
+				}
+				else if (w < 0x110000)
+				{
+					wchar_t inc = w - 0x10000;
+
+					utf16 = (vuint16_t)(inc / 0x400) + 0xD800;
+					if (stream->Write(&utf16buf[1], 1) != 1) break;
+					if (stream->Write(&utf16buf[0], 1) != 1) break;
+
+					utf16 = (vuint16_t)(inc % 0x400) + 0xDC00;
+					if (stream->Write(&utf16buf[1], 1) != 1) break;
+					if (stream->Write(&utf16buf[0], 1) != 1) break;
+				}
+				else
+				{
+					break;
+				}
+				writed++;
+			}
+			if(writed!=chars)
+			{
+				Close();
+			}
+			return writed;
+#endif
+		}
+
+		vint Utf16BEDecoder::ReadString(wchar_t* _buffer, vint chars)
+		{
+#if defined VCZH_MSVC
+			chars=stream->Read(_buffer, chars*sizeof(wchar_t))/sizeof(wchar_t);
+			unsigned char* unicode=(unsigned char*)_buffer;
+			for(vint i=0;i<chars;i++)
+			{
+				unsigned char t=unicode[0];
+				unicode[0]=unicode[1];
+				unicode[1]=t;
+				unicode++;
+			}
+			return chars;
+#elif defined VCZH_GCC
+			wchar_t* writing = _buffer;
+			while (writing - _buffer < chars)
+			{
+				vuint16_t utf16_1 = 0;
+				vuint16_t utf16_2 = 0;
+				vuint8_t* utf16buf = 0;
+				vuint8_t utf16buf_temp = 0;
+
+				if (stream->Read(&utf16_1, 2) != 2) break;
+
+				utf16buf = (vuint8_t*)&utf16_1;
+				utf16buf_temp = utf16buf[0];
+				utf16buf[0] = utf16buf[1];
+				utf16buf[1] = utf16buf_temp;
+
+				if (utf16_1 < 0xD800 || utf16_1 > 0xDFFF)
+				{
+					*writing++ = (wchar_t)utf16_1;
+				}
+				else if (utf16_1 < 0xDC00)
+				{
+					if (stream->Read(&utf16_2, 2) != 2) break;
+
+					utf16buf = (vuint8_t*)&utf16_2;
+					utf16buf_temp = utf16buf[0];
+					utf16buf[0] = utf16buf[1];
+					utf16buf[1] = utf16buf_temp;
+
+					if (0xDC00 <= utf16_2 && utf16_2 <= 0xDFFF)
+					{
+						*writing++ = (wchar_t)(utf16_1 - 0xD800) * 0x400 + (wchar_t)(utf16_2 - 0xDC00) + 0x10000;
+					}
+					else
+					{
+						break;
+					}
+				}
+				else
+				{
+					break;
+				}
+			}
+			return writing - _buffer;
+#endif
+		}
+
+/***********************************************************************
+Utf8
+***********************************************************************/
+
+		vint Utf8Encoder::WriteString(wchar_t* _buffer, vint chars)
+		{
+#if defined VCZH_MSVC
+			vint length=WideCharToMultiByte(CP_UTF8, 0, _buffer, (int)chars, NULL, NULL, NULL, NULL);
+			char* mbcs=new char[length];
+			WideCharToMultiByte(CP_UTF8, 0, _buffer, (int)chars, mbcs, (int)length, NULL, NULL);
+			vint result=stream->Write(mbcs, length);
+			delete[] mbcs;
+			if(result==length)
+			{
+				return chars;
+			}
+			else
+			{
+				Close();
+				return 0;
+			}
+#elif defined VCZH_GCC
+			vint writed = 0;
+			while (writed < chars)
+			{
+				wchar_t w = *_buffer++;
+				vuint8_t utf8[4];
+				if (w < 0x80)
+				{
+					utf8[0] = (vuint8_t)w;
+					if (stream->Write(utf8, 1) != 1) break;
+				}
+				else if (w < 0x800)
+				{
+					utf8[0] = 0xC0 + ((w & 0x7C0) >> 6);
+					utf8[1] = 0x80 + (w & 0x3F);
+					if (stream->Write(utf8, 2) != 2) break;
+				}
+				else if (w < 0x10000)
+				{
+					utf8[0] = 0xE0 + ((w & 0xF000) >> 12);
+					utf8[1] = 0x80 + ((w & 0xFC0) >> 6);
+					utf8[2] = 0x80 + (w & 0x3F);
+					if (stream->Write(utf8, 3) != 3) break;
+				}
+				else if (w < 0x110000) // only accept UTF-16 range
+				{
+					utf8[0] = 0xF0 + ((w & 0x1C0000) >> 18);
+					utf8[1] = 0x80 + ((w & 0x3F000) >> 12);
+					utf8[2] = 0x80 + ((w & 0xFC0) >> 6);
+					utf8[3] = 0x80 + (w & 0x3F);
+					if (stream->Write(utf8, 4) != 4) break;
+				}
+				else
+				{
+					break;
+				}
+				writed++;
+			}
+			if(writed!=chars)
+			{
+				Close();
+			}
+			return writed;
+#endif
+		}
+
+		Utf8Decoder::Utf8Decoder()
+#if defined VCZH_MSVC
+			:cache(0)
+			,cacheAvailable(false)
+#endif
+		{
+		}
+
+		vint Utf8Decoder::ReadString(wchar_t* _buffer, vint chars)
+		{
+			vuint8_t source[4];
+#if defined VCZH_MSVC
+			wchar_t target[2];
+#endif
+			wchar_t* writing=_buffer;
+			vint readed=0;
+			vint sourceCount=0;
+
+			while(readed<chars)
+			{
+#if defined VCZH_MSVC
+				if(cacheAvailable)
+				{
+					*writing++=cache;
+					cache=0;
+					cacheAvailable=false;
+				}
+				else
+				{
+#endif
+					if(stream->Read(source, 1)!=1)
+					{
+						break;
+					}
+					if((*source & 0xF0) == 0xF0)
+					{
+						if(stream->Read(source+1, 3)!=3)
+						{
+							break;
+						}
+						sourceCount=4;
+					}
+					else if((*source & 0xE0) == 0xE0)
+					{
+						if(stream->Read(source+1, 2)!=2)
+						{
+							break;
+						}
+						sourceCount=3;
+					}
+					else if((*source & 0xC0) == 0xC0)
+					{
+						if(stream->Read(source+1, 1)!=1)
+						{
+							break;
+						}
+						sourceCount=2;
+					}
+					else
+					{
+						sourceCount=1;
+					}
+#if defined VCZH_MSVC	
+					int targetCount=MultiByteToWideChar(CP_UTF8, 0, (char*)source, (int)sourceCount, target, 2);
+					if(targetCount==1)
+					{
+						*writing++=target[0];
+					}
+					else if(targetCount==2)
+					{
+						*writing++=target[0];
+						cache=target[1];
+						cacheAvailable=true;
+					}
+					else
+					{
+						break;
+					}
+				}
+#elif defined VCZH_GCC
+					if (sourceCount == 1)
+					{
+						*writing++ = (wchar_t)source[0];
+					}
+					else if (sourceCount == 2)
+					{
+						*writing++ = (((wchar_t)source[0] & 0x1F) << 6) + ((wchar_t)source[1] & 0x3F);
+					}
+					else if (sourceCount == 3)
+					{
+						*writing++ = (((wchar_t)source[0] & 0xF) << 12) + (((wchar_t)source[1] & 0x3F) << 6) + ((wchar_t)source[2] & 0x3F);
+					}
+					else if (sourceCount == 4)
+					{
+						*writing++ = (((wchar_t)source[0] & 0x7) << 18) + (((wchar_t)source[1] & 0x3F) << 12) + (((wchar_t)source[2] & 0x3F) << 6) + ((wchar_t)source[3] & 0x3F);
+					}
+					else
+					{
+						break;
+					}
+#endif
+				readed++;
+			}
+			return readed;
+		}
+
+/***********************************************************************
+BomEncoder
+***********************************************************************/
+
+		BomEncoder::BomEncoder(Encoding _encoding)
+			:encoding(_encoding)
+			,encoder(0)
+		{
+			switch(encoding)
+			{
+			case Mbcs:
+				encoder=new MbcsEncoder;
+				break;
+			case Utf8:
+				encoder=new Utf8Encoder;
+				break;
+			case Utf16:
+				encoder=new Utf16Encoder;
+				break;
+			case Utf16BE:
+				encoder=new Utf16BEEncoder;
+				break;
+			}
+		}
+
+		BomEncoder::~BomEncoder()
+		{
+			Close();
+		}
+
+		void BomEncoder::Setup(IStream* _stream)
+		{
+			switch(encoding)
+			{
+			case Mbcs:
+				break;
+			case Utf8:
+				_stream->Write((void*)"\xEF\xBB\xBF", 3);
+				break;
+			case Utf16:
+				_stream->Write((void*)"\xFF\xFE", 2);
+				break;
+			case Utf16BE:
+				_stream->Write((void*)"\xFE\xFF", 2);
+				break;
+			}
+			encoder->Setup(_stream);
+		}
+
+		void BomEncoder::Close()
+		{
+			if(encoder)
+			{
+				encoder->Close();
+				delete encoder;
+				encoder=0;
+			}
+		}
+
+		vint BomEncoder::Write(void* _buffer, vint _size)
+		{
+			return encoder->Write(_buffer, _size);
+		}
+
+/***********************************************************************
+BomDecoder
+***********************************************************************/
+
+		BomDecoder::BomStream::BomStream(IStream* _stream, char* _bom, vint _bomLength)
+			:stream(_stream)
+			,bomPosition(0)
+			,bomLength(_bomLength)
+		{
+			memcpy(bom, _bom, bomLength);
+		}
+
+		bool BomDecoder::BomStream::CanRead()const
+		{
+			return IsAvailable();
+		}
+
+		bool BomDecoder::BomStream::CanWrite()const
+		{
+			return false;
+		}
+
+		bool BomDecoder::BomStream::CanSeek()const
+		{
+			return false;
+		}
+
+		bool BomDecoder::BomStream::CanPeek()const
+		{
+			return false;
+		}
+
+		bool BomDecoder::BomStream::IsLimited()const
+		{
+			return stream!=0 && stream->IsLimited();
+		}
+
+		bool BomDecoder::BomStream::IsAvailable()const
+		{
+			return stream!=0 && stream->IsAvailable();
+		}
+
+		void BomDecoder::BomStream::Close()
+		{
+			stream=0;
+		}
+
+		pos_t BomDecoder::BomStream::Position()const
+		{
+			return IsAvailable()?bomPosition+stream->Position():-1;
+		}
+
+		pos_t BomDecoder::BomStream::Size()const
+		{
+			return -1;
+		}
+
+		void BomDecoder::BomStream::Seek(pos_t _size)
+		{
+			CHECK_FAIL(L"BomDecoder::BomStream::Seek(pos_t)#Operation not supported.");
+		}
+
+		void BomDecoder::BomStream::SeekFromBegin(pos_t _size)
+		{
+			CHECK_FAIL(L"BomDecoder::BomStream::SeekFromBegin(pos_t)#Operation not supported.");
+		}
+
+		void BomDecoder::BomStream::SeekFromEnd(pos_t _size)
+		{
+			CHECK_FAIL(L"BomDecoder::BomStream::SeekFromEnd(pos_t)#Operation not supported.");
+		}
+
+		vint BomDecoder::BomStream::Read(void* _buffer, vint _size)
+		{
+			vint result=0;
+			unsigned char* buffer=(unsigned char*)_buffer;
+			if(bomPosition<bomLength)
+			{
+				vint remain=bomLength-bomPosition;
+				result=remain<_size?remain:_size;
+				memcpy(buffer, bom+bomPosition, result);
+				buffer+=result;
+				bomPosition+=result;
+				_size-=result;
+			}
+			if(_size)
+			{
+				result+=stream->Read(buffer, _size);
+			}
+			return result;
+		}
+
+		vint BomDecoder::BomStream::Write(void* _buffer, vint _size)
+		{
+			CHECK_FAIL(L"BomDecoder::BomStream::Write(void*, vint)#Operation not supported.");
+		}
+
+		vint BomDecoder::BomStream::Peek(void* _buffer, vint _size)
+		{
+			CHECK_FAIL(L"BomDecoder::BomStream::Peek(void*, vint)#Operation not supported.");
+		}
+
+		BomDecoder::BomDecoder()
+			:decoder(0)
+		{
+		}
+
+		BomDecoder::~BomDecoder()
+		{
+			Close();
+		}
+
+		void BomDecoder::Setup(IStream* _stream)
+		{
+			char bom[3]={0};
+			vint length=_stream->Read(bom, sizeof(bom));
+			if(strncmp(bom, "\xEF\xBB\xBF", 3)==0)
+			{
+				decoder=new Utf8Decoder;
+				stream=new BomStream(_stream, bom+3, 0);
+			}
+			else if(strncmp(bom, "\xFF\xFE", 2)==0)
+			{
+				decoder=new Utf16Decoder;
+				stream=new BomStream(_stream, bom+2, 1);
+			}
+			else if(strncmp(bom, "\xFE\xFF", 2)==0)
+			{
+				decoder=new Utf16BEDecoder;
+				stream=new BomStream(_stream, bom+2, 1);
+			}
+			else
+			{
+				decoder=new MbcsDecoder;
+				stream=new BomStream(_stream, bom, 3);
+			}
+			decoder->Setup(stream);
+		}
+
+		void BomDecoder::Close()
+		{
+			if(decoder)
+			{
+				decoder->Close();
+				delete decoder;
+				decoder=0;
+				stream->Close();
+				delete stream;
+				stream=0;
+			}
+		}
+
+		vint BomDecoder::Read(void* _buffer, vint _size)
+		{
+			return decoder->Read(_buffer, _size);
+		}
+
+/***********************************************************************
+CharEncoder
+***********************************************************************/
+
+		bool CanBeMbcs(unsigned char* buffer, vint size)
+		{
+			for(vint i=0;i<size;i++)
+			{
+				if(buffer[i]==0) return false;
+			}
+			return true;
+		}
+
+		bool CanBeUtf8(unsigned char* buffer, vint size)
+		{
+			for(vint i=0;i<size;i++)
+			{
+				unsigned char c=(unsigned char)buffer[i];
+				if(c==0)
+				{
+					return false;
+				}
+				else
+				{
+					vint count10xxxxxx=0;
+					if((c&0x80)==0x00) /* 0x0xxxxxxx */ count10xxxxxx=0;
+					else if((c&0xE0)==0xC0) /* 0x110xxxxx */ count10xxxxxx=1;
+					else if((c&0xF0)==0xE0) /* 0x1110xxxx */ count10xxxxxx=2;
+					else if((c&0xF8)==0xF0) /* 0x11110xxx */ count10xxxxxx=3;
+					else if((c&0xFC)==0xF8) /* 0x111110xx */ count10xxxxxx=4;
+					else if((c&0xFE)==0xFC) /* 0x1111110x */ count10xxxxxx=5;
+
+					if(size<=i+count10xxxxxx)
+					{
+						return false;
+					}
+					else
+					{
+						for(vint j=0;j<count10xxxxxx;j++)
+						{
+							c=(unsigned char)buffer[i+j+1];
+							if((c&0xC0)!=0x80) /* 0x10xxxxxx */ return false;
+						}
+					}
+					i+=count10xxxxxx;
+				}
+			}
+			return true;
+		}
+
+		bool CanBeUtf16(unsigned char* buffer, vint size, bool& hitSurrogatePairs)
+		{
+			hitSurrogatePairs = false;
+			if (size % 2 != 0) return false;
+			bool needTrail = false;
+			for (vint i = 0; i < size; i += 2)
+			{
+				vuint16_t c = buffer[i] + (buffer[i + 1] << 8);
+				if (c == 0) return false;
+				vint type = 0;
+				if (0xD800 <= c && c <= 0xDBFF) type = 1;
+				else if (0xDC00 <= c && c <= 0xDFFF) type = 2;
+				if (needTrail)
+				{
+					if (type == 2)
+					{
+						needTrail = false;
+					}
+					else
+					{
+						return false;
+					}
+				}
+				else
+				{
+					if (type == 1)
+					{
+						needTrail = true;
+						hitSurrogatePairs = true;
+					}
+					else if (type != 0)
+					{
+						return false;
+					}
+				}
+			}
+			return !needTrail;
+		}
+
+		bool CanBeUtf16BE(unsigned char* buffer, vint size, bool& hitSurrogatePairs)
+		{
+			hitSurrogatePairs = false;
+			if (size % 2 != 0) return false;
+			bool needTrail = false;
+			for (vint i = 0; i < size; i += 2)
+			{
+				vuint16_t c = buffer[i + 1] + (buffer[i] << 8);
+				if (c == 0) return false;
+				vint type = 0;
+				if (0xD800 <= c && c <= 0xDBFF) type = 1;
+				else if (0xDC00 <= c && c <= 0xDFFF) type = 2;
+				if (needTrail)
+				{
+					if (type == 2)
+					{
+						needTrail = false;
+					}
+					else
+					{
+						return false;
+					}
+				}
+				else
+				{
+					if (type == 1)
+					{
+						needTrail = true;
+						hitSurrogatePairs = true;
+					}
+					else if (type != 0)
+					{
+						return false;
+					}
+				}
+			}
+			return !needTrail;
+		}
+
+#if defined VCZH_MSVC
+		template<vint Count>
+		bool GetEncodingResult(int(&tests)[Count], bool(&results)[Count], int test)
+		{
+			for (vint i = 0; i < Count; i++)
+			{
+				if (tests[i] & test)
+				{
+					if (results[i]) return true;
+				}
+			}
+			return false;
+		}
+#endif
+
+		void TestEncoding(unsigned char* buffer, vint size, BomEncoder::Encoding& encoding, bool& containsBom)
+		{
+			if (size >= 3 && strncmp((char*)buffer, "\xEF\xBB\xBF", 3) == 0)
+			{
+				encoding = BomEncoder::Utf8;
+				containsBom = true;
+			}
+			else if (size >= 2 && strncmp((char*)buffer, "\xFF\xFE", 2) == 0)
+			{
+				encoding = BomEncoder::Utf16;
+				containsBom = true;
+			}
+			else if (size >= 2 && strncmp((char*)buffer, "\xFE\xFF", 2) == 0)
+			{
+				encoding = BomEncoder::Utf16BE;
+				containsBom = true;
+			}
+			else
+			{
+				encoding = BomEncoder::Mbcs;
+				containsBom = false;
+
+				bool utf16HitSurrogatePairs = false;
+				bool utf16BEHitSurrogatePairs = false;
+				bool roughMbcs = CanBeMbcs(buffer, size);
+				bool roughUtf8 = CanBeUtf8(buffer, size);
+				bool roughUtf16 = CanBeUtf16(buffer, size, utf16HitSurrogatePairs);
+				bool roughUtf16BE = CanBeUtf16BE(buffer, size, utf16BEHitSurrogatePairs);
+
+				vint roughCount = (roughMbcs ? 1 : 0) + (roughUtf8 ? 1 : 0) + (roughUtf16 ? 1 : 0) + (roughUtf16BE ? 1 : 0);
+				if (roughCount == 1)
+				{
+					if (roughUtf8) encoding = BomEncoder::Utf8;
+					else if (roughUtf16) encoding = BomEncoder::Utf16;
+					else if (roughUtf16BE) encoding = BomEncoder::Utf16BE;
+				}
+				else if (roughCount > 1)
+				{
+#if defined VCZH_MSVC
+					int tests[] =
+					{
+						IS_TEXT_UNICODE_REVERSE_ASCII16,
+						IS_TEXT_UNICODE_REVERSE_STATISTICS,
+						IS_TEXT_UNICODE_REVERSE_CONTROLS,
+
+						IS_TEXT_UNICODE_ASCII16,
+						IS_TEXT_UNICODE_STATISTICS,
+						IS_TEXT_UNICODE_CONTROLS,
+
+						IS_TEXT_UNICODE_ILLEGAL_CHARS,
+						IS_TEXT_UNICODE_ODD_LENGTH,
+						IS_TEXT_UNICODE_NULL_BYTES,
+					};
+
+					const vint TestCount = sizeof(tests) / sizeof(*tests);
+					bool results[TestCount];
+					for (vint i = 0; i < TestCount; i++)
+					{
+						int test = tests[i];
+						results[i] = IsTextUnicode(buffer, (int)size, &test) != 0;
+					}
+
+					if (size % 2 == 0
+						&& !GetEncodingResult(tests, results, IS_TEXT_UNICODE_REVERSE_ASCII16)
+						&& !GetEncodingResult(tests, results, IS_TEXT_UNICODE_REVERSE_STATISTICS)
+						&& !GetEncodingResult(tests, results, IS_TEXT_UNICODE_REVERSE_CONTROLS)
+						)
+					{
+						for (vint i = 0; i < size; i += 2)
+						{
+							unsigned char c = buffer[i];
+							buffer[i] = buffer[i + 1];
+							buffer[i + 1] = c;
+						}
+						// 3 = (count of reverse group) = (count of unicode group)
+						for (vint i = 0; i < 3; i++)
+						{
+							int test = tests[i + 3];
+							results[i] = IsTextUnicode(buffer, (int)size, &test) != 0;
+						}
+						for (vint i = 0; i < size; i += 2)
+						{
+							unsigned char c = buffer[i];
+							buffer[i] = buffer[i + 1];
+							buffer[i + 1] = c;
+						}
+					}
+
+					if (GetEncodingResult(tests, results, IS_TEXT_UNICODE_NOT_UNICODE_MASK))
+					{
+						if (GetEncodingResult(tests, results, IS_TEXT_UNICODE_NOT_ASCII_MASK))
+						{
+							encoding = BomEncoder::Utf8;
+						}
+						else if (roughUtf8 || !roughMbcs)
+						{
+							encoding = BomEncoder::Utf8;
+						}
+					}
+					else if (GetEncodingResult(tests, results, IS_TEXT_UNICODE_ASCII16))
+					{
+						encoding = BomEncoder::Utf16;
+					}
+					else if (GetEncodingResult(tests, results, IS_TEXT_UNICODE_REVERSE_ASCII16))
+					{
+						encoding = BomEncoder::Utf16BE;
+					}
+					else if (GetEncodingResult(tests, results, IS_TEXT_UNICODE_CONTROLS))
+					{
+						encoding = BomEncoder::Utf16;
+					}
+					else if (GetEncodingResult(tests, results, IS_TEXT_UNICODE_REVERSE_CONTROLS))
+					{
+						encoding = BomEncoder::Utf16BE;
+					}
+					else
+					{
+						if (!roughUtf8)
+						{
+							if (GetEncodingResult(tests, results, IS_TEXT_UNICODE_STATISTICS))
+							{
+								encoding = BomEncoder::Utf16;
+							}
+							else if (GetEncodingResult(tests, results, IS_TEXT_UNICODE_STATISTICS))
+							{
+								encoding = BomEncoder::Utf16BE;
+							}
+						}
+						else if (GetEncodingResult(tests, results, IS_TEXT_UNICODE_NOT_UNICODE_MASK))
+						{
+							encoding = BomEncoder::Utf8;
+						}
+						else if (roughUtf8 || !roughMbcs)
+						{
+							encoding = BomEncoder::Utf8;
+						}
+					}
+#elif defined VCZH_GCC
+					if (roughUtf16 && roughUtf16BE && !roughUtf8)
+					{
+						if (utf16BEHitSurrogatePairs && !utf16HitSurrogatePairs)
+						{
+							encoding = BomEncoder::Utf16BE;
+						}
+						else
+						{
+							encoding = BomEncoder::Utf16;
+						}
+					}
+					else
+					{
+						encoding = BomEncoder::Utf8;
+					}
+#endif
+				}
+			}
+		}
+	}
+}
+
+
+/***********************************************************************
+.\STREAM\COMPRESSIONSTREAM.CPP
+***********************************************************************/
+
+namespace vl
+{
+	namespace stream
+	{
+		using namespace collections;
+		using namespace lzw;
+
+/***********************************************************************
+LzwBase
+***********************************************************************/
+
+		void LzwBase::UpdateIndexBits()
+		{
+			if (nextIndex >=2 && (nextIndex & (nextIndex - 1)) == 0)
+			{
+				indexBits++;
+			}
+		}
+
+		lzw::Code* LzwBase::CreateCode(lzw::Code* prefix, vuint8_t byte)
+		{
+			if (nextIndex < MaxDictionarySize)
+			{
+				Code* code = codeAllocator.Create();
+				code->byte = byte;
+				code->code = nextIndex;
+				code->parent = prefix;
+				code->size = prefix->size + 1;
+				prefix->children.Set(byte, code, mapAllocator);
+				nextIndex++;
+
+				return code;
+			}
+			else
+			{
+				return 0;
+			}
+		}
+
+		LzwBase::LzwBase()
+			:codeAllocator(65536)
+			, mapAllocator(1048576)
+		{
+			root = codeAllocator.Create();
+
+			for (vint i = 0; i < 256; i++)
+			{
+				UpdateIndexBits();
+				CreateCode(root, (vuint8_t)i);
+			}
+		}
+
+		LzwBase::LzwBase(bool (&existingBytes)[256])
+		{
+			root = codeAllocator.Create();
+			for (vint i = 0; i < 256; i++)
+			{
+				if (existingBytes[i])
+				{
+					UpdateIndexBits();
+					CreateCode(root, (vuint8_t)i);
+				}
+			}
+
+			if (indexBits < 8)
+			{
+				eofIndex = nextIndex++;
+			}
+		}
+
+		LzwBase::~LzwBase()
+		{
+		}
+
+/***********************************************************************
+LzwEncoder
+***********************************************************************/
+
+		void LzwEncoder::Flush()
+		{
+			vint written = 0;
+			vint bufferUsedSize = bufferUsedBits / 8;
+			if (bufferUsedBits % 8 != 0)
+			{
+				bufferUsedSize++;
+			}
+			while (written < bufferUsedSize)
+			{
+				vint size = stream->Write(buffer + written, bufferUsedSize - written);
+				CHECK_ERROR(size != 0, L"LzwEncoder::Flush()#Failed to flush the lzw buffer.");
+				written += size;
+			}
+			bufferUsedBits = 0;
+		}
+
+		vuint8_t highMarks[9] = { 0x00, 0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE, 0xFF };
+		vuint8_t lowMarks[9] = { 0x00, 0x01, 0x03, 0x07, 0x0F, 0x1F, 0x3F, 0x7F, 0xFF };
+
+		void LzwEncoder::WriteNumber(vint number, vint bitSize)
+		{
+			vint bitStart = 0;
+			vint bitStep = 8 - bufferUsedBits % 8;
+			if (bitStep > bitSize)
+			{
+				bitStep = bitSize;
+			}
+			while (bitStart < bitSize)
+			{
+				if(bufferUsedBits == BufferSize * 8)
+				{
+					Flush();
+				}
+
+				vint writeStart = bufferUsedBits % 8;
+				vint byteIndex = bufferUsedBits / 8;
+				vuint8_t byte = buffer[byteIndex];
+				byte &= highMarks[writeStart];
+
+				vuint8_t content = (vuint8_t)((number >> bitStart)&lowMarks[bitStep]) << (8 - writeStart - bitStep);
+				byte |= content;
+
+				buffer[byteIndex] = byte;
+				bufferUsedBits += bitStep;
+
+				bitStart += bitStep;
+				vint remain = bitSize - bitStart;
+				bitStep = remain < 8 ? remain : 8;
+			}
+		}
+
+		LzwEncoder::LzwEncoder()
+		{
+			prefix = root;
+		}
+
+		LzwEncoder::LzwEncoder(bool (&existingBytes)[256])
+			:LzwBase(existingBytes)
+		{
+			prefix = root;
+		}
+
+		LzwEncoder::~LzwEncoder()
+		{
+		}
+
+		void LzwEncoder::Setup(IStream* _stream)
+		{
+			stream = _stream;
+		}
+
+		void LzwEncoder::Close()
+		{
+			if (prefix != root)
+			{
+				WriteNumber(prefix->code, indexBits);
+				prefix = root;
+			}
+
+			vint remain = 8 - bufferUsedBits % 8;
+			if (remain != 8 && remain >= indexBits)
+			{
+				CHECK_ERROR(eofIndex != -1, L"LzwEncoder::Close()#Internal error.");
+				WriteNumber(eofIndex, indexBits);
+			}
+			Flush();
+		}
+
+		vint LzwEncoder::Write(void* _buffer, vint _size)
+		{
+			vuint8_t* bytes = (vuint8_t*)_buffer;
+			for (vint i = 0; i < _size; i++)
+			{
+				vuint8_t byte = bytes[i];
+				Code* next = prefix->children.Get(byte);
+				if (next)
+				{
+					prefix = next;
+				}
+				else
+				{
+					WriteNumber(prefix->code, indexBits);
+
+					if (nextIndex < MaxDictionarySize)
+					{
+						UpdateIndexBits();
+						CreateCode(prefix, byte);
+					}
+					prefix = root->children.Get(byte);
+				}
+			}
+			return _size;
+		}
+
+/***********************************************************************
+LzwDecoder
+***********************************************************************/
+
+		bool LzwDecoder::ReadNumber(vint& number, vint bitSize)
+		{
+			number = 0;
+			if (inputBufferSize == -1)
+			{
+				return false;
+			}
+
+			vint remainBits = inputBufferSize * 8 - inputBufferUsedBits;
+			vint writtenBits = 0;
+			vint bitStep = 8 - inputBufferUsedBits % 8;
+			if (bitStep > bitSize)
+			{
+				bitStep = bitSize;
+			}
+			while (writtenBits < bitSize)
+			{
+				if (remainBits == 0)
+				{
+					inputBufferSize = stream->Read(inputBuffer, BufferSize);
+					if (inputBufferSize == 0)
+					{
+						inputBufferSize = -1;
+						return false;
+					}
+					remainBits = inputBufferSize * 8;
+					inputBufferUsedBits = 0;
+				}
+
+				vuint8_t byte = inputBuffer[inputBufferUsedBits / 8];
+				byte >>= (8 - inputBufferUsedBits % 8 - bitStep);
+				byte &= lowMarks[bitStep];
+				number |= byte << writtenBits;
+
+				inputBufferUsedBits += bitStep;
+				remainBits -= bitStep;
+				writtenBits += bitStep;
+				vint remain = bitSize - writtenBits;
+				bitStep = remain < 8 ? remain : 8;
+			}
+
+			return true;
+		}
+
+		void LzwDecoder::PrepareOutputBuffer(vint size)
+		{
+			if (outputBuffer.Count() < size)
+			{
+				outputBuffer.Resize(size);
+			}
+			outputBufferSize = size;
+		}
+
+		void LzwDecoder::ExpandCodeToOutputBuffer(lzw::Code* code)
+		{
+			vuint8_t* outputByte = &outputBuffer[0] + code->size;
+			Code* current = code;
+			while (current != root)
+			{
+				*(--outputByte) = current->byte;
+				current = current->parent;
+			}
+			outputBufferUsedBytes = 0;
+		}
+
+		LzwDecoder::LzwDecoder()
+		{
+			for (vint i = 0; i < 256; i++)
+			{
+				dictionary.Add(root->children.Get((vuint8_t)i));
+			}
+		}
+
+		LzwDecoder::LzwDecoder(bool (&existingBytes)[256])
+			:LzwBase(existingBytes)
+		{
+			for (vint i = 0; i < 256; i++)
+			{
+				if (existingBytes[i])
+				{
+					dictionary.Add(root->children.Get((vuint8_t)i));
+				}
+			}
+			if (eofIndex != -1)
+			{
+				dictionary.Add(0);
+			}
+		}
+
+		LzwDecoder::~LzwDecoder()
+		{
+		}
+
+		void LzwDecoder::Setup(IStream* _stream)
+		{
+			stream = _stream;
+		}
+
+		void LzwDecoder::Close()
+		{
+		}
+
+		vint LzwDecoder::Read(void* _buffer, vint _size)
+		{
+			vint written = 0;
+			vuint8_t* bytes = (vuint8_t*)_buffer;
+			while (written < _size)
+			{
+				vint expect = _size - written;
+				vint remain = outputBufferSize - outputBufferUsedBytes;
+				if (remain == 0)
+				{
+					vint index = 0;
+					if (!ReadNumber(index, indexBits) || index == eofIndex)
+					{
+						break;
+					}
+
+					Code* prefix = 0;
+					if (index == dictionary.Count())
+					{
+						prefix = lastCode;
+						PrepareOutputBuffer(prefix->size + 1);
+						ExpandCodeToOutputBuffer(prefix);
+						outputBuffer[outputBufferSize - 1] = outputBuffer[0];
+					}
+					else
+					{
+						prefix = dictionary[index];
+						PrepareOutputBuffer(prefix->size);
+						ExpandCodeToOutputBuffer(prefix);
+					}
+					
+					if (nextIndex < MaxDictionarySize)
+					{
+						if (lastCode)
+						{
+							dictionary.Add(CreateCode(lastCode, outputBuffer[0]));
+						}
+						UpdateIndexBits();
+					}
+					lastCode = dictionary[index];
+				}
+				else
+				{
+					if (remain > expect)
+					{
+						remain = expect;
+					}
+					memcpy(bytes + written, &outputBuffer[outputBufferUsedBytes], remain);
+
+					outputBufferUsedBytes += remain;
+					written += remain;
+				}
+			}
+			return written;
+		}
+
+/***********************************************************************
+Helper Functions
+***********************************************************************/
+
+		vint CopyStream(stream::IStream& inputStream, stream::IStream& outputStream)
+		{
+			vint totalSize = 0;
+			while (true)
+			{
+				char buffer[1024];
+				vint copied = inputStream.Read(buffer, (vint)sizeof(buffer));
+				if (copied == 0)
+				{
+					break;
+				}
+				totalSize += outputStream.Write(buffer, copied);
+			}
+			return totalSize;
+		}
+
+		const vint CompressionFragmentSize = 1048576;
+
+		void CompressStream(stream::IStream& inputStream, stream::IStream& outputStream)
+		{
+			Array<char> buffer(CompressionFragmentSize);
+			while (true)
+			{
+				vint size = inputStream.Read(&buffer[0], buffer.Count());
+				if (size == 0) break;
+
+				MemoryStream compressedStream;
+				{
+					LzwEncoder encoder;
+					EncoderStream encoderStream(compressedStream, encoder);
+					encoderStream.Write(&buffer[0], size);
+				}
+
+				compressedStream.SeekFromBegin(0);
+				{
+					{
+						vint32_t bufferSize = (vint32_t)size;
+						outputStream.Write(&bufferSize, (vint)sizeof(bufferSize));
+					}
+					{
+						vint32_t compressedSize = (vint32_t)compressedStream.Size();
+						outputStream.Write(&compressedSize, (vint)sizeof(compressedSize));
+					}
+					CopyStream(compressedStream, outputStream);
+				}
+			}
+		}
+
+		void DecompressStream(stream::IStream& inputStream, stream::IStream& outputStream)
+		{
+			vint totalSize = 0;
+			vint totalWritten = 0;
+			while (true)
+			{
+				vint32_t bufferSize = 0;
+				if (inputStream.Read(&bufferSize, (vint)sizeof(bufferSize)) != sizeof(bufferSize))
+				{
+					break;
+				}
+
+				vint32_t compressedSize = 0;
+				CHECK_ERROR(inputStream.Read(&compressedSize, (vint)sizeof(compressedSize)) == sizeof(compressedSize), L"vl::stream::DecompressStream(MemoryStream&, MemoryStream&)#Incomplete input");
+
+				Array<char> buffer(compressedSize);
+				CHECK_ERROR(inputStream.Read(&buffer[0], compressedSize) == compressedSize, L"vl::stream::DecompressStream(MemoryStream&, MemoryStream&)#Incomplete input");
+
+				MemoryWrapperStream compressedStream(&buffer[0], compressedSize);
+				LzwDecoder decoder;
+				DecoderStream decoderStream(compressedStream, decoder);
+				totalWritten += CopyStream(decoderStream, outputStream);
+				totalSize += bufferSize;
+			}
+			CHECK_ERROR(outputStream.Size() == totalSize, L"vl::stream::DecompressStream(MemoryStream&, MemoryStream&)#Incomplete input");
+		}
+	}
+}
+
+/***********************************************************************
+.\STREAM\FILESTREAM.CPP
+***********************************************************************/
+#if defined VCZH_GCC
+#endif
+
+namespace vl
+{
+	namespace stream
+	{
+
+#if defined VCZH_GCC
+		void _fseeki64(FILE* file, pos_t offset, int origin)
+		{
+			fseek(file, (long)offset, origin);
+		}
+#endif
+
+/***********************************************************************
+FileStream
+***********************************************************************/
+
+		FileStream::FileStream(const WString& fileName, AccessRight _accessRight)
+			:accessRight(_accessRight)
+		{
+			const wchar_t* mode=L"rb";
+			switch(accessRight)
+			{
+			case ReadOnly:
+				mode=L"rb";
+				break;
+			case WriteOnly:
+				mode=L"wb";
+				break;
+			case ReadWrite:
+				mode=L"w+b";
+				break;
+			}
+
+#if defined VCZH_MSVC
+			if(_wfopen_s(&file, fileName.Buffer(), mode)!=0)
+			{
+				file=0;
+			}
+#elif defined VCZH_GCC
+			AString fileNameA = wtoa(fileName);
+			AString modeA = wtoa(mode);
+			file = fopen(fileNameA.Buffer(), modeA.Buffer());			
+#endif
+		}
+
+		FileStream::~FileStream()
+		{
+			Close();
+		}
+
+		bool FileStream::CanRead()const
+		{
+			return file!=0 && (accessRight==ReadOnly || accessRight==ReadWrite);
+		}
+
+		bool FileStream::CanWrite()const
+		{
+			return file!=0 && (accessRight==WriteOnly || accessRight==ReadWrite);
+		}
+
+		bool FileStream::CanSeek()const
+		{
+			return file!=0;
+		}
+
+		bool FileStream::CanPeek()const
+		{
+			return file!=0 && (accessRight==ReadOnly || accessRight==ReadWrite);
+		}
+
+		bool FileStream::IsLimited()const
+		{
+			return file!=0 && accessRight==ReadOnly;
+		}
+
+		bool FileStream::IsAvailable()const
+		{
+			return file!=0;
+		}
+
+		void FileStream::Close()
+		{
+			if(file!=0)
+			{
+				fclose(file);
+				file=0;
+			}
+		}
+
+		pos_t FileStream::Position()const
+		{
+			if(file!=0)
+			{
+#if defined VCZH_MSVC
+				fpos_t position=0;
+				if(fgetpos(file, &position)==0)
+				{
+					return position;
+				}
+#elif defined VCZH_GCC
+				return (pos_t)ftell(file);
+#endif
+			}
+			return -1;
+		}
+
+		pos_t FileStream::Size()const
+		{
+			if(file!=0)
+			{
+#if defined VCZH_MSVC
+				fpos_t position=0;
+				if(fgetpos(file, &position)==0)
+				{
+					if(fseek(file, 0, SEEK_END)==0)
+					{
+						pos_t size=Position();
+						if(fsetpos(file, &position)==0)
+						{
+							return size;
+						}
+					}
+				}
+#elif defined VCZH_GCC
+				long position = ftell(file);
+				fseek(file, 0, SEEK_END);
+				long size=ftell(file);
+				fseek(file, position, SEEK_SET);
+				return (pos_t)size;
+#endif
+			}
+			return -1;
+		}
+
+		void FileStream::Seek(pos_t _size)
+		{
+			if(Position()+_size>Size())
+			{
+				_fseeki64(file, 0, SEEK_END);
+			}
+			else if(Position()+_size<0)
+			{
+				_fseeki64(file, 0, SEEK_SET);
+			}
+			else
+			{
+				_fseeki64(file, _size, SEEK_CUR);
+			}
+		}
+
+		void FileStream::SeekFromBegin(pos_t _size)
+		{
+			if(_size>Size())
+			{
+				_fseeki64(file, 0, SEEK_END);
+			}
+			else if(_size<0)
+			{
+				_fseeki64(file, 0, SEEK_SET);
+			}
+			else
+			{
+				_fseeki64(file, _size, SEEK_SET);
+			}
+		}
+
+		void FileStream::SeekFromEnd(pos_t _size)
+		{
+			if(_size<0)
+			{
+				_fseeki64(file, 0, SEEK_END);
+			}
+			else if(_size>Size())
+			{
+				_fseeki64(file, 0, SEEK_SET);
+			}
+			else
+			{
+				_fseeki64(file, -_size, SEEK_END);
+			}
+		}
+
+		vint FileStream::Read(void* _buffer, vint _size)
+		{
+			CHECK_ERROR(file!=0, L"FileStream::Read(pos_t)#Stream is closed, cannot perform this operation.");
+			CHECK_ERROR(_size>=0, L"FileStream::Read(void*, vint)#Argument size cannot be negative.");
+			return fread(_buffer, 1, _size, file);
+		}
+
+		vint FileStream::Write(void* _buffer, vint _size)
+		{
+			CHECK_ERROR(file!=0, L"FileStream::Write(pos_t)#Stream is closed, cannot perform this operation.");
+			CHECK_ERROR(_size>=0, L"FileStream::Write(void*, vint)#Argument size cannot be negative.");
+			return fwrite(_buffer, 1, _size, file);
+		}
+
+		vint FileStream::Peek(void* _buffer, vint _size)
+		{
+			CHECK_ERROR(file!=0, L"FileStream::Peek(pos_t)#Stream is closed, cannot perform this operation.");
+			CHECK_ERROR(_size>=0, L"FileStream::Peek(void*, vint)#Argument size cannot be negative.");
+#if defined VCZH_MSVC
+			fpos_t position=0;
+			if(fgetpos(file, &position)==0)
+			{
+				size_t count=fread(_buffer, 1, _size, file);
+				if(fsetpos(file, &position)==0)
+				{
+					return count;
+				}
+			}
+			return -1;
+#elif defined VCZH_GCC
+			long position=ftell(file);
+			size_t count=fread(_buffer, 1, _size, file);
+			fseek(file, position, SEEK_SET);
+			return count;
+#endif
+		}
+	}
+}
+
+
+/***********************************************************************
+.\STREAM\MEMORYSTREAM.CPP
+***********************************************************************/
+
+namespace vl
+{
+	namespace stream
+	{
+/***********************************************************************
+MemoryStream
+***********************************************************************/
+
+		void MemoryStream::PrepareSpace(vint totalSpace)
+		{
+			if(totalSpace>capacity)
+			{
+				totalSpace=(totalSpace/block+1)*block;
+				char* newBuffer=new char[totalSpace];
+				if(buffer)
+				{
+					memcpy(newBuffer, buffer, size);
+					delete[] buffer;
+				}
+				buffer=newBuffer;
+				capacity=totalSpace;
+			}
+		}
+
+		MemoryStream::MemoryStream(vint _block)
+			:block(_block)
+			,buffer(0)
+			,size(0)
+			,position(0)
+			,capacity(0)
+		{
+			if(block<=0)
+			{
+				block=65536;
+			}
+		}
+
+		MemoryStream::~MemoryStream()
+		{
+			Close();
+		}
+
+		bool MemoryStream::CanRead()const
+		{
+			return block!=0;
+		}
+
+		bool MemoryStream::CanWrite()const
+		{
+			return block!=0;
+		}
+
+		bool MemoryStream::CanSeek()const
+		{
+			return block!=0;
+		}
+
+		bool MemoryStream::CanPeek()const
+		{
+			return block!=0;
+		}
+
+		bool MemoryStream::IsLimited()const
+		{
+			return false;
+		}
+
+		bool MemoryStream::IsAvailable()const
+		{
+			return block!=0;
+		}
+
+		void MemoryStream::Close()
+		{
+			if(buffer)
+			{
+				delete[] buffer;
+			}
+			block=0;
+			buffer=0;
+			size=-1;
+			position=-1;
+			capacity=0;
+		}
+
+		pos_t MemoryStream::Position()const
+		{
+			return position;
+		}
+
+		pos_t MemoryStream::Size()const
+		{
+			return size;
+		}
+
+		void MemoryStream::Seek(pos_t _size)
+		{
+			SeekFromBegin(position+_size);
+		}
+
+		void MemoryStream::SeekFromBegin(pos_t _size)
+		{
+			CHECK_ERROR(block!=0, L"MemoryStream::SeekFromBegin(pos_t)#Stream is closed, cannot perform this operation.");
+			vint expected=(vint)_size;
+			if(expected<0)
+			{
+				position=0;
+			}
+			else if(expected>=size)
+			{
+				position=size;
+			}
+			else
+			{
+				position=expected;
+			}
+		}
+
+		void MemoryStream::SeekFromEnd(pos_t _size)
+		{
+			SeekFromBegin(size-_size);
+		}
+
+		vint MemoryStream::Read(void* _buffer, vint _size)
+		{
+			CHECK_ERROR(block!=0, L"MemoryStream::Read(pos_t)#Stream is closed, cannot perform this operation.");
+			CHECK_ERROR(_size>=0, L"MemoryStream::Read(void*, vint)#Argument size cannot be negative.");
+			vint max=size-position;
+			if(_size>max)
+			{
+				_size=max;
+			}
+			memmove(_buffer, buffer+position, _size);
+			position+=_size;
+			return _size;
+		}
+
+		vint MemoryStream::Write(void* _buffer, vint _size)
+		{
+			CHECK_ERROR(block!=0, L"MemoryStream::Write(pos_t)#Stream is closed, cannot perform this operation.");
+			CHECK_ERROR(_size>=0, L"MemoryStream::Write(void*, vint)#Argument size cannot be negative.");
+			PrepareSpace(size+_size);
+			memmove(buffer+position, _buffer, _size);
+			position+=_size;
+			if(size<position)
+			{
+				size=position;
+			}
+			return _size;
+		}
+
+		vint MemoryStream::Peek(void* _buffer, vint _size)
+		{
+			CHECK_ERROR(block!=0, L"MemoryStream::Peek(pos_t)#Stream is closed, cannot perform this operation.");
+			CHECK_ERROR(_size>=0, L"MemoryStream::Peek(void*, vint)#Argument size cannot be negative.");
+			vint max=size-position;
+			if(_size>max)
+			{
+				_size=max;
+			}
+			memmove(_buffer, buffer+position, _size);
+			return _size;
+		}
+
+		void* MemoryStream::GetInternalBuffer()
+		{
+			return buffer;
+		}
+	}
+}
+
+/***********************************************************************
+.\STREAM\MEMORYWRAPPERSTREAM.CPP
+***********************************************************************/
+
+namespace vl
+{
+	namespace stream
+	{
+/***********************************************************************
+MemoryWrapperStream
+***********************************************************************/
+
+		MemoryWrapperStream::MemoryWrapperStream(void* _buffer, vint _size)
+			:buffer((char*)_buffer)
+			,size(_size)
+			,position(0)
+		{
+			if(size<=0)
+			{
+				buffer=0;
+				size=0;
+			}
+		}
+
+		MemoryWrapperStream::~MemoryWrapperStream()
+		{
+		}
+
+		bool MemoryWrapperStream::CanRead()const
+		{
+			return buffer!=0;
+		}
+
+		bool MemoryWrapperStream::CanWrite()const
+		{
+			return buffer!=0;
+		}
+
+		bool MemoryWrapperStream::CanSeek()const
+		{
+			return buffer!=0;
+		}
+
+		bool MemoryWrapperStream::CanPeek()const
+		{
+			return buffer!=0;
+		}
+
+		bool MemoryWrapperStream::IsLimited()const
+		{
+			return buffer!=0;
+		}
+
+		bool MemoryWrapperStream::IsAvailable()const
+		{
+			return buffer!=0;
+		}
+
+		void MemoryWrapperStream::Close()
+		{
+			buffer=0;
+			size=-1;
+			position=-1;
+		}
+
+		pos_t MemoryWrapperStream::Position()const
+		{
+			return position;
+		}
+
+		pos_t MemoryWrapperStream::Size()const
+		{
+			return size;
+		}
+
+		void MemoryWrapperStream::Seek(pos_t _size)
+		{
+			SeekFromBegin(position+_size);
+		}
+
+		void MemoryWrapperStream::SeekFromBegin(pos_t _size)
+		{
+			CHECK_ERROR(buffer!=0, L"MemoryWrapperStream::SeekFromBegin(pos_t)#Stream is closed, cannot perform this operation.");
+			vint expected=(vint)_size;
+			if(expected<0)
+			{
+				position=0;
+			}
+			else if(expected>=size)
+			{
+				position=size;
+			}
+			else
+			{
+				position=expected;
+			}
+		}
+
+		void MemoryWrapperStream::SeekFromEnd(pos_t _size)
+		{
+			SeekFromBegin(size-_size);
+		}
+
+		vint MemoryWrapperStream::Read(void* _buffer, vint _size)
+		{
+			CHECK_ERROR(buffer!=0, L"MemoryWrapperStream::Read(pos_t)#Stream is closed, cannot perform this operation.");
+			CHECK_ERROR(_size>=0, L"MemoryWrapperStream::Read(void*, vint)#Argument size cannot be negative.");
+			vint max=size-position;
+			if(_size>max)
+			{
+				_size=max;
+			}
+			memmove(_buffer, buffer+position, _size);
+			position+=_size;
+			return _size;
+		}
+
+		vint MemoryWrapperStream::Write(void* _buffer, vint _size)
+		{
+			CHECK_ERROR(buffer!=0, L"MemoryWrapperStream::Write(pos_t)#Stream is closed, cannot perform this operation.");
+			CHECK_ERROR(_size>=0, L"MemoryWrapperStream::Write(void*, vint)#Argument size cannot be negative.");
+			vint max=size-position;
+			if(_size>max)
+			{
+				_size=max;
+			}
+			memmove(buffer+position, _buffer, _size);
+			position+=_size;
+			return _size;
+		}
+
+		vint MemoryWrapperStream::Peek(void* _buffer, vint _size)
+		{
+			CHECK_ERROR(buffer!=0, L"MemoryWrapperStream::Peek(pos_t)#Stream is closed, cannot perform this operation.");
+			CHECK_ERROR(_size>=0, L"MemoryWrapperStream::Peek(void*, vint)#Argument size cannot be negative.");
+			vint max=size-position;
+			if(_size>max)
+			{
+				_size=max;
+			}
+			memmove(_buffer, buffer+position, _size);
+			return _size;
 		}
 	}
 }

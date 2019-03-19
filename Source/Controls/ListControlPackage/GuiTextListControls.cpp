@@ -1,6 +1,8 @@
 #include "GuiTextListControls.h"
 #include "GuiListControlItemArrangers.h"
+#include "../GuiButtonControls.h"
 #include "../Templates/GuiThemeStyleFactory.h"
+#include "../../GraphicsComposition/GuiGraphicsTableComposition.h"
 
 namespace vl
 {
@@ -40,6 +42,7 @@ DefaultTextListItemTemplate
 					if (auto bulletStyleController = CreateBulletStyle())
 					{
 						bulletButton = new GuiSelectableButton(theme::ThemeName::Unknown);
+						bulletButton->SetAutoFocus(false);
 						bulletButton->SetControlTemplate(bulletStyleController);
 						bulletButton->GetBoundsComposition()->SetAlignmentToParent(Margin(0, 0, 0, 0));
 						bulletButton->SelectedChanged.AttachMethod(this, &DefaultTextListItemTemplate::OnBulletSelectedChanged);
@@ -69,7 +72,7 @@ DefaultTextListItemTemplate
 					else
 					{
 						AddChild(textComposition);
-						textComposition->SetAlignmentToParent(Margin(5, 0, 0, 0));
+						textComposition->SetAlignmentToParent(Margin(5, 2, 0, 2));
 					}
 
 					FontChanged.AttachMethod(this, &DefaultTextListItemTemplate::OnFontChanged);
@@ -137,7 +140,7 @@ DefaultCheckTextListItemTemplate
 				{
 					if (auto textList = dynamic_cast<GuiVirtualTextList*>(listControl))
 					{
-						auto style = textList->GetControlTemplateObject()->GetCheckBulletTemplate();
+						auto style = textList->GetControlTemplateObject(true)->GetCheckBulletTemplate();
 						if (style) return style;
 					}
 					return theme::GetCurrentTheme()->CreateStyle(theme::ThemeName::CheckTextListItem);
@@ -151,7 +154,7 @@ DefaultRadioTextListItemTemplate
 				{
 					if (auto textList = dynamic_cast<GuiVirtualTextList*>(listControl))
 					{
-						auto style = textList->GetControlTemplateObject()->GetRadioBulletTemplate();
+						auto style = textList->GetControlTemplateObject(true)->GetRadioBulletTemplate();
 						if (style) return style;
 					}
 					return theme::GetCurrentTheme()->CreateStyle(theme::ThemeName::RadioTextListItem);
@@ -303,7 +306,7 @@ GuiTextList
 				GuiSelectableListControl::OnStyleInstalled(itemIndex, style);
 				if (auto textItemStyle = dynamic_cast<templates::GuiTextListItemTemplate*>(style))
 				{
-					textItemStyle->SetTextColor(GetControlTemplateObject()->GetTextColor());
+					textItemStyle->SetTextColor(GetControlTemplateObject(true)->GetTextColor());
 					if (auto textItemView = dynamic_cast<list::ITextItemView*>(itemProvider->RequestView(list::ITextItemView::Identifier)))
 					{
 						textItemStyle->SetChecked(textItemView->GetChecked(itemIndex));

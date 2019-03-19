@@ -1,5 +1,6 @@
 #include "GuiToolstripCommand.h"
 #include "../GuiApplication.h"
+#include "../../GraphicsHost/GuiGraphicsHost_ShortcutKey.h"
 #include "../../Resources/GuiParserManager.h"
 
 namespace vl
@@ -140,7 +141,7 @@ GuiToolstripCommand
 					{
 						if (auto control = dynamic_cast<GuiControl*>(attachedRootObject))
 						{
-							control->RenderTargetChanged.Detach(renderTargetChangedHandler);
+							control->ControlSignalTrigerred.Detach(renderTargetChangedHandler);
 						}
 						else if (auto composition = dynamic_cast<GuiGraphicsComposition*>(attachedRootObject))
 						{
@@ -154,7 +155,11 @@ GuiToolstripCommand
 					{
 						if (auto control = dynamic_cast<GuiControl*>(attachedRootObject))
 						{
-							renderTargetChangedHandler = control->RenderTargetChanged.AttachMethod(this, &GuiToolstripCommand::OnRenderTargetChanged);
+							renderTargetChangedHandler = control->ControlSignalTrigerred.AttachLambda(
+								[=](GuiGraphicsComposition* sender, GuiControlSignalEventArgs& arguments)
+								{
+									OnRenderTargetChanged(sender, arguments);
+								});
 						}
 						else if (auto composition = dynamic_cast<GuiGraphicsComposition*>(attachedRootObject))
 						{
@@ -168,6 +173,20 @@ GuiToolstripCommand
 			void GuiToolstripCommand::Detach(GuiInstanceRootObject* rootObject)
 			{
 				Attach(nullptr);
+			}
+
+			Ptr<GuiImageData> GuiToolstripCommand::GetLargeImage()
+			{
+				return largeImage;
+			}
+
+			void GuiToolstripCommand::SetLargeImage(Ptr<GuiImageData> value)
+			{
+				if (largeImage != value)
+				{
+					largeImage = value;
+					InvokeDescriptionChanged();
+				}
 			}
 
 			Ptr<GuiImageData> GuiToolstripCommand::GetImage()
@@ -279,7 +298,7 @@ GuiToolstripCommand::ShortcutBuilder Parser
 					WString name = match->Groups()[L"key"][0].Value();
 					builder->key = GetCurrentController()->InputService()->GetKey(name);
 
-					return builder->key == -1 ? nullptr : builder;
+					return builder->key == VKEY::_UNKNOWN ? nullptr : builder;
 				}
 			};
 

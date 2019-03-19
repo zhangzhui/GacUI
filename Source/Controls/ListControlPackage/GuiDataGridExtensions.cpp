@@ -1,6 +1,5 @@
 #include "GuiDataGridExtensions.h"
-#include "../Templates/GuiThemeStyleFactory.h"
-#include "../GuiApplication.h"
+#include "../../GraphicsComposition/GuiGraphicsTableComposition.h"
 
 namespace vl
 {
@@ -80,7 +79,7 @@ DataVisualizerFactory
 
 				DataVisualizerFactory::ItemTemplate* DataVisualizerFactory::CreateItemTemplate(controls::list::IDataGridContext* dataGridContext)
 				{
-					ItemTemplate* itemTemplate = templateFactory(dataGridContext->GetViewModelContext());
+					ItemTemplate* itemTemplate = templateFactory({});
 					CHECK_ERROR(itemTemplate, L"DataVisualizerFactory::CreateItemTemplate(IDataGridContext*)#An instance of GuiGridEditorTemplate is expected.");
 					if (decoratedFactory)
 					{
@@ -212,7 +211,7 @@ DataEditorFactory
 					editor->factory = this;
 					editor->dataGridContext = dataGridContext;
 
-					ItemTemplate* itemTemplate = templateFactory(dataGridContext->GetViewModelContext());
+					ItemTemplate* itemTemplate = templateFactory({});
 					CHECK_ERROR(itemTemplate, L"DataEditorFactory::CreateEditor(IDataGridContext*)#An instance of GuiGridEditorTemplate is expected.");
 					editor->editorTemplate = itemTemplate;
 					return editor;
@@ -222,22 +221,22 @@ DataEditorFactory
 MainColumnVisualizerTemplate
 ***********************************************************************/
 
-				void MainColumnVisualizerTemplate::OnTextChanged(GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments)
+				void MainColumnVisualizerTemplate::OnTextChanged(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments)
 				{
 					text->SetText(GetText());
 				}
 
-				void MainColumnVisualizerTemplate::OnFontChanged(GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments)
+				void MainColumnVisualizerTemplate::OnFontChanged(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments)
 				{
 					text->SetFont(GetFont());
 				}
 
-				void MainColumnVisualizerTemplate::OnTextColorChanged(GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments)
+				void MainColumnVisualizerTemplate::OnTextColorChanged(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments)
 				{
 					text->SetColor(GetPrimaryTextColor());
 				}
 
-				void MainColumnVisualizerTemplate::OnSmallImageChanged(GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments)
+				void MainColumnVisualizerTemplate::OnSmallImageChanged(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments)
 				{
 					auto imageData = GetSmallImage();
 					if (imageData)
@@ -306,17 +305,17 @@ MainColumnVisualizerTemplate
 SubColumnVisualizerTemplate
 ***********************************************************************/
 
-				void SubColumnVisualizerTemplate::OnTextChanged(GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments)
+				void SubColumnVisualizerTemplate::OnTextChanged(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments)
 				{
 					text->SetText(GetText());
 				}
 
-				void SubColumnVisualizerTemplate::OnFontChanged(GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments)
+				void SubColumnVisualizerTemplate::OnFontChanged(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments)
 				{
 					text->SetFont(GetFont());
 				}
 
-				void SubColumnVisualizerTemplate::OnTextColorChanged(GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments)
+				void SubColumnVisualizerTemplate::OnTextColorChanged(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments)
 				{
 					text->SetColor(GetSecondaryTextColor());
 				}
@@ -395,6 +394,43 @@ HyperlinkVisualizerTemplate
 CellBorderVisualizerTemplate
 ***********************************************************************/
 
+				void FocusRectangleVisualizerTemplate::OnSelectedChanged(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments)
+				{
+					focusComposition->SetVisible(GetSelected());
+				}
+
+				FocusRectangleVisualizerTemplate::FocusRectangleVisualizerTemplate()
+				{
+					SetMinSizeLimitation(GuiGraphicsComposition::LimitToElementAndChildren);
+
+					focusComposition = new GuiBoundsComposition();
+					{
+						auto focus = GuiFocusRectangleElement::Create();
+						focusComposition->SetOwnedElement(focus);
+						focusComposition->SetAlignmentToParent(Margin(1, 1, 1, 1));
+					}
+					auto container = new GuiBoundsComposition();
+					{
+						container->SetMinSizeLimitation(GuiGraphicsComposition::LimitToElementAndChildren);
+						container->SetAlignmentToParent(Margin(2, 2, 2, 2));
+					}
+
+					AddChild(focusComposition);
+					AddChild(container);
+					SetContainerComposition(container);
+
+					SelectedChanged.AttachMethod(this, &FocusRectangleVisualizerTemplate::OnSelectedChanged);
+					SelectedChanged.Execute(compositions::GuiEventArgs(this));
+				}
+
+				FocusRectangleVisualizerTemplate::~FocusRectangleVisualizerTemplate()
+				{
+				}
+				
+/***********************************************************************
+CellBorderVisualizerTemplate
+***********************************************************************/
+
 				void CellBorderVisualizerTemplate::OnItemSeparatorColorChanged(GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments)
 				{
 					border1->SetColor(GetItemSeparatorColor());
@@ -403,30 +439,32 @@ CellBorderVisualizerTemplate
 
 				CellBorderVisualizerTemplate::CellBorderVisualizerTemplate()
 				{
-					GuiBoundsComposition* bounds1 = nullptr;
-					GuiBoundsComposition* bounds2 = nullptr;
+					SetMinSizeLimitation(GuiGraphicsComposition::LimitToElementAndChildren);
+
+					auto bounds1 = new GuiBoundsComposition;
 					{
 						border1 = GuiSolidBorderElement::Create();
-
-						bounds1 = new GuiBoundsComposition;
 						bounds1->SetOwnedElement(border1);
 						bounds1->SetAlignmentToParent(Margin(-1, 0, 0, 0));
 					}
+					auto bounds2 = new GuiBoundsComposition;
 					{
 						border2 = GuiSolidBorderElement::Create();
-
-						bounds2 = new GuiBoundsComposition;
 						bounds2->SetOwnedElement(border2);
 						bounds2->SetAlignmentToParent(Margin(0, -1, 0, 0));
 					}
+					auto container = new GuiBoundsComposition();
+					{
+						container->SetMinSizeLimitation(GuiGraphicsComposition::LimitToElementAndChildren);
+						container->SetAlignmentToParent(Margin(0, 0, 1, 1));
+					}
 
-					SetAlignmentToParent(Margin(0, 0, 1, 1));
-					SetMinSizeLimitation(GuiGraphicsComposition::LimitToElementAndChildren);
 					AddChild(bounds1);
 					AddChild(bounds2);
+					AddChild(container);
+					SetContainerComposition(container);
 
 					ItemSeparatorColorChanged.AttachMethod(this, &CellBorderVisualizerTemplate::OnItemSeparatorColorChanged);
-
 					ItemSeparatorColorChanged.Execute(compositions::GuiEventArgs(this));
 				}
 

@@ -63,14 +63,75 @@ GuiScroll::CommandExecutor
 GuiScroll
 ***********************************************************************/
 
+			void GuiScroll::OnActiveAlt()
+			{
+				if (autoFocus)
+				{
+					GuiControl::OnActiveAlt();
+				}
+			}
+
+			bool GuiScroll::IsTabAvailable()
+			{
+				return autoFocus && GuiControl::IsTabAvailable();
+			}
+
+			void GuiScroll::OnKeyDown(compositions::GuiGraphicsComposition* sender, compositions::GuiKeyEventArgs& arguments)
+			{
+				if (arguments.eventSource == focusableComposition)
+				{
+					switch (arguments.code)
+					{
+					case VKEY::_HOME:
+						SetPosition(GetMinPosition());
+						arguments.handled = true;
+						break;
+					case VKEY::_END:
+						SetPosition(GetMaxPosition());
+						arguments.handled = true;
+						break;
+					case VKEY::_PRIOR:
+						commandExecutor->BigDecrease();
+						arguments.handled = true;
+						break;
+					case VKEY::_NEXT:
+						commandExecutor->BigIncrease();
+						arguments.handled = true;
+						break;
+					case VKEY::_LEFT:
+					case VKEY::_UP:
+						commandExecutor->SmallDecrease();
+						arguments.handled = true;
+						break;
+					case VKEY::_RIGHT:
+					case VKEY::_DOWN:
+						commandExecutor->SmallIncrease();
+						arguments.handled = true;
+						break;
+					default:;
+					}
+				}
+			}
+
+			void GuiScroll::OnMouseDown(compositions::GuiGraphicsComposition* sender, compositions::GuiMouseEventArgs& arguments)
+			{
+				if (autoFocus)
+				{
+					SetFocus();
+				}
+			}
+
 			void GuiScroll::BeforeControlTemplateUninstalled_()
 			{
-				GetControlTemplateObject()->SetCommands(nullptr);
+				auto ct = GetControlTemplateObject(false);
+				if (!ct) return;
+
+				ct->SetCommands(nullptr);
 			}
 
 			void GuiScroll::AfterControlTemplateInstalled_(bool initialize)
 			{
-				auto ct = GetControlTemplateObject();
+				auto ct = GetControlTemplateObject(true);
 				ct->SetCommands(commandExecutor.Obj());
 				ct->SetPageSize(pageSize);
 				ct->SetTotalSize(totalSize);
@@ -80,6 +141,8 @@ GuiScroll
 			GuiScroll::GuiScroll(theme::ThemeName themeName)
 				:GuiControl(themeName)
 			{
+				SetFocusableComposition(boundsComposition);
+
 				TotalSizeChanged.SetAssociatedComposition(boundsComposition);
 				PageSizeChanged.SetAssociatedComposition(boundsComposition);
 				PositionChanged.SetAssociatedComposition(boundsComposition);
@@ -87,6 +150,9 @@ GuiScroll
 				BigMoveChanged.SetAssociatedComposition(boundsComposition);
 
 				commandExecutor = new CommandExecutor(this);
+				boundsComposition->GetEventReceiver()->keyDown.AttachMethod(this, &GuiScroll::OnKeyDown);
+				boundsComposition->GetEventReceiver()->leftButtonDown.AttachMethod(this, &GuiScroll::OnMouseDown);
+				boundsComposition->GetEventReceiver()->rightButtonDown.AttachMethod(this, &GuiScroll::OnMouseDown);
 			}
 
 			GuiScroll::~GuiScroll()
@@ -111,7 +177,7 @@ GuiScroll
 					{
 						SetPosition(GetMaxPosition());
 					}
-					GetControlTemplateObject()->SetTotalSize(totalSize);
+					GetControlTemplateObject(true)->SetTotalSize(totalSize);
 					TotalSizeChanged.Execute(GetNotifyEventArguments());
 				}
 			}
@@ -130,7 +196,7 @@ GuiScroll
 					{
 						SetPosition(GetMaxPosition());
 					}
-					GetControlTemplateObject()->SetPageSize(pageSize);
+					GetControlTemplateObject(true)->SetPageSize(pageSize);
 					PageSizeChanged.Execute(GetNotifyEventArguments());
 				}
 			}
@@ -151,7 +217,7 @@ GuiScroll
 				if(position!=newPosition)
 				{
 					position=newPosition;
-					GetControlTemplateObject()->SetPosition(position);
+					GetControlTemplateObject(true)->SetPosition(position);
 					PositionChanged.Execute(GetNotifyEventArguments());
 				}
 			}
@@ -192,6 +258,16 @@ GuiScroll
 			vint GuiScroll::GetMaxPosition()
 			{
 				return totalSize-pageSize;
+			}
+
+			bool GuiScroll::GetAutoFocus()
+			{
+				return autoFocus;
+			}
+
+			void GuiScroll::SetAutoFocus(bool value)
+			{
+				autoFocus = value;
 			}
 		}
 	}

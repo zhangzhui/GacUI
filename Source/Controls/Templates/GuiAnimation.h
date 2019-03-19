@@ -10,7 +10,6 @@ Interfaces:
 #define VCZH_PRESENTATION_CONTROLS_TEMPLATES_GUIANIMATION
 
 #include "GuiControlShared.h"
-#include "../../../Import/VlppWorkflowLibrary.h"
 
 namespace vl
 {
@@ -35,6 +34,7 @@ namespace vl
 				static void					PlayAndWaitAndPause(IImpl* impl, Ptr<IGuiAnimation> animation);
 				static void					PlayInGroupAndPause(IImpl* impl, Ptr<IGuiAnimation> animation, vint groupId);
 				static void					WaitForGroupAndPause(IImpl* impl, vint groupId);
+				static void					ReturnAndExit(IImpl* impl);
 				static Ptr<IGuiAnimation>	Create(const Creator& creator);
 			};
 		}

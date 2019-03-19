@@ -9,7 +9,8 @@ Interfaces:
 #ifndef VCZH_PRESENTATION_CONTROLS_GUIBASICCONTROLS
 #define VCZH_PRESENTATION_CONTROLS_GUIBASICCONTROLS
 
-#include "../GraphicsElement/GuiGraphicsHost.h"
+#include "../GraphicsHost/GuiGraphicsHost_Alt.h"
+#include "../GraphicsHost/GuiGraphicsHost_Tab.h"
 #include "Templates/GuiControlTemplates.h"
 
 namespace vl
@@ -23,10 +24,48 @@ namespace vl
 
 		namespace controls
 		{
+			template<typename T, typename Enabled = YesType>
+			struct QueryServiceHelper;
+
+			template<typename T>
+			struct QueryServiceHelper<T, typename RequiresConvertable<decltype(T::Identifier), const wchar_t* const>::YesNoType>
+			{
+				static WString GetIdentifier()
+				{
+					return WString(T::Identifier, false);
+				}
+			};
+
+			template<typename T>
+			struct QueryServiceHelper<T, typename RequiresConvertable<decltype(T::GetIdentifier()), WString>::YesNoType>
+			{
+				static WString GetIdentifier()
+				{
+					return MoveValue<WString>(T::GetIdentifier());
+				}
+			};
 
 /***********************************************************************
 Basic Construction
 ***********************************************************************/
+
+			/// <summary>
+			/// A helper object to test if a control has been deleted or not.
+			/// </summary>
+			class GuiDisposedFlag : public Object, public Description<GuiDisposedFlag>
+			{
+				friend class GuiControl;
+			protected:
+				GuiControl*								owner = nullptr;
+				bool									disposed = false;
+
+				void									SetDisposed();
+			public:
+				GuiDisposedFlag(GuiControl* _owner);
+				~GuiDisposedFlag();
+
+				bool									IsDisposed();
+			};
 
 			/// <summary>
 			/// The base class of all controls.
@@ -34,16 +73,28 @@ Basic Construction
 			/// If you want to manually destroy a control, you should first remove it from its parent.
 			/// The only way to remove a control from a parent control, is to remove the bounds composition from its parent composition. The same to inserting a control.
 			/// </summary>
-			class GuiControl : public Object, protected compositions::IGuiAltAction, public Description<GuiControl>
+			class GuiControl
+				: public Object
+				, protected compositions::IGuiAltAction
+				, protected compositions::IGuiTabAction
+				, public Description<GuiControl>
 			{
 				friend class compositions::GuiGraphicsComposition;
 
+			protected:
 				using ControlList = collections::List<GuiControl*>;
+				using ControlServiceMap = collections::Dictionary<WString, Ptr<IDescriptable>>;
 				using ControlTemplatePropertyType = TemplateProperty<templates::GuiControlTemplate>;
+				using IGuiGraphicsEventHandler = compositions::IGuiGraphicsEventHandler;
+
 			private:
 				theme::ThemeName						controlThemeName;
 				ControlTemplatePropertyType				controlTemplate;
 				templates::GuiControlTemplate*			controlTemplateObject = nullptr;
+				Ptr<GuiDisposedFlag>					disposedFlag;
+
+			public:
+				Ptr<GuiDisposedFlag>					GetDisposedFlag();
 
 			protected:
 				compositions::GuiBoundsComposition*		boundsComposition = nullptr;
@@ -51,13 +102,22 @@ Basic Construction
 				compositions::GuiGraphicsComposition*	focusableComposition = nullptr;
 				compositions::GuiGraphicsEventReceiver*	eventReceiver = nullptr;
 
+				bool									isFocused = false;
+				Ptr<IGuiGraphicsEventHandler>			gotFocusHandler;
+				Ptr<IGuiGraphicsEventHandler>			lostFocusHandler;
+
+				bool									acceptTabInput = false;
+				vint									tabPriority = -1;
 				bool									isEnabled = true;
 				bool									isVisuallyEnabled = true;
 				bool									isVisible = true;
 				WString									alt;
 				WString									text;
-				FontProperties							font;
+				Nullable<FontProperties>				font;
+				FontProperties							displayFont;
+				description::Value						context;
 				compositions::IGuiAltActionHost*		activatingAltHost = nullptr;
+				ControlServiceMap						controlServices;
 
 				GuiControl*								parent = nullptr;
 				ControlList								children;
@@ -74,35 +134,46 @@ Basic Construction
 				virtual void							OnChildRemoved(GuiControl* control);
 				virtual void							OnParentChanged(GuiControl* oldParent, GuiControl* newParent);
 				virtual void							OnParentLineChanged();
+				virtual void							OnServiceAdded();
 				virtual void							OnRenderTargetChanged(elements::IGuiGraphicsRenderTarget* renderTarget);
 				virtual void							OnBeforeReleaseGraphicsHost();
 				virtual void							UpdateVisuallyEnabled();
+				virtual void							UpdateDisplayFont();
+				void									OnGotFocus(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
+				void									OnLostFocus(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
 				void									SetFocusableComposition(compositions::GuiGraphicsComposition* value);
 
+				bool									IsControlVisibleAndEnabled();
 				bool									IsAltEnabled()override;
 				bool									IsAltAvailable()override;
 				compositions::GuiGraphicsComposition*	GetAltComposition()override;
 				compositions::IGuiAltActionHost*		GetActivatingAltHost()override;
 				void									OnActiveAlt()override;
+				bool									IsTabEnabled()override;
+				bool									IsTabAvailable()override;
 
 				static bool								SharedPtrDestructorProc(DescriptableObject* obj, bool forceDisposing);
 
 			public:
 				using ControlTemplateType = templates::GuiControlTemplate;
 
-				/// <summary>Create a control with a specified style controller.</summary>
+				/// <summary>Create a control with a specified default theme.</summary>
 				/// <param name="themeName">The theme name for retriving a default control template.</param>
 				GuiControl(theme::ThemeName themeName);
 				~GuiControl();
 
+				/// <summary>Theme name changed event. This event will be raised when the theme name is changed.</summary>
+				compositions::GuiNotifyEvent			ControlThemeNameChanged;
 				/// <summary>Control template changed event. This event will be raised when the control template is changed.</summary>
 				compositions::GuiNotifyEvent			ControlTemplateChanged;
-				/// <summary>Render target changed event. This event will be raised when the render target of the control is changed.</summary>
-				compositions::GuiNotifyEvent			RenderTargetChanged;
+				/// <summary>Control signal trigerred. This event will be raised because of multiple reason specified in the argument.</summary>
+				compositions::GuiControlSignalEvent		ControlSignalTrigerred;
 				/// <summary>Visible event. This event will be raised when the visibility state of the control is changed.</summary>
 				compositions::GuiNotifyEvent			VisibleChanged;
 				/// <summary>Enabled event. This event will be raised when the enabling state of the control is changed.</summary>
 				compositions::GuiNotifyEvent			EnabledChanged;
+				/// <summary>Focused event. This event will be raised when the focusing state of the control is changed.</summary>
+				compositions::GuiNotifyEvent			FocusedChanged;
 				/// <summary>
 				/// Enabled event. This event will be raised when the visually enabling state of the control is changed. A visually enabling is combined by the enabling state and the parent's visually enabling state.
 				/// A control is rendered as disabled, not only when the control itself is disabled, but also when the parent control is rendered as disabled.
@@ -114,23 +185,39 @@ Basic Construction
 				compositions::GuiNotifyEvent			TextChanged;
 				/// <summary>Font changed event. This event will be raised when the font of the control is changed.</summary>
 				compositions::GuiNotifyEvent			FontChanged;
+				/// <summary>Display font changed event. This event will be raised when the display font of the control is changed.</summary>
+				compositions::GuiNotifyEvent			DisplayFontChanged;
+				/// <summary>Context changed event. This event will be raised when the font of the control is changed.</summary>
+				compositions::GuiNotifyEvent			ContextChanged;
+
+				void									InvokeOrDelayIfRendering(Func<void()> proc);
 
 				/// <summary>A function to create the argument for notify events that raised by itself.</summary>
 				/// <returns>The created argument.</returns>
 				compositions::GuiEventArgs				GetNotifyEventArguments();
+				/// <summary>Get the associated theme name.</summary>
+				/// <returns>The theme name.</returns>
+				theme::ThemeName						GetControlThemeName();
+				/// <summary>Set the associated control theme name.</summary>
+				/// <param name="value">The theme name.</param>
+				void									SetControlThemeName(theme::ThemeName value);
 				/// <summary>Get the associated control template.</summary>
 				/// <returns>The control template.</returns>
 				ControlTemplatePropertyType				GetControlTemplate();
 				/// <summary>Set the associated control template.</summary>
 				/// <param name="value">The control template.</param>
 				void									SetControlTemplate(const ControlTemplatePropertyType& value);
+				/// <summary>Set the associated control theme name and template and the same time.</summary>
+				/// <param name="themeNameValue">The theme name.</param>
+				/// <param name="controlTemplateValue">The control template.</param>
+				void									SetControlThemeNameAndTemplate(theme::ThemeName themeNameValue, const ControlTemplatePropertyType& controlTemplateValue);
 				/// <summary>Get the associated style controller.</summary>
 				/// <returns>The associated style controller.</returns>
 				templates::GuiControlTemplate*			GetControlTemplateObject();
-				/// <summary>Get the bounds composition for the control. The value is from <see cref="IStyleController::GetBoundsComposition"/>.</summary>
+				/// <summary>Get the bounds composition for the control.</summary>
 				/// <returns>The bounds composition.</returns>
 				compositions::GuiBoundsComposition*		GetBoundsComposition();
-				/// <summary>Get the container composition for the control. The value is from <see cref="IStyleController::GetContainerComposition"/>.</summary>
+				/// <summary>Get the container composition for the control.</summary>
 				/// <returns>The container composition.</returns>
 				compositions::GuiGraphicsComposition*	GetContainerComposition();
 				/// <summary>Get the focusable composition for the control. A focusable composition is the composition to be focused when the control is focused.</summary>
@@ -161,6 +248,21 @@ Basic Construction
 				/// <summary>Test if this control is rendered as enabled.</summary>
 				/// <returns>Returns true if this control is rendered as enabled.</returns>
 				virtual bool							GetVisuallyEnabled();
+				/// <summary>Test if this control is focused.</summary>
+				/// <returns>Returns true if this control is focused.</returns>
+				virtual bool							GetFocused();
+				/// <summary>Test if this control accepts tab character input.</summary>
+				/// <returns>Returns true if this control accepts tab character input.</returns>
+				virtual bool							GetAcceptTabInput()override;
+				/// <summary>Set if this control accepts tab character input.</summary>
+				/// <param name="value">Set to true to make this control accept tab character input.</param>
+				void									SetAcceptTabInput(bool value);
+				/// <summary>Get the tab priority associated with this control.</summary>
+				/// <returns>Returns he tab priority associated with this control.</returns>
+				virtual vint							GetTabPriority()override;
+				/// <summary>Associate a tab priority with this control.</summary>
+				/// <param name="value">The tab priority to associate. TAB key will go through controls in the order of priority: 0, 1, 2, ..., -1. All negative numbers will be converted to -1. The priority of containers affects all children if it is not -1.</param>
+				void									SetTabPriority(vint value);
 				/// <summary>Test if this control is enabled.</summary>
 				/// <returns>Returns true if this control is enabled.</returns>
 				virtual bool							GetEnabled();
@@ -178,7 +280,7 @@ Basic Construction
 				virtual const WString&					GetAlt()override;
 				/// <summary>Associate a Alt-combined shortcut key with this control.</summary>
 				/// <returns>Returns true if this operation succeeded.</returns>
-				/// <param name="value">The Alt-combined shortcut key to associate. Only zero, sigle or multiple upper case letters are legal.</param>
+				/// <param name="value">The Alt-combined shortcut key to associate. The key should contain only upper-case letters or digits.</param>
 				virtual bool							SetAlt(const WString& value);
 				/// <summary>Make the control as the parent of multiple Alt-combined shortcut key activatable controls.</summary>
 				/// <param name="host">The alt action host object.</param>
@@ -189,12 +291,21 @@ Basic Construction
 				/// <summary>Set the text to display on the control.</summary>
 				/// <param name="value">The text to display on the control.</param>
 				virtual void							SetText(const WString& value);
-				/// <summary>Get the font to render the text.</summary>
+				/// <summary>Get the font of this control.</summary>
+				/// <returns>The font of this control.</returns>
+				virtual const Nullable<FontProperties>&	GetFont();
+				/// <summary>Set the font of this control.</summary>
+				/// <param name="value">The font of this control.</param>
+				virtual void							SetFont(const Nullable<FontProperties>& value);
+				/// <summary>Get the font to render the text. If the font of this control is null, then the display font is either the parent control's display font, or the system's default font when there is no parent control.</summary>
 				/// <returns>The font to render the text.</returns>
-				virtual const FontProperties&			GetFont();
-				/// <summary>Set the font to render the text.</summary>
-				/// <param name="value">The font to render the text.</param>
-				virtual void							SetFont(const FontProperties& value);
+				virtual const FontProperties&			GetDisplayFont();
+				/// <summary>Get the context of this control. The control template and all item templates (if it has) will see this context property.</summary>
+				/// <returns>The context of this context.</returns>
+				virtual description::Value				GetContext();
+				/// <summary>Set the context of this control.</summary>
+				/// <param name="value">The context of this control.</param>
+				virtual void							SetContext(const description::Value& value);
 				/// <summary>Focus this control.</summary>
 				virtual void							SetFocus();
 
@@ -232,8 +343,14 @@ Basic Construction
 				template<typename T>
 				T* QueryTypedService()
 				{
-					return dynamic_cast<T*>(QueryService(T::Identifier));
+					return dynamic_cast<T*>(QueryService(QueryServiceHelper<T>::GetIdentifier()));
 				}
+
+				/// <summary>Add a service to this control dynamically. The added service cannot override existing services.</summary>
+				/// <returns>Returns true if this operation succeeded.</returns>
+				/// <param name="identifier">The identifier. You are suggested to fill this parameter using the value from the interface's GetIdentifier function, or <see cref="QueryTypedService`1"/> will not work on this service.</param>
+				/// <param name="value">The service.</param>
+				bool									AddService(const WString& identifier, Ptr<IDescriptable> value);
 			};
 
 			/// <summary>Represnets a user customizable control.</summary>
@@ -243,7 +360,7 @@ Basic Construction
 				controls::GuiControlHost*				GetControlHostForInstance()override;
 				void									OnParentLineChanged()override;
 			public:
-				/// <summary>Create a control with a specified style controller.</summary>
+				/// <summary>Create a control with a specified default theme.</summary>
 				/// <param name="themeName">The theme name for retriving a default control template.</param>
 				GuiCustomControl(theme::ThemeName themeName);
 				~GuiCustomControl();
@@ -294,14 +411,13 @@ Basic Construction
 					NAME = ct; \
 					BASE_TYPE::CheckAndStoreControlTemplate(value); \
 				} \
-				bool HasControlTemplateObject() \
-				{ \
-					return NAME != nullptr; \
-				} \
 			public: \
-				templates::Gui##TEMPLATE* GetControlTemplateObject() \
+				templates::Gui##TEMPLATE* GetControlTemplateObject(bool ensureExists) \
 				{ \
-					EnsureControlTemplateExists(); \
+					if (ensureExists) \
+					{ \
+						EnsureControlTemplateExists(); \
+					} \
 					return NAME; \
 				} \
 			private: \

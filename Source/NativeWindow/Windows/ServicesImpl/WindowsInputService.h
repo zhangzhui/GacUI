@@ -10,7 +10,7 @@ Interfaces:
 #define VCZH_PRESENTATION_WINDOWS_SERVICESIMPL_WINDOWSINPUTSERVICE
 
 #include "..\..\GuiNativeWindow.h"
-#include <windows.h>
+#include "..\WinNativeDpiAwareness.h"
 
 namespace vl
 {
@@ -27,9 +27,9 @@ namespace vl
 				HOOKPROC								mouseProc;
 
 				collections::Array<WString>				keyNames;
-				collections::Dictionary<WString, vint>	keys;
+				collections::Dictionary<WString, VKEY>	keys;
 
-				WString									GetKeyNameInternal(vint code);
+				WString									GetKeyNameInternal(VKEY code);
 				void									InitializeKeyNames();
 			public:
 				WindowsInputService(HOOKPROC _mouseProc);
@@ -41,14 +41,14 @@ namespace vl
 				void									StartTimer()override;
 				void									StopTimer()override;
 				bool									IsTimerEnabled()override;
-				bool									IsKeyPressing(vint code)override;
-				bool									IsKeyToggled(vint code)override;
-				WString									GetKeyName(vint code)override;
-				vint									GetKey(const WString& name)override;
+				bool									IsKeyPressing(VKEY code)override;
+				bool									IsKeyToggled(VKEY code)override;
+				WString									GetKeyName(VKEY code)override;
+				VKEY									GetKey(const WString& name)override;
 			};
 
-			extern bool									WinIsKeyPressing(vint code);
-			extern bool									WinIsKeyToggled(vint code);
+			extern bool									WinIsKeyPressing(VKEY code);
+			extern bool									WinIsKeyToggled(VKEY code);
 		}
 	}
 }

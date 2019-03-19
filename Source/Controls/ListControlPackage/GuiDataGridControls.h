@@ -18,6 +18,8 @@ namespace vl
 	{
 		namespace controls
 		{
+			class GuiVirtualDataGrid;
+
 			namespace list
 			{
 
@@ -37,8 +39,7 @@ DefaultDataGridItemTemplate
 					IDataVisualizerFactory*								GetDataVisualizerFactory(vint row, vint column);
 					IDataEditorFactory*									GetDataEditorFactory(vint row, vint column);
 					vint												GetCellColumnIndex(compositions::GuiGraphicsComposition* composition);
-					void												OnCellButtonUp(compositions::GuiGraphicsComposition* sender, bool openEditor);
-					bool												IsInEditor(compositions::GuiMouseEventArgs& arguments);
+					bool												IsInEditor(GuiVirtualDataGrid* dataGrid, compositions::GuiMouseEventArgs& arguments);
 					void												OnCellButtonDown(compositions::GuiGraphicsComposition* sender, compositions::GuiMouseEventArgs& arguments);
 					void												OnCellLeftButtonUp(compositions::GuiGraphicsComposition* sender, compositions::GuiMouseEventArgs& arguments);
 					void												OnCellRightButtonUp(compositions::GuiGraphicsComposition* sender, compositions::GuiMouseEventArgs& arguments);
@@ -47,6 +48,7 @@ DefaultDataGridItemTemplate
 					void												OnInitialize()override;
 					void												OnSelectedChanged(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
 					void												OnFontChanged(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
+					void												OnContextChanged(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
 				public:
 					DefaultDataGridItemTemplate();
 					~DefaultDataGridItemTemplate();
@@ -67,6 +69,7 @@ GuiVirtualDataGrid
 			/// <summary>Data grid control in virtual mode.</summary>
 			class GuiVirtualDataGrid
 				: public GuiVirtualListView
+				, protected compositions::GuiAltActionHostBase
 				, private list::IDataGridContext
 				, public Description<GuiVirtualDataGrid>
 			{
@@ -78,28 +81,32 @@ GuiVirtualDataGrid
 				Ptr<list::IDataVisualizerFactory>						defaultMainColumnVisualizerFactory;
 				Ptr<list::IDataVisualizerFactory>						defaultSubColumnVisualizerFactory;
 
+				bool													skipOnSelectionChanged = false;
 				GridPos													selectedCell{ -1,-1 };
 				Ptr<list::IDataEditor>									currentEditor;
 				GridPos													currentEditorPos{ -1,-1 };
 				bool													currentEditorOpeningEditor = false;
 
+				compositions::IGuiAltActionHost*						GetActivatingAltHost()override;
 				void													OnItemModified(vint start, vint count, vint newCount)override;
 				void													OnStyleUninstalled(ItemStyle* style)override;
 
 				void													NotifyCloseEditor();
 				void													NotifySelectCell(vint row, vint column);
 				bool													StartEdit(vint row, vint column);
-				void													StopEdit(bool forOpenNewEditor);
+				void													StopEdit();
 				void													OnColumnClicked(compositions::GuiGraphicsComposition* sender, compositions::GuiItemEventArgs& arguments);
+				void													OnSelectionChanged(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
+				void													OnKeyDown(compositions::GuiGraphicsComposition* sender, compositions::GuiKeyEventArgs& arguments);
+				void													OnKeyUp(compositions::GuiGraphicsComposition* sender, compositions::GuiKeyEventArgs& arguments);
 
 			public:
 				templates::GuiListViewTemplate*							GetListViewControlTemplate()override;
-				description::Value										GetViewModelContext()override;
 				void													RequestSaveData()override;
 
 			public:
 				/// <summary>Create a data grid control in virtual mode.</summary>
-				/// <param name="_controlTemplate">The control template for this control.</param>
+				/// <param name="themeName">The theme name for retriving a default control template.</param>
 				/// <param name="_itemProvider">The item provider for this control.</param>
 				GuiVirtualDataGrid(theme::ThemeName themeName, GuiListControl::IItemProvider* _itemProvider);
 				~GuiVirtualDataGrid();
@@ -115,9 +122,12 @@ GuiVirtualDataGrid
 				/// <summary>Get the row index and column index of the selected cell.</summary>
 				/// <returns>The row index and column index of the selected cell.</returns>
 				GridPos													GetSelectedCell();
-				/// <summary>Set the row index and column index of the selected cell.</summary>
+
+				/// <summary>Select a cell.</summary>
+				/// <returns>Returns true if the editor is opened.</returns>
 				/// <param name="value">The row index and column index of the selected cell.</param>
-				void													SetSelectedCell(const GridPos& value);
+				/// <param name="openEditor">Set to true to open an editor.</param>
+				bool													SelectCell(const GridPos& value, bool openEditor);
 			};
 		}
 	}

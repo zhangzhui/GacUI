@@ -12,7 +12,6 @@ Interfaces:
 #include "GuiTextListControls.h"
 #include "GuiListViewControls.h"
 #include "GuiTreeViewControls.h"
-#include "GuiDataGridControls.h"
 
 namespace vl
 {
@@ -131,8 +130,7 @@ GuiBindableTextList
 
 			public:
 				/// <summary>Create a bindable Text list control.</summary>
-				/// <param name="_controlTemplate">The control template for this control.</param>
-				/// <param name = "_bulletFactory">The factory object to create the control styles for bullet before a text item.</param>
+				/// <param name="themeName">The theme name for retriving a default control template.</param>
 				GuiBindableTextList(theme::ThemeName themeName);
 				~GuiBindableTextList();
 				
@@ -178,8 +176,8 @@ GuiBindableListView
 				class ItemSource
 					: public list::ItemProviderBase
 					, protected virtual list::IListViewItemProvider
-					, protected virtual list::IListViewItemView
-					, protected virtual list::ListViewColumnItemArranger::IColumnItemView
+					, public virtual list::IListViewItemView
+					, public virtual list::ListViewColumnItemArranger::IColumnItemView
 				{
 					typedef collections::List<list::ListViewColumnItemArranger::IColumnItemViewCallback*>		ColumnItemViewCallbackList;
 				protected:
@@ -244,7 +242,7 @@ GuiBindableListView
 
 			public:
 				/// <summary>Create a bindable List view control.</summary>
-				/// <param name="_controlTemplate">The control template for this control.</param>
+				/// <param name="themeName">The theme name for retriving a default control template.</param>
 				GuiBindableListView(theme::ThemeName themeName);
 				~GuiBindableListView();
 
@@ -314,7 +312,8 @@ GuiBindableTreeView
 					Ptr<description::IValueReadonlyList>			childrenVirtualList;
 					NodeList										children;
 
-					void											PrepareChildren();
+					Ptr<description::IValueReadonlyList>			PrepareValueList(const description::Value& inputItemSource);
+					void											PrepareChildren(Ptr<description::IValueReadonlyList> newValueList);
 					void											UnprepareChildren();
 				public:
 					ItemSourceNode(const description::Value& _itemSource, ItemSourceNode* _parent);
@@ -331,15 +330,13 @@ GuiBindableTreeView
 					vint											CalculateTotalVisibleNodes()override;
 
 					vint											GetChildCount()override;
-					tree::INodeProvider*							GetParent()override;
-					tree::INodeProvider*							GetChild(vint index)override;
-					void											Increase()override;
-					void											Release()override;
+					Ptr<tree::INodeProvider>						GetParent()override;
+					Ptr<tree::INodeProvider>						GetChild(vint index)override;
 				};
 
 				class ItemSource
 					: public tree::NodeRootProviderBase
-					, protected virtual tree::ITreeViewItemView
+					, public virtual tree::ITreeViewItemView
 				{
 					friend class ItemSourceNode;
 				public:
@@ -359,7 +356,7 @@ GuiBindableTreeView
 
 					// ===================== tree::INodeRootProvider =====================
 
-					tree::INodeProvider*							GetRootNode()override;
+					Ptr<tree::INodeProvider>						GetRootNode()override;
 					WString											GetTextValue(tree::INodeProvider* node)override;
 					description::Value								GetBindingValue(tree::INodeProvider* node)override;
 					IDescriptable*									RequestView(const WString& identifier)override;
@@ -375,7 +372,7 @@ GuiBindableTreeView
 
 			public:
 				/// <summary>Create a bindable Tree view control.</summary>
-				/// <param name="_controlTemplate">The control template for this control.</param>
+				/// <param name="themeName">The theme name for retriving a default control template.</param>
 				GuiBindableTreeView(theme::ThemeName themeName);
 				~GuiBindableTreeView();
 				

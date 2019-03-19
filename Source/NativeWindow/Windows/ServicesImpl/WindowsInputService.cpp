@@ -6,12 +6,12 @@ namespace vl
 	{
 		namespace windows
 		{
-			bool WinIsKeyPressing(vint code)
+			bool WinIsKeyPressing(VKEY code)
 			{
 				return (GetKeyState((int)code)&0xF0)!=0;
 			}
 
-			bool WinIsKeyToggled(vint code)
+			bool WinIsKeyToggled(VKEY code)
 			{
 				return (GetKeyState((int)code)&0x0F)!=0;
 			}
@@ -20,12 +20,12 @@ namespace vl
 WindowsInputService
 ***********************************************************************/
 
-			WString WindowsInputService::GetKeyNameInternal(vint code)
+			WString WindowsInputService::GetKeyNameInternal(VKEY code)
 			{
-				if (code < 8) return L"?";
+				if ((vint)code < 8) return L"?";
 				wchar_t name[256]={0};
 				vint scanCode=MapVirtualKey((int)code, MAPVK_VK_TO_VSC)<<16;
-				switch(code)
+				switch((vint)code)
 				{
 				case VK_INSERT:
 				case VK_DELETE:
@@ -56,10 +56,10 @@ WindowsInputService
 			{
 				for (vint i = 0; i < keyNames.Count(); i++)
 				{
-					keyNames[i] = GetKeyNameInternal(i);
+					keyNames[i] = GetKeyNameInternal((VKEY)i);
 					if (keyNames[i] != L"?")
 					{
-						keys.Set(keyNames[i], i);
+						keys.Set(keyNames[i], (VKEY)i);
 					}
 				}
 			}
@@ -124,21 +124,21 @@ WindowsInputService
 				return isTimerEnabled;
 			}
 				
-			bool WindowsInputService::IsKeyPressing(vint code)
+			bool WindowsInputService::IsKeyPressing(VKEY code)
 			{
 				return WinIsKeyPressing(code);
 			}
 
-			bool WindowsInputService::IsKeyToggled(vint code)
+			bool WindowsInputService::IsKeyToggled(VKEY code)
 			{
 				return WinIsKeyToggled(code);
 			}
 
-			WString WindowsInputService::GetKeyName(vint code)
+			WString WindowsInputService::GetKeyName(VKEY code)
 			{
-				if (0 <= code && 0 < keyNames.Count())
+				if (0 <= (vint)code && (vint)code < keyNames.Count())
 				{
-					return keyNames[code];
+					return keyNames[(vint)code];
 				}
 				else
 				{
@@ -146,10 +146,10 @@ WindowsInputService
 				}
 			}
 
-			vint WindowsInputService::GetKey(const WString& name)
+			VKEY WindowsInputService::GetKey(const WString& name)
 			{
 				vint index = keys.Keys().IndexOf(name);
-				return index == -1 ? -1 : keys.Values()[index];
+				return index == -1 ? VKEY::_UNKNOWN : keys.Values()[index];
 			}
 		}
 	}

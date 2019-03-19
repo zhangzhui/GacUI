@@ -22,7 +22,7 @@
     <ProjectGuid>{456FDC57-9687-4607-86A6-D43B7E72E740}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>UnitTest</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -89,6 +89,9 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;VCZH_CHECK_MEMORY_LEAKS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <DisableLanguageExtensions>false</DisableLanguageExtensions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -106,6 +109,9 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;VCZH_CHECK_MEMORY_LEAKS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <DisableLanguageExtensions>false</DisableLanguageExtensions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -125,6 +131,9 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <DisableLanguageExtensions>false</DisableLanguageExtensions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -146,6 +155,9 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <DisableLanguageExtensions>false</DisableLanguageExtensions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -159,6 +171,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="TestReflectionTypeList.cpp" />
     <ClCompile Include="TestResource.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -174,9 +187,13 @@
     <Text Include="..\..\Resources\Resource.FailedInstance.Ctor3.xml.txt" />
     <Text Include="..\..\Resources\Resource.FailedInstance.Ctor4.xml.txt" />
     <Text Include="..\..\Resources\Resource.FailedInstance.Ctor5.xml.txt" />
+    <Text Include="..\..\Resources\Resource.FailedInstance.Inheriting1.xml.txt" />
+    <Text Include="..\..\Resources\Resource.FailedInstance.Inheriting2.xml.txt" />
     <Text Include="..\..\Resources\Resource.FailedScript.Animations.xml.txt" />
     <Text Include="..\..\Resources\Resource.FailedScript.Animations2.xml.txt" />
     <Text Include="..\..\Resources\Resource.FailedScript.Properties.xml.txt" />
+    <Text Include="..\..\Resources\Resource.FailedScript.Strings.xml.txt" />
+    <Text Include="..\..\Resources\Resource.FailedScript.Strings2.xml.txt" />
     <Text Include="..\..\Resources\Resource.FailedScript.Workflow.xml.txt" />
     <Text Include="..\..\Resources\Resource.NotExists.xml.txt" />
     <Text Include="..\..\Resources\Resource.WrongDoc.xml.txt" />
@@ -194,9 +211,13 @@
     <Xml Include="..\..\Resources\Resource.FailedInstance.Ctor3.xml" />
     <Xml Include="..\..\Resources\Resource.FailedInstance.Ctor4.xml" />
     <Xml Include="..\..\Resources\Resource.FailedInstance.Ctor5.xml" />
+    <Xml Include="..\..\Resources\Resource.FailedInstance.Inheriting1.xml" />
+    <Xml Include="..\..\Resources\Resource.FailedInstance.Inheriting2.xml" />
     <Xml Include="..\..\Resources\Resource.FailedScript.Animations.xml" />
     <Xml Include="..\..\Resources\Resource.FailedScript.Animations2.xml" />
     <Xml Include="..\..\Resources\Resource.FailedScript.Properties.xml" />
+    <Xml Include="..\..\Resources\Resource.FailedScript.Strings.xml" />
+    <Xml Include="..\..\Resources\Resource.FailedScript.Strings2.xml" />
     <Xml Include="..\..\Resources\Resource.FailedScript.Workflow.xml" />
     <Xml Include="..\..\Resources\Resource.WrongDoc.xml" />
     <Xml Include="..\..\Resources\Resource.WrongInstance.xml" />

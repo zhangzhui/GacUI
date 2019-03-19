@@ -20,11 +20,15 @@ namespace vl
 GuiInstanceSharedScript
 ***********************************************************************/
 
-		void GuiInstanceCompiledWorkflow::Initialize(bool initializeContext)
+		bool GuiInstanceCompiledWorkflow::Initialize(bool initializeContext, workflow::runtime::WfAssemblyLoadErrors& loadErrors)
 		{
 			if (binaryToLoad)
 			{
-				assembly = new WfAssembly(*binaryToLoad.Obj());
+				assembly = WfAssembly::Deserialize(*binaryToLoad.Obj(), loadErrors);
+				if (!assembly)
+				{
+					return false;
+				}
 				context = nullptr;
 				binaryToLoad = nullptr;
 			}
@@ -34,6 +38,7 @@ GuiInstanceSharedScript
 				context = new WfRuntimeGlobalContext(assembly);
 				LoadFunction<void()>(context, L"<initialize>")();
 			}
+			return true;
 		}
 
 /***********************************************************************
@@ -67,7 +72,7 @@ Compiled Workflow Type Resolver (Workflow)
 				return 1;
 			}
 
-			void Initialize(Ptr<GuiResourceItem> resource, GuiResourceInitializeContext& context)override
+			void Initialize(Ptr<GuiResourceItem> resource, GuiResourceInitializeContext& context, GuiResourceError::List& errors)override
 			{
 				if (auto compiled = resource->GetContent().Cast<GuiInstanceCompiledWorkflow>())
 				{
@@ -78,7 +83,22 @@ Compiled Workflow Type Resolver (Workflow)
 						{
 							if (context.usage == GuiResourceUsage::InstanceClass)
 							{
-								compiled->Initialize(true);
+								WfAssemblyLoadErrors loadErrors;
+								if (!compiled->Initialize(true, loadErrors))
+								{
+									FOREACH(WString, loadError, loadErrors.duplicatedTypes)
+									{
+										errors.Add({ {resource},L"Failed to add an existing type: " + loadError });
+									}
+									FOREACH(WString, loadError, loadErrors.unresolvedTypes)
+									{
+										errors.Add({ {resource},L"Unable to resolve type: " + loadError });
+									}
+									FOREACH(WString, loadError, loadErrors.unresolvedMembers)
+									{
+										errors.Add({ {resource},L"Unable to resolve member: " + loadError });
+									}
+								}
 							}
 						}
 						break;
@@ -223,15 +243,29 @@ Type Declaration
 				STRUCT_MEMBER(column)
 			END_STRUCT_MEMBER(GridPos)
 
+			BEGIN_STRUCT_MEMBER(NativeCoordinate)
+				STRUCT_MEMBER(value)
+			END_STRUCT_MEMBER(NativeCoordinate)
+
 			BEGIN_STRUCT_MEMBER(Point)
 				STRUCT_MEMBER(x)
 				STRUCT_MEMBER(y)
 			END_STRUCT_MEMBER(Point)
 
+			BEGIN_STRUCT_MEMBER(NativePoint)
+				STRUCT_MEMBER(x)
+				STRUCT_MEMBER(y)
+			END_STRUCT_MEMBER(NativePoint)
+
 			BEGIN_STRUCT_MEMBER(Size)
 				STRUCT_MEMBER(x)
 				STRUCT_MEMBER(y)
 			END_STRUCT_MEMBER(Size)
+
+			BEGIN_STRUCT_MEMBER(NativeSize)
+				STRUCT_MEMBER(x)
+				STRUCT_MEMBER(y)
+			END_STRUCT_MEMBER(NativeSize)
 
 			BEGIN_STRUCT_MEMBER(Rect)
 				STRUCT_MEMBER(x1)
@@ -240,12 +274,26 @@ Type Declaration
 				STRUCT_MEMBER(y2)
 			END_STRUCT_MEMBER(Rect)
 
+			BEGIN_STRUCT_MEMBER(NativeRect)
+				STRUCT_MEMBER(x1)
+				STRUCT_MEMBER(y1)
+				STRUCT_MEMBER(x2)
+				STRUCT_MEMBER(y2)
+			END_STRUCT_MEMBER(NativeRect)
+
 			BEGIN_STRUCT_MEMBER(Margin)
 				STRUCT_MEMBER(left)
 				STRUCT_MEMBER(top)
 				STRUCT_MEMBER(right)
 				STRUCT_MEMBER(bottom)
 			END_STRUCT_MEMBER(Margin)
+
+			BEGIN_STRUCT_MEMBER(NativeMargin)
+				STRUCT_MEMBER(left)
+				STRUCT_MEMBER(top)
+				STRUCT_MEMBER(right)
+				STRUCT_MEMBER(bottom)
+			END_STRUCT_MEMBER(NativeMargin)
 
 			BEGIN_STRUCT_MEMBER(FontProperties)
 				STRUCT_MEMBER(fontFamily)
@@ -257,6 +305,13 @@ Type Declaration
 				STRUCT_MEMBER(antialias)
 				STRUCT_MEMBER(verticalAntialias)
 			END_STRUCT_MEMBER(FontProperties)
+
+#define GUI_DEFINE_KEYBOARD_CODE_ENUM_ITEM(NAME, CODE) ENUM_CLASS_ITEM(_##NAME)
+			BEGIN_ENUM_ITEM(VKEY)
+				ENUM_CLASS_ITEM(_UNKNOWN)
+				GUI_DEFINE_KEYBOARD_CODE(GUI_DEFINE_KEYBOARD_CODE_ENUM_ITEM)
+			END_ENUM_ITEM(VKEY)
+#undef GUI_DEFINE_KEYBOARD_CODE_ENUM_ITEM
 
 			BEGIN_STRUCT_MEMBER_FLAG(GlobalStringKey, TypeDescriptorFlags::Primitive)
 				valueType = new SerializableValueType<GlobalStringKey>();
@@ -319,6 +374,8 @@ Type Declaration
 				CLASS_MEMBER_PROPERTY_FAST(CaretPoint)
 				CLASS_MEMBER_PROPERTY_FAST(Parent)
 				CLASS_MEMBER_PROPERTY_FAST(AlwaysPassFocusToParent)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(CustomFramePadding)
+				CLASS_MEMBER_PROPERTY_FAST(Icon)
 				CLASS_MEMBER_PROPERTY_READONLY_FAST(SizeState)
 				CLASS_MEMBER_PROPERTY_FAST(MinimizedBox)
 				CLASS_MEMBER_PROPERTY_FAST(MaximizedBox)
@@ -383,6 +440,8 @@ Type Declaration
 				CLASS_MEMBER_PROPERTY_READONLY_FAST(Bounds);
 				CLASS_MEMBER_PROPERTY_READONLY_FAST(ClientBounds);
 				CLASS_MEMBER_PROPERTY_READONLY_FAST(Name);
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(ScalingX);
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(ScalingY);
 
 				CLASS_MEMBER_METHOD(IsPrimary, NO_PARAMETER)
 			END_INTERFACE_MEMBER(INativeScreen)
@@ -407,10 +466,25 @@ Type Declaration
 				CLASS_MEMBER_METHOD(DelayExecuteInMainThread, {L"proc" _ L"milliseconds"})
 			END_INTERFACE_MEMBER(INativeAsyncService)
 
-			BEGIN_INTERFACE_MEMBER_NOPROXY(INativeClipboardService)
-				CLASS_MEMBER_PROPERTY_FAST(Text)
-
+			BEGIN_INTERFACE_MEMBER_NOPROXY(INativeClipboardReader)
 				CLASS_MEMBER_METHOD(ContainsText, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(GetText, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(ContainsDocument, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(GetDocument, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(ContainsImage, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(GetImage, NO_PARAMETER)
+			END_INTERFACE_MEMBER(INativeClipboardReader)
+
+			BEGIN_INTERFACE_MEMBER_NOPROXY(INativeClipboardWriter)
+				CLASS_MEMBER_METHOD(SetText, { L"value" })
+				CLASS_MEMBER_METHOD(SetDocument, { L"value" })
+				CLASS_MEMBER_METHOD(SetImage, { L"value" })
+				CLASS_MEMBER_METHOD(Submit, NO_PARAMETER)
+			END_INTERFACE_MEMBER(INativeClipboardWriter)
+
+			BEGIN_INTERFACE_MEMBER_NOPROXY(INativeClipboardService)
+				CLASS_MEMBER_METHOD(ReadClipboard, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(WriteClipboard, NO_PARAMETER)
 			END_INTERFACE_MEMBER(INativeClipboardService)
 
 			BEGIN_INTERFACE_MEMBER_NOPROXY(INativeScreenService)
@@ -814,17 +888,18 @@ namespace vl
 			using namespace collections;
 			using namespace presentation;
 			using namespace presentation::compositions;
+			using namespace presentation::controls;
 
 #ifndef VCZH_DEBUG_NO_REFLECTION
-
-/***********************************************************************
-Type Declaration
-***********************************************************************/
 
 #define _ ,
 
 #define INTERFACE_IDENTIFIER(INTERFACE)\
-	CLASS_MEMBER_STATIC_EXTERNALMETHOD(GetIdentifier, NO_PARAMETER, WString(*)(), vl::reflection::description::Interface_GetIdentifier<::INTERFACE>)
+	CLASS_MEMBER_STATIC_EXTERNALMETHOD(GetIdentifier, NO_PARAMETER, WString(*)(), vl::presentation::controls::QueryServiceHelper<::INTERFACE>::GetIdentifier)
+
+/***********************************************************************
+Type Declaration (Extra)
+***********************************************************************/
 
 			BEGIN_ENUM_ITEM(KeyDirection)
 				ENUM_CLASS_ITEM(Up)
@@ -863,7 +938,135 @@ Type Declaration
 				CLASS_MEMBER_PROPERTY_READONLY_FAST(Direction)
 			END_CLASS_MEMBER(GuiAxis)
 
+			BEGIN_ENUM_ITEM(GuiGraphicsComposition::MinSizeLimitation)
+				ENUM_ITEM_NAMESPACE(GuiGraphicsComposition)
+				ENUM_NAMESPACE_ITEM(NoLimit)
+				ENUM_NAMESPACE_ITEM(LimitToElement)
+				ENUM_NAMESPACE_ITEM(LimitToElementAndChildren)
+			END_ENUM_ITEM(GuiGraphicsComposition::MinSizeLimitation)
+
+			BEGIN_ENUM_ITEM(GuiStackComposition::Direction)
+				ENUM_ITEM_NAMESPACE(GuiStackComposition)
+				ENUM_NAMESPACE_ITEM(Horizontal)
+				ENUM_NAMESPACE_ITEM(Vertical)
+				ENUM_NAMESPACE_ITEM(ReversedHorizontal)
+				ENUM_NAMESPACE_ITEM(ReversedVertical)
+			END_ENUM_ITEM(GuiStackComposition::Direction)
+
+			BEGIN_STRUCT_MEMBER(GuiCellOption)
+				STRUCT_MEMBER(composeType)
+				STRUCT_MEMBER(absolute)
+				STRUCT_MEMBER(percentage)
+			END_STRUCT_MEMBER(GuiCellOption)
+
+			BEGIN_ENUM_ITEM(GuiCellOption::ComposeType)
+				ENUM_ITEM_NAMESPACE(GuiCellOption)
+				ENUM_NAMESPACE_ITEM(Absolute)
+				ENUM_NAMESPACE_ITEM(Percentage)
+				ENUM_NAMESPACE_ITEM(MinSize)
+			END_ENUM_ITEM(GuiCellOption::ComposeType)
+
+			BEGIN_STRUCT_MEMBER(GuiFlowOption)
+				STRUCT_MEMBER(baseline)
+				STRUCT_MEMBER(percentage)
+				STRUCT_MEMBER(distance)
+			END_STRUCT_MEMBER(GuiFlowOption)
+
+			BEGIN_ENUM_ITEM(GuiFlowOption::BaselineType)
+				ENUM_ITEM_NAMESPACE(GuiFlowOption)
+				ENUM_NAMESPACE_ITEM(Percentage)
+				ENUM_NAMESPACE_ITEM(FromTop)
+				ENUM_NAMESPACE_ITEM(FromBottom)
+			END_ENUM_ITEM(GuiFlowOption::BaselineType)
+
+			BEGIN_ENUM_ITEM(FlowAlignment)
+				ENUM_CLASS_ITEM(Left)
+				ENUM_CLASS_ITEM(Center)
+				ENUM_CLASS_ITEM(Extend)
+			END_ENUM_ITEM(FlowAlignment)
+
+			BEGIN_ENUM_ITEM(GuiSideAlignedComposition::Direction)
+				ENUM_ITEM_NAMESPACE(GuiSideAlignedComposition)
+				ENUM_NAMESPACE_ITEM(Left)
+				ENUM_NAMESPACE_ITEM(Top)
+				ENUM_NAMESPACE_ITEM(Right)
+				ENUM_NAMESPACE_ITEM(Bottom)
+			END_ENUM_ITEM(GuiSideAlignedComposition::Direction)
+
+			BEGIN_ENUM_ITEM(ResponsiveDirection)
+				ENUM_CLASS_ITEM(Horizontal)
+				ENUM_CLASS_ITEM(Vertical)
+				ENUM_CLASS_ITEM(Both)
+			END_ENUM_ITEM(ResponsiveDirection)
+
+			BEGIN_INTERFACE_MEMBER_NOPROXY(IGuiShortcutKeyItem)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(Manager)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(Name)
+			END_INTERFACE_MEMBER(IGuiShortcutKeyItem)
+
+			BEGIN_INTERFACE_MEMBER_NOPROXY(IGuiShortcutKeyManager)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(ItemCount)
+
+				CLASS_MEMBER_METHOD(GetItem, {L"index"})
+			END_INTERFACE_MEMBER(IGuiShortcutKeyManager)
+
+			BEGIN_CLASS_MEMBER(GuiShortcutKeyManager)
+				CLASS_MEMBER_BASE(IGuiShortcutKeyManager)
+				CLASS_MEMBER_CONSTRUCTOR(GuiShortcutKeyManager*(), NO_PARAMETER)
+
+				CLASS_MEMBER_METHOD(CreateShortcut, {L"ctrl" _ L"shift" _ L"alt" _ L"ket"})
+				CLASS_MEMBER_METHOD(DestroyShortcut, {L"ctrl" _ L"shift" _ L"alt" _ L"ket"})
+				CLASS_MEMBER_METHOD(TryGetShortcut, {L"ctrl" _ L"shift" _ L"alt" _ L"ket"})
+			END_CLASS_MEMBER(GuiShortcutKeyManager)
+
+			BEGIN_INTERFACE_MEMBER_NOPROXY(IGuiAltAction)
+				INTERFACE_IDENTIFIER(vl::presentation::compositions::IGuiAltAction)
+
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(Alt)
+
+				CLASS_MEMBER_METHOD(IsAltEnabled, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(IsAltAvailable, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(GetAltComposition, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(GetActivatingAltHost, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(OnActiveAlt, NO_PARAMETER)
+			END_INTERFACE_MEMBER(IGuiAltAction)
+
+			BEGIN_INTERFACE_MEMBER_NOPROXY(IGuiAltActionContainer)
+				INTERFACE_IDENTIFIER(vl::presentation::compositions::IGuiAltActionContainer)
+
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(AltActionCount)
+				
+				CLASS_MEMBER_METHOD(GetAltAction, { L"index" })
+			END_INTERFACE_MEMBER(IGuiAltActionContainer)
+
+			BEGIN_INTERFACE_MEMBER_NOPROXY(IGuiAltActionHost)
+				INTERFACE_IDENTIFIER(vl::presentation::compositions::IGuiAltActionHost)
+
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(AltComposition)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(PreviousAltHost)
+
+				CLASS_MEMBER_METHOD(OnActivatedAltHost, { L"previousHost" })
+				CLASS_MEMBER_METHOD(OnDeactivatedAltHost, NO_PARAMETER)
+				CLASS_MEMBER_EXTERNALMETHOD(CollectAltActions, {L"actions"}, void(IGuiAltActionHost::*)(List<IGuiAltAction*>&), vl::reflection::description::IGuiAltActionHost_CollectAltActions)
+			END_INTERFACE_MEMBER(IGuiAltActionHost)
+
+			BEGIN_INTERFACE_MEMBER_NOPROXY(IGuiTabAction)
+				INTERFACE_IDENTIFIER(vl::presentation::compositions::IGuiTabAction)
+
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(AcceptTabInput)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(TabPriority)
+				CLASS_MEMBER_METHOD(IsTabEnabled, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(IsTabAvailable, NO_PARAMETER)
+			END_INTERFACE_MEMBER(IGuiTabAction)
+
+/***********************************************************************
+Type Declaration (Class)
+***********************************************************************/
+
 			BEGIN_CLASS_MEMBER(GuiGraphicsComposition)
+
+				CLASS_MEMBER_EXTERNALMETHOD(SafeDelete, NO_PARAMETER, void(GuiGraphicsComposition::*)(), vl::presentation::compositions::SafeDeleteComposition)
+
 				CLASS_MEMBER_GUIEVENT_COMPOSITION(leftButtonDown)
 				CLASS_MEMBER_GUIEVENT_COMPOSITION(leftButtonUp)
 				CLASS_MEMBER_GUIEVENT_COMPOSITION(leftButtonDoubleClick)
@@ -925,13 +1128,6 @@ Type Declaration
 				CLASS_MEMBER_METHOD(IsSizeAffectParent, NO_PARAMETER)
 			END_CLASS_MEMBER(GuiGraphicsComposition)
 
-			BEGIN_ENUM_ITEM(GuiGraphicsComposition::MinSizeLimitation)
-				ENUM_ITEM_NAMESPACE(GuiGraphicsComposition)
-				ENUM_NAMESPACE_ITEM(NoLimit)
-				ENUM_NAMESPACE_ITEM(LimitToElement)
-				ENUM_NAMESPACE_ITEM(LimitToElementAndChildren)
-			END_ENUM_ITEM(GuiGraphicsComposition::MinSizeLimitation)
-
 			BEGIN_CLASS_MEMBER(GuiGraphicsSite)
 				CLASS_MEMBER_BASE(GuiGraphicsComposition)
 
@@ -969,14 +1165,6 @@ Type Declaration
 				CLASS_MEMBER_METHOD(EnsureVisible, {L"index"})
 			END_CLASS_MEMBER(GuiStackComposition)
 
-			BEGIN_ENUM_ITEM(GuiStackComposition::Direction)
-				ENUM_ITEM_NAMESPACE(GuiStackComposition)
-				ENUM_NAMESPACE_ITEM(Horizontal)
-				ENUM_NAMESPACE_ITEM(Vertical)
-				ENUM_NAMESPACE_ITEM(ReversedHorizontal)
-				ENUM_NAMESPACE_ITEM(ReversedVertical)
-			END_ENUM_ITEM(GuiStackComposition::Direction)
-
 			BEGIN_CLASS_MEMBER(GuiStackItemComposition)
 				CLASS_MEMBER_BASE(GuiGraphicsSite)
 				CLASS_MEMBER_CONSTRUCTOR(GuiStackItemComposition*(), NO_PARAMETER)
@@ -984,19 +1172,6 @@ Type Declaration
 				CLASS_MEMBER_PROPERTY_EVENT_FAST(Bounds, BoundsChanged)
 				CLASS_MEMBER_PROPERTY_FAST(ExtraMargin)
 			END_CLASS_MEMBER(GuiStackItemComposition)
-
-			BEGIN_STRUCT_MEMBER(GuiCellOption)
-				STRUCT_MEMBER(composeType)
-				STRUCT_MEMBER(absolute)
-				STRUCT_MEMBER(percentage)
-			END_STRUCT_MEMBER(GuiCellOption)
-
-			BEGIN_ENUM_ITEM(GuiCellOption::ComposeType)
-				ENUM_ITEM_NAMESPACE(GuiCellOption)
-				ENUM_NAMESPACE_ITEM(Absolute)
-				ENUM_NAMESPACE_ITEM(Percentage)
-				ENUM_NAMESPACE_ITEM(MinSize)
-			END_ENUM_ITEM(GuiCellOption::ComposeType)
 
 			BEGIN_CLASS_MEMBER(GuiTableComposition)
 				CLASS_MEMBER_BASE(GuiBoundsComposition)
@@ -1057,12 +1232,6 @@ Type Declaration
 				CLASS_MEMBER_PROPERTY_FAST(ColumnsToTheLeft)
 			END_CLASS_MEMBER(GuiColumnSplitterComposition)
 
-			BEGIN_ENUM_ITEM(FlowAlignment)
-				ENUM_CLASS_ITEM(Left)
-				ENUM_CLASS_ITEM(Center)
-				ENUM_CLASS_ITEM(Extend)
-			END_ENUM_ITEM(FlowAlignment)
-
 			BEGIN_CLASS_MEMBER(GuiFlowComposition)
 				CLASS_MEMBER_BASE(GuiBoundsComposition)
 				CLASS_MEMBER_CONSTRUCTOR(GuiFlowComposition*(), NO_PARAMETER)
@@ -1074,19 +1243,6 @@ Type Declaration
 				CLASS_MEMBER_PROPERTY_FAST(Axis)
 				CLASS_MEMBER_PROPERTY_FAST(Alignment)
 			END_CLASS_MEMBER(GuiFlowComposition)
-
-			BEGIN_STRUCT_MEMBER(GuiFlowOption)
-				STRUCT_MEMBER(baseline)
-				STRUCT_MEMBER(percentage)
-				STRUCT_MEMBER(distance)
-			END_STRUCT_MEMBER(GuiFlowOption)
-
-			BEGIN_ENUM_ITEM(GuiFlowOption::BaselineType)
-				ENUM_ITEM_NAMESPACE(GuiFlowOption)
-				ENUM_NAMESPACE_ITEM(Percentage)
-				ENUM_NAMESPACE_ITEM(FromTop)
-				ENUM_NAMESPACE_ITEM(FromBottom)
-			END_ENUM_ITEM(GuiFlowOption::BaselineType)
 
 			BEGIN_CLASS_MEMBER(GuiFlowItemComposition)
 				CLASS_MEMBER_BASE(GuiGraphicsSite)
@@ -1105,14 +1261,6 @@ Type Declaration
 				CLASS_MEMBER_PROPERTY_FAST(MaxLength)
 				CLASS_MEMBER_PROPERTY_FAST(MaxRatio)
 			END_CLASS_MEMBER(GuiSideAlignedComposition)
-
-			BEGIN_ENUM_ITEM(GuiSideAlignedComposition::Direction)
-				ENUM_ITEM_NAMESPACE(GuiSideAlignedComposition)
-				ENUM_NAMESPACE_ITEM(Left)
-				ENUM_NAMESPACE_ITEM(Top)
-				ENUM_NAMESPACE_ITEM(Right)
-				ENUM_NAMESPACE_ITEM(Bottom)
-			END_ENUM_ITEM(GuiSideAlignedComposition::Direction)
 
 			BEGIN_CLASS_MEMBER(GuiPartialViewComposition)
 				CLASS_MEMBER_BASE(GuiGraphicsSite)
@@ -1157,57 +1305,56 @@ Type Declaration
 				CLASS_MEMBER_CONSTRUCTOR(GuiRepeatFlowComposition*(), NO_PARAMETER)
 			END_CLASS_MEMBER(GuiRepeatFlowComposition)
 
-			BEGIN_INTERFACE_MEMBER_NOPROXY(IGuiShortcutKeyItem)
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(Manager)
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(Name)
-			END_INTERFACE_MEMBER(IGuiShortcutKeyItem)
+			BEGIN_CLASS_MEMBER(GuiResponsiveCompositionBase)
+				CLASS_MEMBER_BASE(GuiBoundsComposition)
 
-			BEGIN_INTERFACE_MEMBER_NOPROXY(IGuiShortcutKeyManager)
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(ItemCount)
+				CLASS_MEMBER_PROPERTY_GUIEVENT_READONLY_FAST(LevelCount)
+				CLASS_MEMBER_PROPERTY_GUIEVENT_READONLY_FAST(CurrentLevel)
+				CLASS_MEMBER_PROPERTY_FAST(Direction)
+				CLASS_MEMBER_METHOD(LevelDown, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(LevelUp, NO_PARAMETER)
+			END_CLASS_MEMBER(GuiResponsiveCompositionBase)
 
-				CLASS_MEMBER_METHOD(GetItem, {L"index"})
-			END_INTERFACE_MEMBER(IGuiShortcutKeyManager)
+			BEGIN_CLASS_MEMBER(GuiResponsiveSharedComposition)
+				CLASS_MEMBER_BASE(GuiBoundsComposition)
+				CLASS_MEMBER_CONSTRUCTOR(GuiResponsiveSharedComposition*(), NO_PARAMETER)
+				CLASS_MEMBER_PROPERTY_FAST(Shared)
+			END_CLASS_MEMBER(GuiResponsiveSharedComposition)
 
-			BEGIN_CLASS_MEMBER(GuiShortcutKeyManager)
-				CLASS_MEMBER_BASE(IGuiShortcutKeyManager)
-				CLASS_MEMBER_CONSTRUCTOR(GuiShortcutKeyManager*(), NO_PARAMETER)
+			BEGIN_CLASS_MEMBER(GuiResponsiveViewComposition)
+				CLASS_MEMBER_BASE(GuiResponsiveCompositionBase)
+				CLASS_MEMBER_CONSTRUCTOR(GuiResponsiveViewComposition*(), NO_PARAMETER)
 
-				CLASS_MEMBER_METHOD(CreateShortcut, {L"ctrl" _ L"shift" _ L"alt" _ L"ket"})
-				CLASS_MEMBER_METHOD(DestroyShortcut, {L"ctrl" _ L"shift" _ L"alt" _ L"ket"})
-				CLASS_MEMBER_METHOD(TryGetShortcut, {L"ctrl" _ L"shift" _ L"alt" _ L"ket"})
-			END_CLASS_MEMBER(GuiShortcutKeyManager)
+				CLASS_MEMBER_GUIEVENT(BeforeSwitchingView)
+					
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(CurrentView)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(SharedControls)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(Views)
+			END_CLASS_MEMBER(GuiResponsiveViewComposition)
 
-			BEGIN_INTERFACE_MEMBER_NOPROXY(IGuiAltAction)
-				INTERFACE_IDENTIFIER(vl::presentation::compositions::IGuiAltAction)
+			BEGIN_CLASS_MEMBER(GuiResponsiveFixedComposition)
+				CLASS_MEMBER_BASE(GuiResponsiveCompositionBase)
+				CLASS_MEMBER_CONSTRUCTOR(GuiResponsiveFixedComposition*(), NO_PARAMETER)
+			END_CLASS_MEMBER(GuiResponsiveFixedComposition)
 
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(Alt)
+			BEGIN_CLASS_MEMBER(GuiResponsiveStackComposition)
+				CLASS_MEMBER_BASE(GuiResponsiveCompositionBase)
+				CLASS_MEMBER_CONSTRUCTOR(GuiResponsiveStackComposition*(), NO_PARAMETER)
+			END_CLASS_MEMBER(GuiResponsiveStackComposition)
 
-				CLASS_MEMBER_METHOD(IsAltEnabled, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(IsAltAvailable, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(GetAltComposition, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(GetActivatingAltHost, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(OnActiveAlt, NO_PARAMETER)
-			END_INTERFACE_MEMBER(IGuiAltAction)
+			BEGIN_CLASS_MEMBER(GuiResponsiveGroupComposition)
+				CLASS_MEMBER_BASE(GuiResponsiveCompositionBase)
+				CLASS_MEMBER_CONSTRUCTOR(GuiResponsiveGroupComposition*(), NO_PARAMETER)
+			END_CLASS_MEMBER(GuiResponsiveGroupComposition)
 
-			BEGIN_INTERFACE_MEMBER_NOPROXY(IGuiAltActionContainer)
-				INTERFACE_IDENTIFIER(vl::presentation::compositions::IGuiAltActionContainer)
+			BEGIN_CLASS_MEMBER(GuiResponsiveContainerComposition)
+				CLASS_MEMBER_BASE(GuiBoundsComposition)
+				CLASS_MEMBER_CONSTRUCTOR(GuiResponsiveContainerComposition*(), NO_PARAMETER)
 
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(AltActionCount)
-				
-				CLASS_MEMBER_METHOD(GetAltAction, { L"index" })
-			END_INTERFACE_MEMBER(IGuiAltActionContainer)
+				CLASS_MEMBER_PROPERTY_FAST(ResponsiveTarget)
+			END_CLASS_MEMBER(GuiResponsiveContainerComposition)
 
-			BEGIN_INTERFACE_MEMBER_NOPROXY(IGuiAltActionHost)
-				INTERFACE_IDENTIFIER(vl::presentation::compositions::IGuiAltActionHost)
-
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(PreviousAltHost)
-
-				CLASS_MEMBER_METHOD(OnActivatedAltHost, { L"previousHost" })
-				CLASS_MEMBER_METHOD(OnDeactivatedAltHost, NO_PARAMETER)
-				CLASS_MEMBER_EXTERNALMETHOD(CollectAltActions, {L"actions"}, void(IGuiAltActionHost::*)(List<IGuiAltAction*>&), vl::reflection::description::IGuiAltActionHost_CollectAltActions)
-			END_INTERFACE_MEMBER(IGuiAltActionHost)
-
-#undef INTERFACE_EXTERNALCTOR
+#undef INTERFACE_IDENTIFIER
 #undef _
 
 /***********************************************************************
@@ -1265,10 +1412,6 @@ namespace vl
 
 #ifndef VCZH_DEBUG_NO_REFLECTION
 
-/***********************************************************************
-Type Declaration
-***********************************************************************/
-
 #define _ ,
 
 #define CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE_INHERITANCE(CONTROL)\
@@ -1293,11 +1436,17 @@ Type Declaration
 	CLASS_MEMBER_PROPERTY_READONLY_FAST(ControlTemplateObject)\
 
 #define INTERFACE_IDENTIFIER(INTERFACE)\
-	CLASS_MEMBER_STATIC_EXTERNALMETHOD(GetIdentifier, NO_PARAMETER, WString(*)(), vl::reflection::description::Interface_GetIdentifier<::INTERFACE>)
+	CLASS_MEMBER_STATIC_EXTERNALMETHOD(GetIdentifier, NO_PARAMETER, WString(*)(), vl::presentation::controls::QueryServiceHelper<::INTERFACE>::GetIdentifier)
+
+/***********************************************************************
+Type Declaration (Extra)
+***********************************************************************/
 
 			BEGIN_CLASS_MEMBER(GuiApplication)
 				CLASS_MEMBER_STATIC_EXTERNALMETHOD(GetApplication, NO_PARAMETER, GuiApplication*(*)(), vl::presentation::controls::GetApplication)
 
+				CLASS_MEMBER_EVENT(LocaleChanged)
+				CLASS_MEMBER_PROPERTY_EVENT_FAST(Locale, LocaleChanged)
 				CLASS_MEMBER_PROPERTY_READONLY_FAST(MainWindow)
 				CLASS_MEMBER_PROPERTY_READONLY_FAST(TooltipOwner)
 				CLASS_MEMBER_PROPERTY_READONLY_FAST(ExecutablePath)
@@ -1334,6 +1483,7 @@ Type Declaration
 				CLASS_MEMBER_BASE(GuiInstanceRootObject)
 				CLASS_MEMBER_CONSTRUCTOR(Ptr<ThemeTemplates>(), NO_PARAMETER)
 
+				CLASS_MEMBER_FIELD(Name)
 #define GUI_DEFINE_ITEM_PROPERTY(TEMPLATE, CONTROL) CLASS_MEMBER_FIELD(CONTROL)
 				GUI_CONTROL_TEMPLATE_TYPES(GUI_DEFINE_ITEM_PROPERTY)
 #undef GUI_DEFINE_ITEM_PROPERTY
@@ -1410,68 +1560,6 @@ Type Declaration
 				CLASS_MEMBER_METHOD(ShowDialog, NO_PARAMETER)
 			END_CLASS_MEMBER(GuiSaveFileDialog)
 
-			BEGIN_CLASS_MEMBER(GuiControl)
-				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiControl)
-
-				CLASS_MEMBER_GUIEVENT(RenderTargetChanged)
-				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(ControlTemplate)
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(BoundsComposition)
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(ContainerComposition)
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(FocusableComposition)
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(Parent)
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(ChildrenCount)
-				CLASS_MEMBER_PROPERTY_EVENT_READONLY_FAST(RelatedControlHost, RenderTargetChanged)
-				CLASS_MEMBER_PROPERTY_GUIEVENT_READONLY_FAST(VisuallyEnabled)
-				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(Enabled)
-				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(Visible)
-				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(Alt)
-				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(Text)
-				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(Font)
-				CLASS_MEMBER_PROPERTY_FAST(Tag)
-				CLASS_MEMBER_PROPERTY_FAST(TooltipControl)
-				CLASS_MEMBER_PROPERTY_FAST(TooltipWidth)
-
-				CLASS_MEMBER_METHOD(SetActivatingAltHost, { L"host" })
-				CLASS_MEMBER_METHOD(GetChild, {L"index"})
-				CLASS_MEMBER_METHOD(AddChild, {L"control"})
-				CLASS_MEMBER_METHOD(HasChild, {L"control"})
-				CLASS_MEMBER_METHOD(SetFocus, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(DisplayTooltip, {L"location"})
-				CLASS_MEMBER_METHOD(CloseTooltip, NO_PARAMETER)
-				CLASS_MEMBER_METHOD_OVERLOAD(QueryService, {L"identifier"}, IDescriptable*(GuiControl::*)(const WString&))
-			END_CLASS_MEMBER(GuiControl)
-
-			BEGIN_CLASS_MEMBER(GuiCustomControl)
-				CLASS_MEMBER_BASE(GuiControl)
-				CLASS_MEMBER_BASE(GuiInstanceRootObject)
-				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiCustomControl)
-			END_CLASS_MEMBER(GuiCustomControl)
-
-			BEGIN_CLASS_MEMBER(GuiLabel)
-				CLASS_MEMBER_BASE(GuiControl)
-				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiLabel)
-
-				CLASS_MEMBER_PROPERTY_FAST(TextColor)
-			END_CLASS_MEMBER(GuiLabel)
-
-			BEGIN_CLASS_MEMBER(GuiButton)
-				CLASS_MEMBER_BASE(GuiControl)
-				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiButton)
-
-				CLASS_MEMBER_GUIEVENT(Clicked)
-
-				CLASS_MEMBER_PROPERTY_FAST(ClickOnMouseUp)
-			END_CLASS_MEMBER(GuiButton)
-
-			BEGIN_CLASS_MEMBER(GuiSelectableButton)
-				CLASS_MEMBER_BASE(GuiButton)
-				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiSelectableButton)
-
-				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(GroupController)
-				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(AutoSelection)
-				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(Selected)
-			END_CLASS_MEMBER(GuiSelectableButton)
-
 			BEGIN_CLASS_MEMBER(GuiSelectableButton::GroupController)
 				CLASS_MEMBER_BASE(GuiComponent)
 
@@ -1484,160 +1572,6 @@ Type Declaration
 				CLASS_MEMBER_BASE(GuiSelectableButton::GroupController)
 				CLASS_MEMBER_CONSTRUCTOR(GuiSelectableButton::MutexGroupController*(), NO_PARAMETER)
 			END_CLASS_MEMBER(GuiSelectableButton::MutexGroupController)
-
-			BEGIN_CLASS_MEMBER(GuiScroll)
-				CLASS_MEMBER_BASE(GuiControl)
-				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiScroll)
-
-				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(TotalSize)
-				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(PageSize)
-				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(Position)
-				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(SmallMove)
-				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(BigMove)
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(MinPosition)
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(MaxPosition)
-			END_CLASS_MEMBER(GuiScroll)
-
-			BEGIN_CLASS_MEMBER(GuiTabPage)
-				CLASS_MEMBER_BASE(GuiCustomControl)
-				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiTabPage)
-
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(OwnerTab)
-			END_CLASS_MEMBER(GuiTabPage)
-
-			BEGIN_CLASS_MEMBER(GuiTab)
-				CLASS_MEMBER_BASE(GuiControl)
-				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiTab)
-
-				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(SelectedPage)
-
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(Pages)
-			END_CLASS_MEMBER(GuiTab)
-
-			BEGIN_CLASS_MEMBER(GuiScrollView)
-				CLASS_MEMBER_BASE(GuiControl)
-
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(ViewSize)
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(ViewBounds)
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(HorizontalScroll)
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(VerticalScroll)
-				CLASS_MEMBER_PROPERTY_FAST(HorizontalAlwaysVisible)
-				CLASS_MEMBER_PROPERTY_FAST(VerticalAlwaysVisible)
-
-				CLASS_MEMBER_METHOD(CalculateView, NO_PARAMETER)
-			END_CLASS_MEMBER(GuiScrollView)
-
-			BEGIN_CLASS_MEMBER(GuiScrollContainer)
-				CLASS_MEMBER_BASE(GuiScrollView)
-				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiScrollContainer)
-
-				CLASS_MEMBER_PROPERTY_FAST(ExtendToFullWidth)
-				CLASS_MEMBER_PROPERTY_FAST(ExtendToFullHeight)
-			END_CLASS_MEMBER(GuiScrollContainer)
-
-			BEGIN_CLASS_MEMBER(GuiControlHost)
-				CLASS_MEMBER_BASE(GuiControl)
-				CLASS_MEMBER_BASE(GuiInstanceRootObject)
-				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiControlHost)
-
-				CLASS_MEMBER_GUIEVENT(WindowGotFocus)
-				CLASS_MEMBER_GUIEVENT(WindowLostFocus)
-				CLASS_MEMBER_GUIEVENT(WindowActivated)
-				CLASS_MEMBER_GUIEVENT(WindowDeactivated)
-				CLASS_MEMBER_GUIEVENT(WindowOpened)
-				CLASS_MEMBER_GUIEVENT(WindowClosing)
-				CLASS_MEMBER_GUIEVENT(WindowClosed)
-				CLASS_MEMBER_GUIEVENT(WindowDestroying)
-
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(MainComposition)
-				CLASS_MEMBER_PROPERTY_FAST(ShowInTaskBar)
-				CLASS_MEMBER_PROPERTY_FAST(EnabledActivate)
-				CLASS_MEMBER_PROPERTY_FAST(TopMost)
-				CLASS_MEMBER_PROPERTY_FAST(ClientSize)
-				CLASS_MEMBER_PROPERTY_FAST(Bounds)
-				CLASS_MEMBER_PROPERTY_FAST(ShortcutKeyManager)
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(RelatedScreen)
-
-				CLASS_MEMBER_METHOD(ForceCalculateSizeImmediately, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(GetFocused, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(SetFocused, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(GetActivated, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(SetActivated, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(Show, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(ShowDeactivated, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(ShowRestored, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(ShowMaximized, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(ShowMinimized, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(Hide, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(Close, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(GetOpening, NO_PARAMETER)
-			END_CLASS_MEMBER(GuiControlHost)
-
-			BEGIN_CLASS_MEMBER(GuiWindow)
-				CLASS_MEMBER_BASE(GuiControlHost)
-				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiWindow)
-
-				CLASS_MEMBER_GUIEVENT(ClipboardUpdated)
-
-				CLASS_MEMBER_PROPERTY_FAST(MaximizedBox)
-				CLASS_MEMBER_PROPERTY_FAST(MinimizedBox)
-				CLASS_MEMBER_PROPERTY_FAST(Border)
-				CLASS_MEMBER_PROPERTY_FAST(SizeBox)
-				CLASS_MEMBER_PROPERTY_FAST(IconVisible)
-				CLASS_MEMBER_PROPERTY_FAST(TitleBar)
-
-				CLASS_MEMBER_METHOD_OVERLOAD(MoveToScreenCenter, NO_PARAMETER, void(GuiWindow::*)())
-				CLASS_MEMBER_METHOD_OVERLOAD(MoveToScreenCenter, { L"screen" }, void(GuiWindow::*)(INativeScreen*))
-				CLASS_MEMBER_METHOD(ShowModal, { L"owner" _ L"callback" })
-				CLASS_MEMBER_METHOD(ShowModalAndDelete, { L"owner" _ L"callback" })
-				CLASS_MEMBER_METHOD(ShowModalAsync, { L"owner" })
-			END_CLASS_MEMBER(GuiWindow)
-
-			BEGIN_CLASS_MEMBER(GuiPopup)
-				CLASS_MEMBER_BASE(GuiWindow)
-				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiPopup)
-
-				CLASS_MEMBER_METHOD(IsClippedByScreen, {L"location"})
-				CLASS_MEMBER_METHOD_OVERLOAD(ShowPopup, {L"location" _ L"screen"}, void(GuiPopup::*)(Point _ INativeScreen*))
-				CLASS_MEMBER_METHOD_OVERLOAD(ShowPopup, {L"control" _ L"location"}, void(GuiPopup::*)(GuiControl* _ Point))
-				CLASS_MEMBER_METHOD_OVERLOAD(ShowPopup, {L"control" _ L"preferredTopBottomSide"}, void(GuiPopup::*)(GuiControl* _ bool))
-			END_CLASS_MEMBER(GuiPopup)
-
-			BEGIN_CLASS_MEMBER(GuiTooltip)
-				CLASS_MEMBER_BASE(GuiPopup)
-				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiTooltip)
-				
-				CLASS_MEMBER_PROPERTY_FAST(PreferredContentWidth)
-				CLASS_MEMBER_PROPERTY_FAST(TemporaryContentControl)
-			END_CLASS_MEMBER(GuiTooltip)
-
-			BEGIN_CLASS_MEMBER(GuiListControl)
-				CLASS_MEMBER_BASE(GuiScrollView)
-				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE_3(GuiListControl, GuiListControl::IItemProvider*, itemProvider, bool, acceptFocus)
-
-				CLASS_MEMBER_GUIEVENT(AdoptedSizeInvalidated)
-				CLASS_MEMBER_GUIEVENT(ItemLeftButtonDown)
-				CLASS_MEMBER_GUIEVENT(ItemLeftButtonUp)
-				CLASS_MEMBER_GUIEVENT(ItemLeftButtonDoubleClick)
-				CLASS_MEMBER_GUIEVENT(ItemMiddleButtonDown)
-				CLASS_MEMBER_GUIEVENT(ItemMiddleButtonUp)
-				CLASS_MEMBER_GUIEVENT(ItemMiddleButtonDoubleClick)
-				CLASS_MEMBER_GUIEVENT(ItemRightButtonDown)
-				CLASS_MEMBER_GUIEVENT(ItemRightButtonUp)
-				CLASS_MEMBER_GUIEVENT(ItemRightButtonDoubleClick)
-				CLASS_MEMBER_GUIEVENT(ItemMouseMove)
-				CLASS_MEMBER_GUIEVENT(ItemMouseEnter)
-				CLASS_MEMBER_GUIEVENT(ItemMouseLeave)
-
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(ItemProvider)
-				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(ItemTemplate)
-				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(Arranger)
-				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(Axis)
-				CLASS_MEMBER_PROPERTY_FAST(DisplayItemBackground)
-
-				CLASS_MEMBER_METHOD(EnsureItemVisible, {L"itemIndex"})
-				CLASS_MEMBER_METHOD(GetAdoptedSize, {L"expectedSize"})
-			END_CLASS_MEMBER(GuiListControl)
 
 			BEGIN_INTERFACE_MEMBER(GuiListControl::IItemProviderCallback)
 				CLASS_MEMBER_BASE(IDescriptable)
@@ -1658,6 +1592,12 @@ Type Declaration
 				CLASS_MEMBER_METHOD(GetContainerComposition, NO_PARAMETER)
 				CLASS_MEMBER_METHOD(OnTotalSizeChanged, NO_PARAMETER)
 			END_INTERFACE_MEMBER(GuiListControl::IItemArrangerCallback)
+
+			BEGIN_ENUM_ITEM(GuiListControl::EnsureItemVisibleResult)
+				ENUM_CLASS_ITEM(ItemNotExists)
+				ENUM_CLASS_ITEM(Moved)
+				ENUM_CLASS_ITEM(NotMoved)
+			END_ENUM_ITEM(GuiListControl::EnsureItemVisibleResult)
 
 			BEGIN_INTERFACE_MEMBER(GuiListControl::IItemProvider)
 				CLASS_MEMBER_BASE(IDescriptable)
@@ -1690,24 +1630,6 @@ Type Declaration
 				CLASS_MEMBER_METHOD(GetAdoptedSize, {L"expectedSize"})
 			END_INTERFACE_MEMBER(GuiListControl::IItemArranger)
 
-			BEGIN_CLASS_MEMBER(GuiSelectableListControl)
-				CLASS_MEMBER_BASE(GuiListControl)
-				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE_INHERITANCE_2(GuiSelectableListControl, GuiListControl::IItemProvider*, itemProvider)
-
-				CLASS_MEMBER_GUIEVENT(SelectionChanged)
-
-				CLASS_MEMBER_PROPERTY_FAST(MultiSelect)
-				CLASS_MEMBER_PROPERTY_EVENT_READONLY_FAST(SelectedItems, SelectionChanged)
-				CLASS_MEMBER_PROPERTY_EVENT_READONLY_FAST(SelectedItemIndex, SelectionChanged)
-				CLASS_MEMBER_PROPERTY_EVENT_READONLY_FAST(SelectedItemText, SelectionChanged)
-
-				CLASS_MEMBER_METHOD(GetSelected, {L"itemIndex"})
-				CLASS_MEMBER_METHOD(SetSelected, {L"itemIndex" _ L"value"})
-				CLASS_MEMBER_METHOD(SelectItemsByClick, {L"itemIndex" _ L"ctrl" _ L"shift" _ L"leftButton"})
-				CLASS_MEMBER_METHOD(SelectItemsByKey, {L"code" _ L"ctrl" _ L"shift"})
-				CLASS_MEMBER_METHOD(ClearSelection, NO_PARAMETER)
-			END_CLASS_MEMBER(GuiSelectableListControl)
-
 			BEGIN_CLASS_MEMBER(ItemProviderBase)
 				CLASS_MEMBER_BASE(GuiListControl::IItemProvider)
 			END_CLASS_MEMBER(ItemProviderBase)
@@ -1715,6 +1637,11 @@ Type Declaration
 			BEGIN_CLASS_MEMBER(RangedItemArrangerBase)
 				CLASS_MEMBER_BASE(GuiListControl::IItemArranger)
 			END_CLASS_MEMBER(RangedItemArrangerBase)
+
+			BEGIN_CLASS_MEMBER(FreeHeightItemArranger)
+				CLASS_MEMBER_BASE(RangedItemArrangerBase)
+				CLASS_MEMBER_CONSTRUCTOR(Ptr<FreeHeightItemArranger>(), NO_PARAMETER)
+			END_CLASS_MEMBER(FreeHeightItemArranger)
 
 			BEGIN_CLASS_MEMBER(FixedHeightItemArranger)
 				CLASS_MEMBER_BASE(RangedItemArrangerBase)
@@ -1747,42 +1674,16 @@ Type Declaration
 				CLASS_MEMBER_PROPERTY_FAST(Checked)
 			END_CLASS_MEMBER(TextItem)
 
+			BEGIN_CLASS_MEMBER(TextItemProvider)
+				CLASS_MEMBER_BASE(ITextItemView)
+			END_CLASS_MEMBER(TextItemProvider)
+
 			BEGIN_ENUM_ITEM(TextListView)
 				ENUM_CLASS_ITEM(Text)
 				ENUM_CLASS_ITEM(Check)
 				ENUM_CLASS_ITEM(Radio)
 				ENUM_CLASS_ITEM(Unknown)
 			END_ENUM_ITEM(TextListView)
-
-			BEGIN_CLASS_MEMBER(GuiVirtualTextList)
-				CLASS_MEMBER_BASE(GuiSelectableListControl)
-				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE_2(GuiVirtualTextList, GuiListControl::IItemProvider*, L"itemProvider")
-
-				CLASS_MEMBER_GUIEVENT(ItemChecked)
-				CLASS_MEMBER_PROPERTY_FAST(View)
-			END_CLASS_MEMBER(GuiVirtualTextList)
-
-			BEGIN_CLASS_MEMBER(GuiTextList)
-				CLASS_MEMBER_BASE(GuiVirtualTextList)
-				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE_INHERITANCE(GuiTextList)
-
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(Items)
-				CLASS_MEMBER_PROPERTY_EVENT_READONLY_FAST(SelectedItem, SelectionChanged)
-			END_CLASS_MEMBER(GuiTextList)
-
-			BEGIN_CLASS_MEMBER(GuiListViewColumnHeader)
-				CLASS_MEMBER_BASE(GuiMenuButton)
-				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiListViewColumnHeader)
-
-				CLASS_MEMBER_PROPERTY_FAST(ColumnSortingState)
-			END_CLASS_MEMBER(GuiListViewColumnHeader)
-
-			BEGIN_CLASS_MEMBER(GuiListViewBase)
-				CLASS_MEMBER_BASE(GuiSelectableListControl)
-				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE_2(GuiListViewBase, GuiListControl::IItemProvider*, itemProvider)
-
-				CLASS_MEMBER_GUIEVENT(ColumnClicked)
-			END_CLASS_MEMBER(GuiListViewBase)
 
 			BEGIN_INTERFACE_MEMBER(IListViewItemView)
 				INTERFACE_IDENTIFIER(vl::presentation::controls::list::IListViewItemView)
@@ -1841,6 +1742,11 @@ Type Declaration
 				CLASS_MEMBER_PROPERTY_FAST(SortingState)
 			END_CLASS_MEMBER(ListViewColumn)
 
+			BEGIN_CLASS_MEMBER(ListViewItemProvider)
+				CLASS_MEMBER_BASE(IListViewItemView)
+				CLASS_MEMBER_BASE(ListViewColumnItemArranger::IColumnItemView)
+			END_CLASS_MEMBER(ListViewItemProvider)
+
 			BEGIN_ENUM_ITEM(ListViewView)
 				ENUM_CLASS_ITEM(BigIcon)
 				ENUM_CLASS_ITEM(SmallIcon)
@@ -1850,23 +1756,6 @@ Type Declaration
 				ENUM_CLASS_ITEM(Detail)
 				ENUM_CLASS_ITEM(Unknown)
 			END_ENUM_ITEM(ListViewView)
-
-			BEGIN_CLASS_MEMBER(GuiVirtualListView)
-				CLASS_MEMBER_BASE(GuiListViewBase)
-				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE_INHERITANCE_2(GuiVirtualListView, GuiListControl::IItemProvider*, itemProvider)
-
-				CLASS_MEMBER_PROPERTY_FAST(View)
-			END_CLASS_MEMBER(GuiVirtualListView)
-
-			BEGIN_CLASS_MEMBER(GuiListView)
-				CLASS_MEMBER_BASE(GuiVirtualListView)
-				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiListView)
-
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(DataColumns)
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(Columns)
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(Items)
-				CLASS_MEMBER_PROPERTY_EVENT_READONLY_FAST(SelectedItem, SelectionChanged)
-			END_CLASS_MEMBER(GuiListView)
 
 			BEGIN_INTERFACE_MEMBER_NOPROXY(IGuiMenuService)
 				INTERFACE_IDENTIFIER(vl::presentation::controls::IGuiMenuService)
@@ -1881,41 +1770,17 @@ Type Declaration
 				CLASS_MEMBER_METHOD(MenuClosed, {L"menu"})
 			END_INTERFACE_MEMBER(IGuiMenuService)
 
+			BEGIN_INTERFACE_MEMBER_NOPROXY(IGuiMenuDropdownProvider)
+				INTERFACE_IDENTIFIER(vl::presentation::controls::IGuiMenuDropdownProvider)
+
+				CLASS_MEMBER_METHOD(ProvideDropdownMenu, NO_PARAMETER)
+			END_INTERFACE_MEMBER(IGuiMenuDropdownProvider)
+
 			BEGIN_ENUM_ITEM(IGuiMenuService::Direction)
 				ENUM_ITEM_NAMESPACE(IGuiMenuService)
 				ENUM_NAMESPACE_ITEM(Horizontal)
 				ENUM_NAMESPACE_ITEM(Vertical)
 			END_ENUM_ITEM(IGuiMenuService::Direction)
-
-			BEGIN_CLASS_MEMBER(GuiMenu)
-				CLASS_MEMBER_BASE(GuiPopup)
-				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE_2(GuiMenu, GuiControl*, owner)
-
-				CLASS_MEMBER_METHOD(UpdateMenuService, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(QueryService, {L"identifier"})
-			END_CLASS_MEMBER(GuiMenu)
-
-			BEGIN_CLASS_MEMBER(GuiMenuBar)
-				CLASS_MEMBER_BASE(GuiControl)
-				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiMenuBar)
-			END_CLASS_MEMBER(GuiMenuBar)
-
-			BEGIN_CLASS_MEMBER(GuiMenuButton)
-				CLASS_MEMBER_BASE(GuiSelectableButton)
-				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiMenuButton)
-
-				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(Image)
-				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(ShortcutText)
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(SubMenu)
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(OwnedSubMenu)
-				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(SubMenuOpening)
-				CLASS_MEMBER_PROPERTY_FAST(PreferredMenuClientSize)
-				CLASS_MEMBER_PROPERTY_FAST(CascadeAction)
-
-				CLASS_MEMBER_METHOD(IsSubMenuExists, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(CreateSubMenu, {L"subMenuStyleController"})
-				CLASS_MEMBER_METHOD(SetSubMenu, {L"value" _ L"owned"})
-			END_CLASS_MEMBER(GuiMenuButton)
 
 			BEGIN_INTERFACE_MEMBER_NOPROXY(INodeProviderCallback)
 				CLASS_MEMBER_BASE(IDescriptable)
@@ -1936,8 +1801,6 @@ Type Declaration
 
 				CLASS_MEMBER_METHOD(CalculateTotalVisibleNodes, NO_PARAMETER)
 				CLASS_MEMBER_METHOD(GetChild, {L"index"})
-				CLASS_MEMBER_METHOD(Increase, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(Release, NO_PARAMETER)
 			END_INTERFACE_MEMBER(INodeProvider)
 
 			BEGIN_INTERFACE_MEMBER(INodeRootProvider)
@@ -1958,9 +1821,13 @@ Type Declaration
 				INTERFACE_IDENTIFIER(vl::presentation::controls::tree::INodeItemView)
 
 				CLASS_MEMBER_METHOD(RequestNode, {L"index"})
-				CLASS_MEMBER_METHOD(ReleaseNode, {L"node"})
 				CLASS_MEMBER_METHOD(CalculateNodeVisibilityIndex, {L"node"})
 			END_INTERFACE_MEMBER(INodeItemView)
+
+			BEGIN_CLASS_MEMBER(NodeItemProvider)
+				CLASS_MEMBER_BASE(ItemProviderBase)
+				CLASS_MEMBER_BASE(INodeItemView)
+			END_CLASS_MEMBER(NodeItemProvider)
 
 			BEGIN_CLASS_MEMBER(MemoryNodeProvider)
 				CLASS_MEMBER_BASE(INodeProvider)
@@ -1987,29 +1854,6 @@ Type Declaration
 				CLASS_MEMBER_METHOD(GetMemoryNode, {L"node"})
 			END_CLASS_MEMBER(MemoryNodeRootProvider)
 
-			BEGIN_CLASS_MEMBER(GuiVirtualTreeListControl)
-				CLASS_MEMBER_BASE(GuiSelectableListControl)
-				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE_2(GuiVirtualTreeListControl, Ptr<INodeRootProvider>, rootNodeProvider)
-
-				CLASS_MEMBER_GUIEVENT(NodeLeftButtonDown)
-				CLASS_MEMBER_GUIEVENT(NodeLeftButtonUp)
-				CLASS_MEMBER_GUIEVENT(NodeLeftButtonDoubleClick)
-				CLASS_MEMBER_GUIEVENT(NodeMiddleButtonDown)
-				CLASS_MEMBER_GUIEVENT(NodeMiddleButtonUp)
-				CLASS_MEMBER_GUIEVENT(NodeMiddleButtonDoubleClick)
-				CLASS_MEMBER_GUIEVENT(NodeRightButtonDown)
-				CLASS_MEMBER_GUIEVENT(NodeRightButtonUp)
-				CLASS_MEMBER_GUIEVENT(NodeRightButtonDoubleClick)
-				CLASS_MEMBER_GUIEVENT(NodeMouseMove)
-				CLASS_MEMBER_GUIEVENT(NodeMouseEnter)
-				CLASS_MEMBER_GUIEVENT(NodeMouseLeave)
-				CLASS_MEMBER_GUIEVENT(NodeExpanded)
-				CLASS_MEMBER_GUIEVENT(NodeCollapsed)
-
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(NodeItemView)
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(NodeRootProvider)
-			END_CLASS_MEMBER(GuiVirtualTreeListControl)
-
 			BEGIN_INTERFACE_MEMBER(ITreeViewItemView)
 				INTERFACE_IDENTIFIER(vl::presentation::controls::tree::ITreeViewItemView)
 
@@ -2027,45 +1871,13 @@ Type Declaration
 
 			BEGIN_CLASS_MEMBER(TreeViewItemRootProvider)
 				CLASS_MEMBER_BASE(MemoryNodeRootProvider)
+				CLASS_MEMBER_BASE(ITreeViewItemView)
 				CLASS_MEMBER_CONSTRUCTOR(Ptr<TreeViewItemRootProvider>(), NO_PARAMETER)
 
 				CLASS_MEMBER_METHOD(GetTreeViewData, {L"node"})
 				CLASS_MEMBER_METHOD(SetTreeViewData, {L"node" _ L"value"})
 				CLASS_MEMBER_METHOD(UpdateTreeViewData, {L"node"})
 			END_CLASS_MEMBER(TreeViewItemRootProvider)
-
-			BEGIN_CLASS_MEMBER(GuiVirtualTreeView)
-				CLASS_MEMBER_BASE(GuiVirtualTreeListControl)
-				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE_INHERITANCE_2(GuiVirtualTreeView, Ptr<INodeRootProvider>, rootNodeProvider)
-
-			END_CLASS_MEMBER(GuiVirtualTreeView)
-
-			BEGIN_CLASS_MEMBER(GuiTreeView)
-				CLASS_MEMBER_BASE(GuiVirtualTreeView)
-				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE_INHERITANCE(GuiTreeView)
-
-				CLASS_MEMBER_METHOD_RENAME(GetNodes, Nodes, NO_PARAMETER)
-				CLASS_MEMBER_PROPERTY_READONLY(Nodes, GetNodes)
-				CLASS_MEMBER_PROPERTY_EVENT_READONLY_FAST(SelectedItem, SelectionChanged)
-			END_CLASS_MEMBER(GuiTreeView)
-
-			BEGIN_CLASS_MEMBER(GuiComboBoxBase)
-				CLASS_MEMBER_BASE(GuiMenuButton)
-				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiComboBoxBase)
-
-				CLASS_MEMBER_GUIEVENT(ItemSelected)
-			END_CLASS_MEMBER(GuiComboBoxBase)
-
-			BEGIN_CLASS_MEMBER(GuiComboBoxListControl)
-				CLASS_MEMBER_BASE(GuiComboBoxBase)
-				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE_INHERITANCE_2(GuiComboBoxListControl, GuiSelectableListControl*, containedListControl)
-
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(ContainedListControl)
-				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(ItemTemplate)
-				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(SelectedIndex)
-				CLASS_MEMBER_PROPERTY_EVENT_READONLY_FAST(SelectedItem, SelectedIndexChanged)
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(ItemProvider)
-			END_CLASS_MEMBER(GuiComboBoxListControl)
 
 			BEGIN_CLASS_MEMBER(GuiToolstripCommand)
 				CLASS_MEMBER_BASE(GuiComponent)
@@ -2074,6 +1886,7 @@ Type Declaration
 				CLASS_MEMBER_GUIEVENT(Executed)
 				CLASS_MEMBER_GUIEVENT(DescriptionChanged)
 
+				CLASS_MEMBER_PROPERTY_EVENT_FAST(LargeImage, DescriptionChanged)
 				CLASS_MEMBER_PROPERTY_EVENT_FAST(Image, DescriptionChanged)
 				CLASS_MEMBER_PROPERTY_EVENT_FAST(Text, DescriptionChanged)
 				CLASS_MEMBER_PROPERTY_EVENT_FAST(Shortcut, DescriptionChanged)
@@ -2082,37 +1895,29 @@ Type Declaration
 				CLASS_MEMBER_PROPERTY_EVENT_FAST(Selected, DescriptionChanged)
 			END_CLASS_MEMBER(GuiToolstripCommand)
 
-			BEGIN_CLASS_MEMBER(GuiToolstripMenu)
-				CLASS_MEMBER_BASE(GuiMenu)
-				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE_INHERITANCE_2(GuiToolstripMenu, GuiControl*, owner)
+			BEGIN_ENUM_ITEM(RibbonButtonSize)
+				ENUM_CLASS_ITEM(Large)
+				ENUM_CLASS_ITEM(Small)
+				ENUM_CLASS_ITEM(Icon)
+			END_ENUM_ITEM(RibbonButtonSize)
 
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(ToolstripItems)
-			END_CLASS_MEMBER(GuiToolstripMenu)
+			BEGIN_STRUCT_MEMBER(GalleryPos)
+				STRUCT_MEMBER(group)
+				STRUCT_MEMBER(item)
+			END_STRUCT_MEMBER(GalleryPos)
 
-			BEGIN_CLASS_MEMBER(GuiToolstripMenuBar)
-				CLASS_MEMBER_BASE(GuiMenuBar)
-				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiToolstripMenuBar)
-				
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(ToolstripItems)
-			END_CLASS_MEMBER(GuiToolstripMenuBar)
+			BEGIN_CLASS_MEMBER(GalleryGroup)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(Name)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(ItemValues)
+			END_CLASS_MEMBER(GalleryGroup)
 
-			BEGIN_CLASS_MEMBER(GuiToolstripToolBar)
-				CLASS_MEMBER_BASE(GuiControl)
-				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiToolstripToolBar)
-				
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(ToolstripItems)
-			END_CLASS_MEMBER(GuiToolstripToolBar)
-
-			BEGIN_CLASS_MEMBER(GuiToolstripButton)
-				CLASS_MEMBER_BASE(GuiMenuButton)
-				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiToolstripButton)
-
-				CLASS_MEMBER_PROPERTY_FAST(Command)
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(ToolstripSubMenu)
-
-				CLASS_MEMBER_METHOD(EnsureToolstripSubMenu, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(CreateToolstripSubMenu, {L"subMenuStyleController"})
-			END_CLASS_MEMBER(GuiToolstripButton)
+			BEGIN_CLASS_MEMBER(GroupedDataSource)
+				CLASS_MEMBER_PROPERTY_FAST(ItemSource)
+				CLASS_MEMBER_PROPERTY_GUIEVENT_READONLY_FAST(GroupEnabled)
+				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(GroupTitleProperty)
+				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(GroupChildrenProperty)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(Groups)
+			END_CLASS_MEMBER(GroupedDataSource)
 
 			BEGIN_CLASS_MEMBER(GuiDocumentItem)
 				CLASS_MEMBER_CONSTRUCTOR(Ptr<GuiDocumentItem>(const WString&), { L"name" })
@@ -2121,59 +1926,6 @@ Type Declaration
 				CLASS_MEMBER_PROPERTY_READONLY_FAST(Name)
 			END_CLASS_MEMBER(GuiDocumentItem)
 
-			BEGIN_CLASS_MEMBER(GuiDocumentCommonInterface)
-				CLASS_MEMBER_PROPERTY_FAST(Document)
-				CLASS_MEMBER_PROPERTY_FAST(EditMode)
-
-				CLASS_MEMBER_GUIEVENT(ActiveHyperlinkChanged)
-				CLASS_MEMBER_GUIEVENT(ActiveHyperlinkExecuted)
-				CLASS_MEMBER_GUIEVENT(SelectionChanged)
-				CLASS_MEMBER_GUIEVENT(UndoRedoChanged)
-
-				CLASS_MEMBER_METHOD(AddDocumentItem, { L"value" })
-				CLASS_MEMBER_METHOD(RemoveDocumentItem, { L"value" })
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(DocumentItems)
-
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(CaretBegin)
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(CaretEnd)
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(ActiveHyperlinkReference)
-				CLASS_MEMBER_PROPERTY_EVENT_FAST(SelectionText, SelectionChanged)
-				CLASS_MEMBER_PROPERTY_EVENT_FAST(SelectionModel, SelectionChanged)
-				CLASS_MEMBER_PROPERTY_GUIEVENT_READONLY_FAST(Modified)
-
-				CLASS_MEMBER_METHOD(SetCaret, {L"begin" _ L"end" _ L"frontSide"})
-				CLASS_MEMBER_METHOD(CalculateCaretFromPoint, {L"point"})
-				CLASS_MEMBER_METHOD(GetCaretBounds, {L"caret" _ L"frontSide"})
-				CLASS_MEMBER_METHOD(NotifyParagraphUpdated, {L"index" _ L"oldCount" _ L"newCount" _ L"updatedText"})
-				CLASS_MEMBER_METHOD(EditRun, {L"begin" _ L"end" _ L"model" _ L"copy"})
-				CLASS_MEMBER_METHOD(EditText, {L"begin" _ L"end" _ L"frontSide" _ L"text"})
-				CLASS_MEMBER_METHOD(EditStyle, {L"begin" _ L"end" _ L"style"})
-				CLASS_MEMBER_METHOD(EditImage, {L"begin" _ L"end" _ L"image"})
-				CLASS_MEMBER_METHOD(EditHyperlink, {L"paragraphIndex" _ L"begin" _ L"end" _ L"reference" _ L"normalStyleName" _ L"activeStyleName"})
-				CLASS_MEMBER_METHOD(RemoveHyperlink, {L"paragraphIndex" _ L"begin" _ L"end"})
-				CLASS_MEMBER_METHOD(EditStyleName, {L"begin" _ L"end" _ L"styleName"})
-				CLASS_MEMBER_METHOD(RemoveStyleName, {L"begin" _ L"end" _ L"image"})
-				CLASS_MEMBER_METHOD(RenameStyle, {L"oldStyleName" _ L"newStyleName"})
-				CLASS_MEMBER_METHOD(ClearStyle, {L"begin" _ L"end"})
-				CLASS_MEMBER_METHOD(SummarizeStyle, {L"begin" _ L"end"})
-				CLASS_MEMBER_METHOD(SetParagraphAlignments, { L"begin" _ L"end" _ L"alignments" })
-				CLASS_MEMBER_METHOD(SetParagraphAlignment, { L"begin" _ L"end" _ L"alignment" })
-				CLASS_MEMBER_METHOD(SummarizeParagraphAlignment, { L"begin" _ L"end" })
-				CLASS_MEMBER_METHOD(SelectAll, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(CanCut, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(CanCopy, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(CanPaste, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(Cut, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(Copy, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(Paste, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(CanUndo, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(CanRedo, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(ClearUndoRedo, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(NotifyModificationSaved, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(Undo, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(Redo, NO_PARAMETER)
-			END_CLASS_MEMBER(GuiDocumentCommonInterface)
-
 			BEGIN_ENUM_ITEM(GuiDocumentCommonInterface::EditMode)
 				ENUM_ITEM_NAMESPACE(GuiDocumentCommonInterface)
 				ENUM_NAMESPACE_ITEM(ViewOnly)
@@ -2181,79 +1933,11 @@ Type Declaration
 				ENUM_NAMESPACE_ITEM(Editable)
 			END_ENUM_ITEM(GuiDocumentCommonInterface::EditMode)
 
-			BEGIN_CLASS_MEMBER(GuiDocumentViewer)
-				CLASS_MEMBER_BASE(GuiScrollContainer)
-				CLASS_MEMBER_BASE(GuiDocumentCommonInterface)
-				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiDocumentViewer)
-			END_CLASS_MEMBER(GuiDocumentViewer)
-
-			BEGIN_CLASS_MEMBER(GuiDocumentLabel)
-				CLASS_MEMBER_BASE(GuiControl)
-				CLASS_MEMBER_BASE(GuiDocumentCommonInterface)
-				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiDocumentLabel)
-			END_CLASS_MEMBER(GuiDocumentLabel)
-
-			BEGIN_CLASS_MEMBER(GuiTextBoxCommonInterface)
-				CLASS_MEMBER_GUIEVENT(SelectionChanged)
-				CLASS_MEMBER_GUIEVENT(UndoRedoChanged)
-				
-				CLASS_MEMBER_PROPERTY_FAST(Readonly)
-				CLASS_MEMBER_PROPERTY_EVENT_FAST(SelectionText, SelectionChanged)
-				CLASS_MEMBER_PROPERTY_EVENT_READONLY_FAST(CaretBegin, SelectionChanged)
-				CLASS_MEMBER_PROPERTY_EVENT_READONLY_FAST(CaretEnd, SelectionChanged)
-				CLASS_MEMBER_PROPERTY_EVENT_READONLY_FAST(CaretSmall, SelectionChanged)
-				CLASS_MEMBER_PROPERTY_EVENT_READONLY_FAST(CaretLarge, SelectionChanged)
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(RowCount)
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(RowHeight)
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(MaxWidth)
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(MaxHeight)
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(EditVersion)
-				CLASS_MEMBER_PROPERTY_GUIEVENT_READONLY_FAST(Modified)
-
-				CLASS_MEMBER_METHOD(CanCut, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(CanCopy, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(CanPaste, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(Cut, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(Copy, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(Paste, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(SelectAll, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(Select, {L"begin" _ L"end"})
-				CLASS_MEMBER_METHOD(SetSelectionTextAsKeyInput, {L"value"})
-				CLASS_MEMBER_METHOD(GetRowText, {L"row"})
-				CLASS_MEMBER_METHOD(GetFragmentText, {L"start" _ L"end"})
-				CLASS_MEMBER_METHOD(GetRowWidth, {L"row"})
-				CLASS_MEMBER_METHOD(GetTextPosFromPoint, {L"point"})
-				CLASS_MEMBER_METHOD(GetPointFromTextPos, {L"pos"})
-				CLASS_MEMBER_METHOD(GetRectFromTextPos, {L"pos"})
-				CLASS_MEMBER_METHOD(GetNearestTextPos, {L"point"})
-				CLASS_MEMBER_METHOD(CanUndo, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(CanRedo, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(ClearUndoRedo, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(NotifyModificationSaved, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(Undo, NO_PARAMETER)
-				CLASS_MEMBER_METHOD(Redo, NO_PARAMETER)
-			END_CLASS_MEMBER(GuiTextBoxCommonInterface)
-
-			BEGIN_CLASS_MEMBER(GuiMultilineTextBox)
-				CLASS_MEMBER_BASE(GuiScrollView)
-				CLASS_MEMBER_BASE(GuiTextBoxCommonInterface)
-				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiMultilineTextBox)
-			END_CLASS_MEMBER(GuiMultilineTextBox)
-
-			BEGIN_CLASS_MEMBER(GuiSinglelineTextBox)
-				CLASS_MEMBER_BASE(GuiControl)
-				CLASS_MEMBER_BASE(GuiTextBoxCommonInterface)
-				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiSinglelineTextBox)
-
-				CLASS_MEMBER_PROPERTY_FAST(PasswordChar)
-			END_CLASS_MEMBER(GuiSinglelineTextBox)
-
 			BEGIN_INTERFACE_MEMBER(IDataGridContext)
 				CLASS_MEMBER_BASE(IDescriptable)
 
 				CLASS_MEMBER_PROPERTY_READONLY_FAST(ItemProvider)
 				CLASS_MEMBER_PROPERTY_READONLY_FAST(ListViewControlTemplate)
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(ViewModelContext)
 				CLASS_MEMBER_METHOD(RequestSaveData, NO_PARAMETER)
 			END_INTERFACE_MEMBER(IDataGridContext)
 
@@ -2293,9 +1977,7 @@ Type Declaration
 				CLASS_MEMBER_BASE(IDescriptable)
 				INTERFACE_IDENTIFIER(vl::presentation::controls::list::IDataGridView)
 
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(ViewModelContext)
 				CLASS_MEMBER_PROPERTY_READONLY_FAST(SortedColumn)
-
 				CLASS_MEMBER_METHOD(IsColumnSortable, {L"column"})
 				CLASS_MEMBER_METHOD(SortByColumn, {L"column" _ L"ascending"})
 				CLASS_MEMBER_METHOD(IsSortOrderAscending, NO_PARAMETER)
@@ -2305,17 +1987,6 @@ Type Declaration
 				CLASS_MEMBER_METHOD(GetBindingCellValue, {L"row" _ L"column"})
 				CLASS_MEMBER_METHOD(SetBindingCellValue, {L"row" _ L"column" _ L"value"})
 			END_INTERFACE_MEMBER(IDataGridView)
-
-			BEGIN_CLASS_MEMBER(GuiVirtualDataGrid)
-				CLASS_MEMBER_BASE(GuiVirtualListView)
-				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE_INHERITANCE_2(GuiVirtualDataGrid, GuiListControl::IItemProvider*, itemProvider)
-
-				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(SelectedCell)
-
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(ItemProvider)
-
-				CLASS_MEMBER_METHOD(SetViewToDefault, NO_PARAMETER)
-			END_CLASS_MEMBER(GuiVirtualDataGrid)
 
 			BEGIN_CLASS_MEMBER(DataVisualizerBase)
 				CLASS_MEMBER_BASE(IDataVisualizer)
@@ -2334,79 +2005,6 @@ Type Declaration
 				CLASS_MEMBER_BASE(IDataEditorFactory)
 				CLASS_MEMBER_CONSTRUCTOR(Ptr<DataEditorFactory>(TemplateProperty<templates::GuiGridEditorTemplate>), { L"templateFactory" })
 			END_CLASS_MEMBER(DataEditorFactory)
-
-			BEGIN_CLASS_MEMBER(MainColumnVisualizerTemplate)
-				CLASS_MEMBER_BASE(GuiGridVisualizerTemplate)
-				CLASS_MEMBER_CONSTRUCTOR(MainColumnVisualizerTemplate*(), NO_PARAMETER)
-			END_CLASS_MEMBER(MainColumnVisualizerTemplate)
-
-			BEGIN_CLASS_MEMBER(SubColumnVisualizerTemplate)
-				CLASS_MEMBER_BASE(GuiGridVisualizerTemplate)
-				CLASS_MEMBER_CONSTRUCTOR(SubColumnVisualizerTemplate*(), NO_PARAMETER)
-			END_CLASS_MEMBER(SubColumnVisualizerTemplate)
-
-			BEGIN_CLASS_MEMBER(HyperlinkVisualizerTemplate)
-				CLASS_MEMBER_BASE(SubColumnVisualizerTemplate)
-				CLASS_MEMBER_CONSTRUCTOR(HyperlinkVisualizerTemplate*(), NO_PARAMETER)
-			END_CLASS_MEMBER(HyperlinkVisualizerTemplate)
-
-			BEGIN_CLASS_MEMBER(CellBorderVisualizerTemplate)
-				CLASS_MEMBER_BASE(GuiGridVisualizerTemplate)
-				CLASS_MEMBER_CONSTRUCTOR(CellBorderVisualizerTemplate*(), NO_PARAMETER)
-			END_CLASS_MEMBER(CellBorderVisualizerTemplate)
-
-			BEGIN_CLASS_MEMBER(GuiDatePicker)
-				CLASS_MEMBER_BASE(GuiControl)
-				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiDatePicker)
-
-				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(Date)
-				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(DateFormat)
-				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(DateLocale)
-
-				CLASS_MEMBER_GUIEVENT(DateSelected);
-				CLASS_MEMBER_GUIEVENT(DateNavigated);
-			END_CLASS_MEMBER(GuiDatePicker)
-
-			BEGIN_CLASS_MEMBER(GuiDateComboBox)
-				CLASS_MEMBER_BASE(GuiComboBoxBase)
-				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE_INHERITANCE_2(GuiDateComboBox, GuiDatePicker*, datePicker)
-
-				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(SelectedDate)
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(DatePicker)
-			END_CLASS_MEMBER(GuiDateComboBox)
-
-			BEGIN_CLASS_MEMBER(GuiBindableTextList)
-				CLASS_MEMBER_BASE(GuiVirtualTextList)
-				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE_INHERITANCE(GuiBindableTextList)
-
-				CLASS_MEMBER_PROPERTY_FAST(ItemSource)
-				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(TextProperty)
-				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(CheckedProperty)
-				CLASS_MEMBER_PROPERTY_EVENT_READONLY_FAST(SelectedItem, SelectionChanged)
-			END_CLASS_MEMBER(GuiBindableTextList)
-
-			BEGIN_CLASS_MEMBER(GuiBindableListView)
-				CLASS_MEMBER_BASE(GuiVirtualListView)
-				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE_INHERITANCE(GuiBindableListView)
-
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(DataColumns)
-				CLASS_MEMBER_PROPERTY_READONLY_FAST(Columns)
-				CLASS_MEMBER_PROPERTY_FAST(ItemSource)
-				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(LargeImageProperty)
-				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(SmallImageProperty)
-				CLASS_MEMBER_PROPERTY_EVENT_READONLY_FAST(SelectedItem, SelectionChanged)
-			END_CLASS_MEMBER(GuiBindableListView)
-
-			BEGIN_CLASS_MEMBER(GuiBindableTreeView)
-				CLASS_MEMBER_BASE(GuiVirtualTreeView)
-				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE_INHERITANCE(GuiBindableTreeView)
-				
-				CLASS_MEMBER_PROPERTY_FAST(ItemSource)
-				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(TextProperty)
-				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(ImageProperty)
-				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(ChildrenProperty)
-				CLASS_MEMBER_PROPERTY_EVENT_READONLY_FAST(SelectedItem, SelectionChanged)
-			END_CLASS_MEMBER(GuiBindableTreeView)
 
 			BEGIN_INTERFACE_MEMBER(IDataProcessorCallback)
 				CLASS_MEMBER_BASE(IDescriptable)
@@ -2503,9 +2101,729 @@ Type Declaration
 				CLASS_MEMBER_BASE(IDataProcessorCallback)
 			END_CLASS_MEMBER(DataProvider)
 
+/***********************************************************************
+Type Declaration (Class)
+***********************************************************************/
+
+			BEGIN_CLASS_MEMBER(GuiDisposedFlag)
+				CLASS_MEMBER_METHOD(IsDisposed, NO_PARAMETER)
+			END_CLASS_MEMBER(GuiDisposedFlag)
+
+			BEGIN_CLASS_MEMBER(GuiControl)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiControl)
+
+				CLASS_MEMBER_EXTERNALMETHOD(SafeDelete, NO_PARAMETER, void(GuiControl::*)(), vl::presentation::compositions::SafeDeleteControl)
+
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(DisposedFlag)
+				CLASS_MEMBER_GUIEVENT(ControlSignalTrigerred)
+				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(ControlThemeName)
+				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(ControlTemplate)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(BoundsComposition)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(ContainerComposition)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(FocusableComposition)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(Parent)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(ChildrenCount)
+				CLASS_MEMBER_PROPERTY_EVENT_READONLY_FAST(RelatedControlHost, RenderTargetChanged)
+				CLASS_MEMBER_PROPERTY_GUIEVENT_READONLY_FAST(VisuallyEnabled)
+				CLASS_MEMBER_PROPERTY_GUIEVENT_READONLY_FAST(Focused)
+				CLASS_MEMBER_PROPERTY_FAST(AcceptTabInput)
+				CLASS_MEMBER_PROPERTY_FAST(TabPriority)
+				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(Enabled)
+				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(Visible)
+				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(Alt)
+				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(Text)
+				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(Font)
+				CLASS_MEMBER_PROPERTY_GUIEVENT_READONLY_FAST(DisplayFont)
+				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(Context)
+				CLASS_MEMBER_PROPERTY_FAST(Tag)
+				CLASS_MEMBER_PROPERTY_FAST(TooltipControl)
+				CLASS_MEMBER_PROPERTY_FAST(TooltipWidth)
+
+				CLASS_MEMBER_METHOD(SetControlThemeNameAndTemplate, { L"themeNameValue" _ L"controlTemplateValue" })
+				CLASS_MEMBER_METHOD(SetActivatingAltHost, { L"host" })
+				CLASS_MEMBER_METHOD(GetChild, {L"index"})
+				CLASS_MEMBER_METHOD(AddChild, {L"control"})
+				CLASS_MEMBER_METHOD(HasChild, {L"control"})
+				CLASS_MEMBER_METHOD(SetFocus, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(DisplayTooltip, {L"location"})
+				CLASS_MEMBER_METHOD(CloseTooltip, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(QueryService, {L"identifier"})
+				CLASS_MEMBER_METHOD(AddService, { L"identifier" _ L"value" })
+			END_CLASS_MEMBER(GuiControl)
+
+			BEGIN_CLASS_MEMBER(GuiCustomControl)
+				CLASS_MEMBER_BASE(GuiControl)
+				CLASS_MEMBER_BASE(GuiInstanceRootObject)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiCustomControl)
+			END_CLASS_MEMBER(GuiCustomControl)
+
+			BEGIN_CLASS_MEMBER(GuiLabel)
+				CLASS_MEMBER_BASE(GuiControl)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiLabel)
+
+				CLASS_MEMBER_PROPERTY_FAST(TextColor)
+			END_CLASS_MEMBER(GuiLabel)
+
+			BEGIN_CLASS_MEMBER(GuiButton)
+				CLASS_MEMBER_BASE(GuiControl)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiButton)
+
+				CLASS_MEMBER_GUIEVENT(Clicked)
+
+				CLASS_MEMBER_PROPERTY_FAST(ClickOnMouseUp)
+				CLASS_MEMBER_PROPERTY_FAST(AutoFocus)
+			END_CLASS_MEMBER(GuiButton)
+
+			BEGIN_CLASS_MEMBER(GuiSelectableButton)
+				CLASS_MEMBER_BASE(GuiButton)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiSelectableButton)
+
+				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(GroupController)
+				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(AutoSelection)
+				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(Selected)
+			END_CLASS_MEMBER(GuiSelectableButton)
+
+			BEGIN_CLASS_MEMBER(GuiScroll)
+				CLASS_MEMBER_BASE(GuiControl)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiScroll)
+
+				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(TotalSize)
+				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(PageSize)
+				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(Position)
+				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(SmallMove)
+				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(BigMove)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(MinPosition)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(MaxPosition)
+				CLASS_MEMBER_PROPERTY_FAST(AutoFocus)
+			END_CLASS_MEMBER(GuiScroll)
+
+			BEGIN_CLASS_MEMBER(GuiTabPage)
+				CLASS_MEMBER_BASE(GuiCustomControl)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiTabPage)
+
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(OwnerTab)
+			END_CLASS_MEMBER(GuiTabPage)
+
+			BEGIN_CLASS_MEMBER(GuiTab)
+				CLASS_MEMBER_BASE(GuiControl)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiTab)
+
+				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(SelectedPage)
+
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(Pages)
+			END_CLASS_MEMBER(GuiTab)
+
+			BEGIN_CLASS_MEMBER(GuiScrollView)
+				CLASS_MEMBER_BASE(GuiControl)
+
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(ViewSize)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(ViewBounds)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(ViewPosition)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(HorizontalScroll)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(VerticalScroll)
+				CLASS_MEMBER_PROPERTY_FAST(HorizontalAlwaysVisible)
+				CLASS_MEMBER_PROPERTY_FAST(VerticalAlwaysVisible)
+
+				CLASS_MEMBER_METHOD(CalculateView, NO_PARAMETER)
+			END_CLASS_MEMBER(GuiScrollView)
+
+			BEGIN_CLASS_MEMBER(GuiScrollContainer)
+				CLASS_MEMBER_BASE(GuiScrollView)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiScrollContainer)
+
+				CLASS_MEMBER_PROPERTY_FAST(ExtendToFullWidth)
+				CLASS_MEMBER_PROPERTY_FAST(ExtendToFullHeight)
+			END_CLASS_MEMBER(GuiScrollContainer)
+
+			BEGIN_CLASS_MEMBER(GuiControlHost)
+				CLASS_MEMBER_BASE(GuiControl)
+				CLASS_MEMBER_BASE(GuiInstanceRootObject)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiControlHost)
+
+				CLASS_MEMBER_GUIEVENT(WindowGotFocus)
+				CLASS_MEMBER_GUIEVENT(WindowLostFocus)
+				CLASS_MEMBER_GUIEVENT(WindowActivated)
+				CLASS_MEMBER_GUIEVENT(WindowDeactivated)
+				CLASS_MEMBER_GUIEVENT(WindowOpened)
+				CLASS_MEMBER_GUIEVENT(WindowClosing)
+				CLASS_MEMBER_GUIEVENT(WindowClosed)
+				CLASS_MEMBER_GUIEVENT(WindowDestroying)
+
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(MainComposition)
+				CLASS_MEMBER_PROPERTY_FAST(ShowInTaskBar)
+				CLASS_MEMBER_PROPERTY_FAST(EnabledActivate)
+				CLASS_MEMBER_PROPERTY_FAST(TopMost)
+				CLASS_MEMBER_PROPERTY_FAST(ClientSize)
+				CLASS_MEMBER_PROPERTY_FAST(Location)
+				CLASS_MEMBER_PROPERTY_FAST(ShortcutKeyManager)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(RelatedScreen)
+
+				CLASS_MEMBER_METHOD(DeleteAfterProcessingAllEvents, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(ForceCalculateSizeImmediately, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(GetFocused, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(SetFocused, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(GetActivated, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(SetActivated, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(SetBounds, {L"location" _ L"size"})
+				CLASS_MEMBER_METHOD(Show, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(ShowDeactivated, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(ShowRestored, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(ShowMaximized, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(ShowMinimized, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(Hide, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(Close, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(GetOpening, NO_PARAMETER)
+			END_CLASS_MEMBER(GuiControlHost)
+
+			BEGIN_CLASS_MEMBER(GuiWindow)
+				CLASS_MEMBER_BASE(GuiControlHost)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiWindow)
+
+				CLASS_MEMBER_GUIEVENT(ClipboardUpdated)
+
+				CLASS_MEMBER_PROPERTY_FAST(MaximizedBox)
+				CLASS_MEMBER_PROPERTY_FAST(MinimizedBox)
+				CLASS_MEMBER_PROPERTY_FAST(Border)
+				CLASS_MEMBER_PROPERTY_FAST(SizeBox)
+				CLASS_MEMBER_PROPERTY_FAST(IconVisible)
+				CLASS_MEMBER_PROPERTY_FAST(TitleBar)
+				CLASS_MEMBER_PROPERTY_FAST(Icon)
+
+				CLASS_MEMBER_METHOD_OVERLOAD(MoveToScreenCenter, NO_PARAMETER, void(GuiWindow::*)())
+				CLASS_MEMBER_METHOD_OVERLOAD(MoveToScreenCenter, { L"screen" }, void(GuiWindow::*)(INativeScreen*))
+				CLASS_MEMBER_METHOD(ShowModal, { L"owner" _ L"callback" })
+				CLASS_MEMBER_METHOD(ShowModalAndDelete, { L"owner" _ L"callback" })
+				CLASS_MEMBER_METHOD(ShowModalAsync, { L"owner" })
+			END_CLASS_MEMBER(GuiWindow)
+
+			BEGIN_CLASS_MEMBER(GuiPopup)
+				CLASS_MEMBER_BASE(GuiWindow)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiPopup)
+
+				CLASS_MEMBER_METHOD_OVERLOAD(ShowPopup, {L"location" _ L"screen"}, void(GuiPopup::*)(NativePoint _ INativeScreen*))
+				CLASS_MEMBER_METHOD_OVERLOAD(ShowPopup, {L"control" _ L"bounds" _ L"preferredTopBottomSide"}, void(GuiPopup::*)(GuiControl* _ Rect _ bool))
+				CLASS_MEMBER_METHOD_OVERLOAD(ShowPopup, {L"control" _ L"location"}, void(GuiPopup::*)(GuiControl* _ Point))
+				CLASS_MEMBER_METHOD_OVERLOAD(ShowPopup, {L"control" _ L"preferredTopBottomSide"}, void(GuiPopup::*)(GuiControl* _ bool))
+			END_CLASS_MEMBER(GuiPopup)
+
+			BEGIN_CLASS_MEMBER(GuiTooltip)
+				CLASS_MEMBER_BASE(GuiPopup)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiTooltip)
+				
+				CLASS_MEMBER_PROPERTY_FAST(PreferredContentWidth)
+				CLASS_MEMBER_PROPERTY_FAST(TemporaryContentControl)
+			END_CLASS_MEMBER(GuiTooltip)
+
+			BEGIN_CLASS_MEMBER(GuiListControl)
+				CLASS_MEMBER_BASE(GuiScrollView)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE_3(GuiListControl, GuiListControl::IItemProvider*, itemProvider, bool, acceptFocus)
+
+				CLASS_MEMBER_GUIEVENT(AdoptedSizeInvalidated)
+				CLASS_MEMBER_GUIEVENT(ItemLeftButtonDown)
+				CLASS_MEMBER_GUIEVENT(ItemLeftButtonUp)
+				CLASS_MEMBER_GUIEVENT(ItemLeftButtonDoubleClick)
+				CLASS_MEMBER_GUIEVENT(ItemMiddleButtonDown)
+				CLASS_MEMBER_GUIEVENT(ItemMiddleButtonUp)
+				CLASS_MEMBER_GUIEVENT(ItemMiddleButtonDoubleClick)
+				CLASS_MEMBER_GUIEVENT(ItemRightButtonDown)
+				CLASS_MEMBER_GUIEVENT(ItemRightButtonUp)
+				CLASS_MEMBER_GUIEVENT(ItemRightButtonDoubleClick)
+				CLASS_MEMBER_GUIEVENT(ItemMouseMove)
+				CLASS_MEMBER_GUIEVENT(ItemMouseEnter)
+				CLASS_MEMBER_GUIEVENT(ItemMouseLeave)
+
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(ItemProvider)
+				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(ItemTemplate)
+				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(Arranger)
+				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(Axis)
+				CLASS_MEMBER_PROPERTY_FAST(DisplayItemBackground)
+
+				CLASS_MEMBER_METHOD(EnsureItemVisible, {L"itemIndex"})
+				CLASS_MEMBER_METHOD(GetAdoptedSize, {L"expectedSize"})
+			END_CLASS_MEMBER(GuiListControl)
+
+			BEGIN_CLASS_MEMBER(GuiSelectableListControl)
+				CLASS_MEMBER_BASE(GuiListControl)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE_INHERITANCE_2(GuiSelectableListControl, GuiListControl::IItemProvider*, itemProvider)
+
+				CLASS_MEMBER_GUIEVENT(SelectionChanged)
+
+				CLASS_MEMBER_PROPERTY_FAST(MultiSelect)
+				CLASS_MEMBER_PROPERTY_EVENT_READONLY_FAST(SelectedItems, SelectionChanged)
+				CLASS_MEMBER_PROPERTY_EVENT_READONLY_FAST(SelectedItemIndex, SelectionChanged)
+				CLASS_MEMBER_PROPERTY_EVENT_READONLY_FAST(SelectedItemText, SelectionChanged)
+
+				CLASS_MEMBER_METHOD(GetSelected, {L"itemIndex"})
+				CLASS_MEMBER_METHOD(SetSelected, {L"itemIndex" _ L"value"})
+				CLASS_MEMBER_METHOD(SelectItemsByClick, {L"itemIndex" _ L"ctrl" _ L"shift" _ L"leftButton"})
+				CLASS_MEMBER_METHOD(SelectItemsByKey, {L"code" _ L"ctrl" _ L"shift"})
+				CLASS_MEMBER_METHOD(ClearSelection, NO_PARAMETER)
+			END_CLASS_MEMBER(GuiSelectableListControl)
+
+			BEGIN_CLASS_MEMBER(GuiVirtualTextList)
+				CLASS_MEMBER_BASE(GuiSelectableListControl)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE_2(GuiVirtualTextList, GuiListControl::IItemProvider*, L"itemProvider")
+
+				CLASS_MEMBER_GUIEVENT(ItemChecked)
+				CLASS_MEMBER_PROPERTY_FAST(View)
+			END_CLASS_MEMBER(GuiVirtualTextList)
+
+			BEGIN_CLASS_MEMBER(GuiTextList)
+				CLASS_MEMBER_BASE(GuiVirtualTextList)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE_INHERITANCE(GuiTextList)
+
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(Items)
+				CLASS_MEMBER_PROPERTY_EVENT_READONLY_FAST(SelectedItem, SelectionChanged)
+			END_CLASS_MEMBER(GuiTextList)
+
+			BEGIN_CLASS_MEMBER(GuiListViewColumnHeader)
+				CLASS_MEMBER_BASE(GuiMenuButton)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiListViewColumnHeader)
+
+				CLASS_MEMBER_PROPERTY_FAST(ColumnSortingState)
+			END_CLASS_MEMBER(GuiListViewColumnHeader)
+
+			BEGIN_CLASS_MEMBER(GuiListViewBase)
+				CLASS_MEMBER_BASE(GuiSelectableListControl)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE_2(GuiListViewBase, GuiListControl::IItemProvider*, itemProvider)
+
+				CLASS_MEMBER_GUIEVENT(ColumnClicked)
+			END_CLASS_MEMBER(GuiListViewBase)
+
+			BEGIN_CLASS_MEMBER(GuiVirtualListView)
+				CLASS_MEMBER_BASE(GuiListViewBase)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE_INHERITANCE_2(GuiVirtualListView, GuiListControl::IItemProvider*, itemProvider)
+
+				CLASS_MEMBER_PROPERTY_FAST(View)
+			END_CLASS_MEMBER(GuiVirtualListView)
+
+			BEGIN_CLASS_MEMBER(GuiListView)
+				CLASS_MEMBER_BASE(GuiVirtualListView)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiListView)
+
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(DataColumns)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(Columns)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(Items)
+				CLASS_MEMBER_PROPERTY_EVENT_READONLY_FAST(SelectedItem, SelectionChanged)
+			END_CLASS_MEMBER(GuiListView)
+
+			BEGIN_CLASS_MEMBER(GuiMenu)
+				CLASS_MEMBER_BASE(GuiPopup)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE_2(GuiMenu, GuiControl*, owner)
+
+				CLASS_MEMBER_PROPERTY_FAST(HideOnDeactivateAltHost)
+				CLASS_MEMBER_METHOD(UpdateMenuService, NO_PARAMETER)
+			END_CLASS_MEMBER(GuiMenu)
+
+			BEGIN_CLASS_MEMBER(GuiMenuBar)
+				CLASS_MEMBER_BASE(GuiControl)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiMenuBar)
+			END_CLASS_MEMBER(GuiMenuBar)
+
+			BEGIN_CLASS_MEMBER(GuiMenuButton)
+				CLASS_MEMBER_BASE(GuiSelectableButton)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiMenuButton)
+
+				CLASS_MEMBER_GUIEVENT(BeforeSubMenuOpening)
+				CLASS_MEMBER_GUIEVENT(AfterSubMenuOpening)
+
+				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(LargeImage)
+				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(Image)
+				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(ShortcutText)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(SubMenu)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(OwnedSubMenu)
+				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(SubMenuOpening)
+				CLASS_MEMBER_PROPERTY_FAST(PreferredMenuClientSize)
+				CLASS_MEMBER_PROPERTY_FAST(CascadeAction)
+
+				CLASS_MEMBER_METHOD(IsSubMenuExists, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(CreateSubMenu, {L"subMenuStyleController"})
+				CLASS_MEMBER_METHOD(SetSubMenu, {L"value" _ L"owned"})
+			END_CLASS_MEMBER(GuiMenuButton)
+
+			BEGIN_CLASS_MEMBER(GuiVirtualTreeListControl)
+				CLASS_MEMBER_BASE(GuiSelectableListControl)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE_2(GuiVirtualTreeListControl, Ptr<INodeRootProvider>, rootNodeProvider)
+
+				CLASS_MEMBER_GUIEVENT(NodeLeftButtonDown)
+				CLASS_MEMBER_GUIEVENT(NodeLeftButtonUp)
+				CLASS_MEMBER_GUIEVENT(NodeLeftButtonDoubleClick)
+				CLASS_MEMBER_GUIEVENT(NodeMiddleButtonDown)
+				CLASS_MEMBER_GUIEVENT(NodeMiddleButtonUp)
+				CLASS_MEMBER_GUIEVENT(NodeMiddleButtonDoubleClick)
+				CLASS_MEMBER_GUIEVENT(NodeRightButtonDown)
+				CLASS_MEMBER_GUIEVENT(NodeRightButtonUp)
+				CLASS_MEMBER_GUIEVENT(NodeRightButtonDoubleClick)
+				CLASS_MEMBER_GUIEVENT(NodeMouseMove)
+				CLASS_MEMBER_GUIEVENT(NodeMouseEnter)
+				CLASS_MEMBER_GUIEVENT(NodeMouseLeave)
+				CLASS_MEMBER_GUIEVENT(NodeExpanded)
+				CLASS_MEMBER_GUIEVENT(NodeCollapsed)
+
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(NodeItemView)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(NodeRootProvider)
+			END_CLASS_MEMBER(GuiVirtualTreeListControl)
+
+			BEGIN_CLASS_MEMBER(GuiVirtualTreeView)
+				CLASS_MEMBER_BASE(GuiVirtualTreeListControl)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE_INHERITANCE_2(GuiVirtualTreeView, Ptr<INodeRootProvider>, rootNodeProvider)
+
+			END_CLASS_MEMBER(GuiVirtualTreeView)
+
+			BEGIN_CLASS_MEMBER(GuiTreeView)
+				CLASS_MEMBER_BASE(GuiVirtualTreeView)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE_INHERITANCE(GuiTreeView)
+
+				CLASS_MEMBER_METHOD_RENAME(GetNodes, Nodes, NO_PARAMETER)
+				CLASS_MEMBER_PROPERTY_READONLY(Nodes, GetNodes)
+				CLASS_MEMBER_PROPERTY_EVENT_READONLY_FAST(SelectedItem, SelectionChanged)
+			END_CLASS_MEMBER(GuiTreeView)
+
+			BEGIN_CLASS_MEMBER(GuiComboBoxBase)
+				CLASS_MEMBER_BASE(GuiMenuButton)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiComboBoxBase)
+			END_CLASS_MEMBER(GuiComboBoxBase)
+
+			BEGIN_CLASS_MEMBER(GuiComboBoxListControl)
+				CLASS_MEMBER_BASE(GuiComboBoxBase)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE_INHERITANCE_2(GuiComboBoxListControl, GuiSelectableListControl*, containedListControl)
+
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(ContainedListControl)
+				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(ItemTemplate)
+				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(SelectedIndex)
+				CLASS_MEMBER_PROPERTY_EVENT_READONLY_FAST(SelectedItem, SelectedIndexChanged)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(ItemProvider)
+			END_CLASS_MEMBER(GuiComboBoxListControl)
+
+			BEGIN_CLASS_MEMBER(GuiToolstripMenu)
+				CLASS_MEMBER_BASE(GuiMenu)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE_INHERITANCE_2(GuiToolstripMenu, GuiControl*, owner)
+
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(ToolstripItems)
+			END_CLASS_MEMBER(GuiToolstripMenu)
+
+			BEGIN_CLASS_MEMBER(GuiToolstripMenuBar)
+				CLASS_MEMBER_BASE(GuiMenuBar)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiToolstripMenuBar)
+				
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(ToolstripItems)
+			END_CLASS_MEMBER(GuiToolstripMenuBar)
+
+			BEGIN_CLASS_MEMBER(GuiToolstripToolBar)
+				CLASS_MEMBER_BASE(GuiControl)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiToolstripToolBar)
+				
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(ToolstripItems)
+			END_CLASS_MEMBER(GuiToolstripToolBar)
+
+			BEGIN_CLASS_MEMBER(GuiToolstripButton)
+				CLASS_MEMBER_BASE(GuiMenuButton)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiToolstripButton)
+
+				CLASS_MEMBER_PROPERTY_FAST(Command)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(ToolstripSubMenu)
+
+				CLASS_MEMBER_METHOD(EnsureToolstripSubMenu, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(CreateToolstripSubMenu, {L"subMenuStyleController"})
+			END_CLASS_MEMBER(GuiToolstripButton)
+
+			BEGIN_CLASS_MEMBER(GuiToolstripNestedContainer)
+				CLASS_MEMBER_BASE(GuiControl)
+			END_CLASS_MEMBER(GuiToolstripGroupContainer)
+
+			BEGIN_CLASS_MEMBER(GuiToolstripGroupContainer)
+				CLASS_MEMBER_BASE(GuiToolstripNestedContainer)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiToolstripGroupContainer)
+
+				CLASS_MEMBER_PROPERTY_FAST(SplitterTemplate)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(ToolstripItems)
+			END_CLASS_MEMBER(GuiToolstripGroupContainer)
+
+			BEGIN_CLASS_MEMBER(GuiToolstripGroup)
+				CLASS_MEMBER_BASE(GuiToolstripNestedContainer)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiToolstripGroup)
+
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(ToolstripItems)
+			END_CLASS_MEMBER(GuiToolstripGroup)
+
+			BEGIN_CLASS_MEMBER(GuiRibbonTab)
+				CLASS_MEMBER_BASE(GuiTab)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiRibbonTab)
+
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(BeforeHeaders)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(AfterHeaders)
+			END_CLASS_MEMBER(GuiRibbonTab)
+
+			BEGIN_CLASS_MEMBER(GuiRibbonTabPage)
+				CLASS_MEMBER_BASE(GuiTabPage)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiRibbonTabPage)
+
+				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(Highlighted)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(Groups)
+			END_CLASS_MEMBER(GuiRibbonTabPage)
+
+			BEGIN_CLASS_MEMBER(GuiRibbonGroup)
+				CLASS_MEMBER_BASE(GuiControl)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiRibbonGroup)
+
+				CLASS_MEMBER_GUIEVENT(ExpandButtonClicked)
+				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(Expandable)
+				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(LargeImage)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(Items)
+			END_CLASS_MEMBER(GuiRibbonGroup)
+
+			BEGIN_CLASS_MEMBER(GuiRibbonIconLabel)
+				CLASS_MEMBER_BASE(GuiControl)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiRibbonIconLabel)
+
+				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(Image)
+			END_CLASS_MEMBER(GuiRibbonIconLabel)
+
+			BEGIN_CLASS_MEMBER(GuiRibbonButtons)
+				CLASS_MEMBER_BASE(GuiControl)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE_3(GuiRibbonButtons, RibbonButtonSize, maxSize, RibbonButtonSize, minSize)
+
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(Buttons)
+			END_CLASS_MEMBER(GuiRibbonButtons)
+
+			BEGIN_CLASS_MEMBER(GuiRibbonToolstrips)
+				CLASS_MEMBER_BASE(GuiControl)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiRibbonToolstrips)
+
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(Groups)
+			END_CLASS_MEMBER(GuiRibbonToolstrips)
+
+			BEGIN_CLASS_MEMBER(GuiRibbonGallery)
+				CLASS_MEMBER_BASE(GuiControl)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiRibbonGallery)
+
+				CLASS_MEMBER_GUIEVENT(RequestedScrollUp)
+				CLASS_MEMBER_GUIEVENT(RequestedScrollDown)
+				CLASS_MEMBER_GUIEVENT(RequestedDropdown)
+
+				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(ScrollUpEnabled)
+				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(ScrollDownEnabled)
+			END_CLASS_MEMBER(GuiRibbonGallery)
+
+			BEGIN_CLASS_MEMBER(GuiRibbonToolstripMenu)
+				CLASS_MEMBER_BASE(GuiToolstripMenu)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE_INHERITANCE_2(GuiRibbonToolstripMenu, GuiControl*, owner)
+
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(ContentComposition)
+			END_CLASS_MEMBER(GuiRibbonToolstripMenu)
+
+			BEGIN_CLASS_MEMBER(GuiBindableRibbonGalleryList)
+				CLASS_MEMBER_BASE(GuiRibbonGallery)
+				CLASS_MEMBER_BASE(GroupedDataSource)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiBindableRibbonGalleryList)
+					
+				CLASS_MEMBER_GUIEVENT(SelectionChanged)
+				CLASS_MEMBER_GUIEVENT(PreviewStarted)
+				CLASS_MEMBER_GUIEVENT(PreviewStopped)
+				CLASS_MEMBER_GUIEVENT(ItemApplied)
+
+				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(ItemTemplate)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(SubMenu)
+				CLASS_MEMBER_PROPERTY_FAST(MinCount)
+				CLASS_MEMBER_PROPERTY_FAST(MaxCount)
+				CLASS_MEMBER_PROPERTY_EVENT_READONLY_FAST(SelectedIndex, SelectionChanged)
+				CLASS_MEMBER_PROPERTY_EVENT_READONLY_FAST(SelectedItem, SelectionChanged)
+				CLASS_MEMBER_PROPERTY_FAST(VisibleItemCount)
+
+				CLASS_MEMBER_METHOD(IndexToGalleryPos, { L"index" })
+				CLASS_MEMBER_METHOD(GalleryPosToIndex, { L"pos" })
+				CLASS_MEMBER_METHOD(ApplyItem, { L"index" })
+				CLASS_MEMBER_METHOD(SelectItem, { L"index" })
+			END_CLASS_MEMBER(GuiBindableRibbonGalleryList)
+
+			BEGIN_CLASS_MEMBER(GuiDocumentCommonInterface)
+				CLASS_MEMBER_PROPERTY_FAST(Document)
+				CLASS_MEMBER_PROPERTY_FAST(EditMode)
+
+				CLASS_MEMBER_GUIEVENT(ActiveHyperlinkChanged)
+				CLASS_MEMBER_GUIEVENT(ActiveHyperlinkExecuted)
+				CLASS_MEMBER_GUIEVENT(SelectionChanged)
+				CLASS_MEMBER_GUIEVENT(UndoRedoChanged)
+
+				CLASS_MEMBER_METHOD(AddDocumentItem, { L"value" })
+				CLASS_MEMBER_METHOD(RemoveDocumentItem, { L"value" })
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(DocumentItems)
+
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(CaretBegin)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(CaretEnd)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(ActiveHyperlinkReference)
+				CLASS_MEMBER_PROPERTY_EVENT_FAST(SelectionText, SelectionChanged)
+				CLASS_MEMBER_PROPERTY_EVENT_FAST(SelectionModel, SelectionChanged)
+				CLASS_MEMBER_PROPERTY_GUIEVENT_READONLY_FAST(Modified)
+
+				CLASS_MEMBER_METHOD(SetCaret, {L"begin" _ L"end" _ L"frontSide"})
+				CLASS_MEMBER_METHOD(CalculateCaretFromPoint, {L"point"})
+				CLASS_MEMBER_METHOD(GetCaretBounds, {L"caret" _ L"frontSide"})
+				CLASS_MEMBER_METHOD(NotifyParagraphUpdated, {L"index" _ L"oldCount" _ L"newCount" _ L"updatedText"})
+				CLASS_MEMBER_METHOD(EditRun, {L"begin" _ L"end" _ L"model" _ L"copy"})
+				CLASS_MEMBER_METHOD(EditText, {L"begin" _ L"end" _ L"frontSide" _ L"text"})
+				CLASS_MEMBER_METHOD(EditStyle, {L"begin" _ L"end" _ L"style"})
+				CLASS_MEMBER_METHOD(EditImage, {L"begin" _ L"end" _ L"image"})
+				CLASS_MEMBER_METHOD(EditHyperlink, {L"paragraphIndex" _ L"begin" _ L"end" _ L"reference" _ L"normalStyleName" _ L"activeStyleName"})
+				CLASS_MEMBER_METHOD(RemoveHyperlink, {L"paragraphIndex" _ L"begin" _ L"end"})
+				CLASS_MEMBER_METHOD(EditStyleName, {L"begin" _ L"end" _ L"styleName"})
+				CLASS_MEMBER_METHOD(RemoveStyleName, {L"begin" _ L"end" _ L"image"})
+				CLASS_MEMBER_METHOD(RenameStyle, {L"oldStyleName" _ L"newStyleName"})
+				CLASS_MEMBER_METHOD(ClearStyle, {L"begin" _ L"end"})
+				CLASS_MEMBER_METHOD(SummarizeStyle, {L"begin" _ L"end"})
+				CLASS_MEMBER_METHOD(SummarizeStyleName, { L"begin" _ L"end" })
+				CLASS_MEMBER_METHOD(SetParagraphAlignments, { L"begin" _ L"end" _ L"alignments" })
+				CLASS_MEMBER_METHOD(SetParagraphAlignment, { L"begin" _ L"end" _ L"alignment" })
+				CLASS_MEMBER_METHOD(SummarizeParagraphAlignment, { L"begin" _ L"end" })
+				CLASS_MEMBER_METHOD(SelectAll, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(CanCut, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(CanCopy, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(CanPaste, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(Cut, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(Copy, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(Paste, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(CanUndo, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(CanRedo, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(ClearUndoRedo, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(NotifyModificationSaved, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(Undo, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(Redo, NO_PARAMETER)
+			END_CLASS_MEMBER(GuiDocumentCommonInterface)
+
+			BEGIN_CLASS_MEMBER(GuiDocumentViewer)
+				CLASS_MEMBER_BASE(GuiScrollContainer)
+				CLASS_MEMBER_BASE(GuiDocumentCommonInterface)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiDocumentViewer)
+			END_CLASS_MEMBER(GuiDocumentViewer)
+
+			BEGIN_CLASS_MEMBER(GuiDocumentLabel)
+				CLASS_MEMBER_BASE(GuiControl)
+				CLASS_MEMBER_BASE(GuiDocumentCommonInterface)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiDocumentLabel)
+			END_CLASS_MEMBER(GuiDocumentLabel)
+
+			BEGIN_CLASS_MEMBER(GuiTextBoxCommonInterface)
+				CLASS_MEMBER_GUIEVENT(SelectionChanged)
+				CLASS_MEMBER_GUIEVENT(UndoRedoChanged)
+				
+				CLASS_MEMBER_PROPERTY_FAST(Readonly)
+				CLASS_MEMBER_PROPERTY_EVENT_FAST(SelectionText, SelectionChanged)
+				CLASS_MEMBER_PROPERTY_EVENT_READONLY_FAST(CaretBegin, SelectionChanged)
+				CLASS_MEMBER_PROPERTY_EVENT_READONLY_FAST(CaretEnd, SelectionChanged)
+				CLASS_MEMBER_PROPERTY_EVENT_READONLY_FAST(CaretSmall, SelectionChanged)
+				CLASS_MEMBER_PROPERTY_EVENT_READONLY_FAST(CaretLarge, SelectionChanged)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(RowCount)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(RowHeight)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(MaxWidth)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(MaxHeight)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(EditVersion)
+				CLASS_MEMBER_PROPERTY_GUIEVENT_READONLY_FAST(Modified)
+
+				CLASS_MEMBER_METHOD(CanCut, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(CanCopy, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(CanPaste, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(Cut, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(Copy, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(Paste, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(SelectAll, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(Select, {L"begin" _ L"end"})
+				CLASS_MEMBER_METHOD(SetSelectionTextAsKeyInput, {L"value"})
+				CLASS_MEMBER_METHOD(GetRowText, {L"row"})
+				CLASS_MEMBER_METHOD(GetFragmentText, {L"start" _ L"end"})
+				CLASS_MEMBER_METHOD(GetRowWidth, {L"row"})
+				CLASS_MEMBER_METHOD(GetTextPosFromPoint, {L"point"})
+				CLASS_MEMBER_METHOD(GetPointFromTextPos, {L"pos"})
+				CLASS_MEMBER_METHOD(GetRectFromTextPos, {L"pos"})
+				CLASS_MEMBER_METHOD(GetNearestTextPos, {L"point"})
+				CLASS_MEMBER_METHOD(CanUndo, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(CanRedo, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(ClearUndoRedo, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(NotifyModificationSaved, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(Undo, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(Redo, NO_PARAMETER)
+			END_CLASS_MEMBER(GuiTextBoxCommonInterface)
+
+			BEGIN_CLASS_MEMBER(GuiMultilineTextBox)
+				CLASS_MEMBER_BASE(GuiScrollView)
+				CLASS_MEMBER_BASE(GuiTextBoxCommonInterface)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiMultilineTextBox)
+			END_CLASS_MEMBER(GuiMultilineTextBox)
+
+			BEGIN_CLASS_MEMBER(GuiSinglelineTextBox)
+				CLASS_MEMBER_BASE(GuiControl)
+				CLASS_MEMBER_BASE(GuiTextBoxCommonInterface)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiSinglelineTextBox)
+
+				CLASS_MEMBER_PROPERTY_FAST(PasswordChar)
+			END_CLASS_MEMBER(GuiSinglelineTextBox)
+
+			BEGIN_CLASS_MEMBER(GuiVirtualDataGrid)
+				CLASS_MEMBER_BASE(GuiVirtualListView)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE_INHERITANCE_2(GuiVirtualDataGrid, GuiListControl::IItemProvider*, itemProvider)
+
+				CLASS_MEMBER_PROPERTY_GUIEVENT_READONLY_FAST(SelectedCell)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(ItemProvider)
+
+				CLASS_MEMBER_METHOD(SetViewToDefault, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(SelectCell, { L"value" _ L"openEditor" })
+			END_CLASS_MEMBER(GuiVirtualDataGrid)
+
+			BEGIN_CLASS_MEMBER(GuiDatePicker)
+				CLASS_MEMBER_BASE(GuiControl)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE(GuiDatePicker)
+
+				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(Date)
+				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(DateFormat)
+				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(DateLocale)
+
+				CLASS_MEMBER_GUIEVENT(DateSelected);
+				CLASS_MEMBER_GUIEVENT(DateNavigated);
+			END_CLASS_MEMBER(GuiDatePicker)
+
+			BEGIN_CLASS_MEMBER(GuiDateComboBox)
+				CLASS_MEMBER_BASE(GuiComboBoxBase)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE_INHERITANCE(GuiDateComboBox)
+
+				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(SelectedDate)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(DatePicker)
+			END_CLASS_MEMBER(GuiDateComboBox)
+
+			BEGIN_CLASS_MEMBER(GuiBindableTextList)
+				CLASS_MEMBER_BASE(GuiVirtualTextList)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE_INHERITANCE(GuiBindableTextList)
+
+				CLASS_MEMBER_PROPERTY_FAST(ItemSource)
+				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(TextProperty)
+				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(CheckedProperty)
+				CLASS_MEMBER_PROPERTY_EVENT_READONLY_FAST(SelectedItem, SelectionChanged)
+			END_CLASS_MEMBER(GuiBindableTextList)
+
+			BEGIN_CLASS_MEMBER(GuiBindableListView)
+				CLASS_MEMBER_BASE(GuiVirtualListView)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE_INHERITANCE(GuiBindableListView)
+
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(DataColumns)
+				CLASS_MEMBER_PROPERTY_READONLY_FAST(Columns)
+				CLASS_MEMBER_PROPERTY_FAST(ItemSource)
+				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(LargeImageProperty)
+				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(SmallImageProperty)
+				CLASS_MEMBER_PROPERTY_EVENT_READONLY_FAST(SelectedItem, SelectionChanged)
+			END_CLASS_MEMBER(GuiBindableListView)
+
+			BEGIN_CLASS_MEMBER(GuiBindableTreeView)
+				CLASS_MEMBER_BASE(GuiVirtualTreeView)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE_INHERITANCE(GuiBindableTreeView)
+				
+				CLASS_MEMBER_PROPERTY_FAST(ItemSource)
+				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(TextProperty)
+				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(ImageProperty)
+				CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(ChildrenProperty)
+				CLASS_MEMBER_PROPERTY_EVENT_READONLY_FAST(SelectedItem, SelectionChanged)
+			END_CLASS_MEMBER(GuiBindableTreeView)
+
 			BEGIN_CLASS_MEMBER(GuiBindableDataGrid)
 				CLASS_MEMBER_BASE(GuiVirtualDataGrid)
-				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE_INHERITANCE_2(GuiBindableDataGrid, const Value&, viewModelContext)
+				CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE_INHERITANCE(GuiBindableDataGrid)
 
 				CLASS_MEMBER_PROPERTY_READONLY_FAST(DataColumns)
 				CLASS_MEMBER_PROPERTY_READONLY_FAST(Columns)
@@ -2518,8 +2836,12 @@ Type Declaration
 			END_CLASS_MEMBER(GuiBindableDataGrid)
 
 #undef INTERFACE_IDENTIFIER
+#undef CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE_3
+#undef CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE_INHERITANCE_3
+#undef CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE_2
+#undef CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE_INHERITANCE_2
 #undef CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE
-#undef INTERFACE_EXTERNALCTOR
+#undef CONTROL_CONSTRUCTOR_CONTROLT_TEMPLATE_INHERITANCE
 #undef _
 
 /***********************************************************************
@@ -2573,11 +2895,14 @@ namespace vl
 
 #ifndef VCZH_DEBUG_NO_REFLECTION
 
-/***********************************************************************
-Type Declaration
-***********************************************************************/
-
 #define _ ,
+
+#define ELEMENT_CONSTRUCTOR(ELEMENT)\
+			CLASS_MEMBER_EXTERNALCTOR(Ptr<ELEMENT>(), NO_PARAMETER, vl::reflection::description::Element_Constructor<::vl::presentation::elements::ELEMENT>)
+
+/***********************************************************************
+Type Declaration (Extra)
+***********************************************************************/
 
 			BEGIN_INTERFACE_MEMBER_NOPROXY(IGuiGraphicsElement)
 				CLASS_MEMBER_PROPERTY_READONLY_FAST(OwnerComposition)
@@ -2611,68 +2936,11 @@ Type Declaration
 				STRUCT_MEMBER(radiusY)
 			END_STRUCT_MEMBER(ElementShape)
 
-			BEGIN_CLASS_MEMBER(GuiSolidBorderElement)
-				CLASS_MEMBER_BASE(IGuiGraphicsElement)
-				CLASS_MEMBER_EXTERNALCTOR(Ptr<GuiSolidBorderElement>(), NO_PARAMETER, vl::reflection::description::Element_Constructor<::vl::presentation::elements::GuiSolidBorderElement>)
-
-				CLASS_MEMBER_PROPERTY_FAST(Color)
-				CLASS_MEMBER_PROPERTY_FAST(Shape)
-			END_CLASS_MEMBER(GuiSolidBorderElement)
-
-			BEGIN_CLASS_MEMBER(Gui3DBorderElement)
-				CLASS_MEMBER_BASE(IGuiGraphicsElement)
-				CLASS_MEMBER_EXTERNALCTOR(Ptr<Gui3DBorderElement>(), NO_PARAMETER, vl::reflection::description::Element_Constructor<::vl::presentation::elements::Gui3DBorderElement>)
-				
-				CLASS_MEMBER_METHOD(SetColors, {L"value1" _ L"value2"})
-
-				CLASS_MEMBER_PROPERTY_FAST(Color1)
-				CLASS_MEMBER_PROPERTY_FAST(Color2)
-			END_CLASS_MEMBER(Gui3DBorderElement)
-
-			BEGIN_CLASS_MEMBER(Gui3DSplitterElement)
-				CLASS_MEMBER_BASE(IGuiGraphicsElement)
-				CLASS_MEMBER_EXTERNALCTOR(Ptr<Gui3DSplitterElement>(), NO_PARAMETER, vl::reflection::description::Element_Constructor<::vl::presentation::elements::Gui3DSplitterElement>)
-				
-				CLASS_MEMBER_METHOD(SetColors, {L"value1" _ L"value2"})
-
-				CLASS_MEMBER_PROPERTY_FAST(Color1)
-				CLASS_MEMBER_PROPERTY_FAST(Color2)
-				CLASS_MEMBER_PROPERTY_FAST(Direction)
-			END_CLASS_MEMBER(Gui3DSplitterElement)
-
 			BEGIN_ENUM_ITEM(Gui3DSplitterElement::Direction)
 				ENUM_ITEM_NAMESPACE(Gui3DSplitterElement)
 				ENUM_NAMESPACE_ITEM(Horizontal)
 				ENUM_NAMESPACE_ITEM(Vertical)
 			END_ENUM_ITEM(Gui3DSplitterElement::Direction)
-
-			BEGIN_CLASS_MEMBER(GuiSolidBackgroundElement)
-				CLASS_MEMBER_BASE(IGuiGraphicsElement)
-				CLASS_MEMBER_EXTERNALCTOR(Ptr<GuiSolidBackgroundElement>(), NO_PARAMETER, vl::reflection::description::Element_Constructor<::vl::presentation::elements::GuiSolidBackgroundElement>)
-				
-				CLASS_MEMBER_PROPERTY_FAST(Color)
-				CLASS_MEMBER_PROPERTY_FAST(Shape)
-			END_CLASS_MEMBER(GuiSolidBackgroundElement)
-
-			BEGIN_CLASS_MEMBER(GuiGradientBackgroundElement)
-				CLASS_MEMBER_BASE(IGuiGraphicsElement)
-				CLASS_MEMBER_EXTERNALCTOR(Ptr<GuiGradientBackgroundElement>(), NO_PARAMETER, vl::reflection::description::Element_Constructor<::vl::presentation::elements::GuiGradientBackgroundElement>)
-				
-				CLASS_MEMBER_METHOD(SetColors, {L"value1" _ L"value2"})
-
-				CLASS_MEMBER_PROPERTY_FAST(Color1)
-				CLASS_MEMBER_PROPERTY_FAST(Color2)
-				CLASS_MEMBER_PROPERTY_FAST(Direction)
-				CLASS_MEMBER_PROPERTY_FAST(Shape)
-			END_CLASS_MEMBER(GuiGradientBackgroundElement)
-
-			BEGIN_CLASS_MEMBER(GuiInnerShadowElement)
-				CLASS_MEMBER_BASE(IGuiGraphicsElement)
-				CLASS_MEMBER_EXTERNALCTOR(Ptr<GuiInnerShadowElement>(), NO_PARAMETER, vl::reflection::description::Element_Constructor<::vl::presentation::elements::GuiInnerShadowElement>)
-
-				CLASS_MEMBER_PROPERTY_FAST(Color)
-				CLASS_MEMBER_PROPERTY_FAST(Thickness)
-			END_CLASS_MEMBER(GuiInnerShadowElement)
 
 			BEGIN_ENUM_ITEM(GuiGradientBackgroundElement::Direction)
 				ENUM_ITEM_NAMESPACE(GuiGradientBackgroundElement)
@@ -2681,51 +2949,6 @@ Type Declaration
 				ENUM_NAMESPACE_ITEM(Slash)
 				ENUM_NAMESPACE_ITEM(Backslash)
 			END_ENUM_ITEM(GuiGradientBackgroundElement::Direction)
-
-			BEGIN_CLASS_MEMBER(GuiSolidLabelElement)
-				CLASS_MEMBER_BASE(IGuiGraphicsElement)
-				CLASS_MEMBER_EXTERNALCTOR(Ptr<GuiSolidLabelElement>(), NO_PARAMETER, vl::reflection::description::Element_Constructor<::vl::presentation::elements::GuiSolidLabelElement>)
-				
-				CLASS_MEMBER_METHOD(SetAlignments, {L"horizontal" _ L"vertical"})
-
-				CLASS_MEMBER_PROPERTY_FAST(Color)
-				CLASS_MEMBER_PROPERTY_FAST(Font)
-				CLASS_MEMBER_PROPERTY_FAST(Text)
-				CLASS_MEMBER_PROPERTY_FAST(HorizontalAlignment)
-				CLASS_MEMBER_PROPERTY_FAST(VerticalAlignment)
-				CLASS_MEMBER_PROPERTY_FAST(WrapLine)
-				CLASS_MEMBER_PROPERTY_FAST(Ellipse)
-				CLASS_MEMBER_PROPERTY_FAST(Multiline)
-				CLASS_MEMBER_PROPERTY_FAST(WrapLineHeightCalculation)
-			END_CLASS_MEMBER(GuiSolidLabelElement)
-
-			BEGIN_CLASS_MEMBER(GuiImageFrameElement)
-				CLASS_MEMBER_BASE(IGuiGraphicsElement)
-				CLASS_MEMBER_EXTERNALCTOR(Ptr<GuiImageFrameElement>(), NO_PARAMETER, vl::reflection::description::Element_Constructor<::vl::presentation::elements::GuiImageFrameElement>)
-
-				CLASS_MEMBER_METHOD(GetImage, NO_PARAMETER)
-				CLASS_MEMBER_METHOD_OVERLOAD(SetImage, {L"value"}, void(GuiImageFrameElement::*)(Ptr<INativeImage>))
-				CLASS_MEMBER_METHOD_OVERLOAD(SetImage, {L"image" _  L"frameIndex"}, void(GuiImageFrameElement::*)(Ptr<INativeImage> _ vint))
-				CLASS_MEMBER_PROPERTY(Image, GetImage, SetImage)
-
-				CLASS_MEMBER_PROPERTY_FAST(FrameIndex)
-				CLASS_MEMBER_PROPERTY_FAST(HorizontalAlignment)
-				CLASS_MEMBER_PROPERTY_FAST(VerticalAlignment)
-				CLASS_MEMBER_PROPERTY_FAST(Stretch)
-				CLASS_MEMBER_PROPERTY_FAST(Enabled)
-			END_CLASS_MEMBER(GuiImageFrameElement)
-
-			BEGIN_CLASS_MEMBER(GuiPolygonElement)
-				CLASS_MEMBER_BASE(IGuiGraphicsElement)
-				CLASS_MEMBER_EXTERNALCTOR(Ptr<GuiPolygonElement>(), NO_PARAMETER, vl::reflection::description::Element_Constructor<::vl::presentation::elements::GuiPolygonElement>)
-
-				CLASS_MEMBER_METHOD_RENAME(GetPoints, GetPointsArray, NO_PARAMETER);
-				CLASS_MEMBER_METHOD_RENAME(SetPoints, SetPointsArray, {L"points"});
-				CLASS_MEMBER_PROPERTY(Points, GetPoints, SetPoints);
-				CLASS_MEMBER_PROPERTY_FAST(Size)
-				CLASS_MEMBER_PROPERTY_FAST(BorderColor)
-				CLASS_MEMBER_PROPERTY_FAST(BackgroundColor)
-			END_CLASS_MEMBER(GuiPolygonElement)
 
 			BEGIN_CLASS_MEMBER(text::TextLines)
 				CLASS_MEMBER_PROPERTY_READONLY_FAST(Count)
@@ -2762,9 +2985,120 @@ Type Declaration
 				STRUCT_MEMBER(selectedUnfocused)
 			END_STRUCT_MEMBER(text::ColorEntry)
 
+/***********************************************************************
+Type Declaration (Class)
+***********************************************************************/
+
+			BEGIN_CLASS_MEMBER(GuiFocusRectangleElement)
+				CLASS_MEMBER_BASE(IGuiGraphicsElement)
+				ELEMENT_CONSTRUCTOR(GuiFocusRectangleElement)
+			END_CLASS_MEMBER(GuiFocusRectangleElement)
+
+			BEGIN_CLASS_MEMBER(GuiSolidBorderElement)
+				CLASS_MEMBER_BASE(IGuiGraphicsElement)
+				ELEMENT_CONSTRUCTOR(GuiSolidBorderElement)
+
+				CLASS_MEMBER_PROPERTY_FAST(Color)
+				CLASS_MEMBER_PROPERTY_FAST(Shape)
+			END_CLASS_MEMBER(GuiSolidBorderElement)
+
+			BEGIN_CLASS_MEMBER(Gui3DBorderElement)
+				CLASS_MEMBER_BASE(IGuiGraphicsElement)
+				ELEMENT_CONSTRUCTOR(Gui3DBorderElement)
+				
+				CLASS_MEMBER_METHOD(SetColors, {L"value1" _ L"value2"})
+
+				CLASS_MEMBER_PROPERTY_FAST(Color1)
+				CLASS_MEMBER_PROPERTY_FAST(Color2)
+			END_CLASS_MEMBER(Gui3DBorderElement)
+
+			BEGIN_CLASS_MEMBER(Gui3DSplitterElement)
+				CLASS_MEMBER_BASE(IGuiGraphicsElement)
+				ELEMENT_CONSTRUCTOR(Gui3DSplitterElement)
+				
+				CLASS_MEMBER_METHOD(SetColors, {L"value1" _ L"value2"})
+
+				CLASS_MEMBER_PROPERTY_FAST(Color1)
+				CLASS_MEMBER_PROPERTY_FAST(Color2)
+				CLASS_MEMBER_PROPERTY_FAST(Direction)
+			END_CLASS_MEMBER(Gui3DSplitterElement)
+
+			BEGIN_CLASS_MEMBER(GuiSolidBackgroundElement)
+				CLASS_MEMBER_BASE(IGuiGraphicsElement)
+				ELEMENT_CONSTRUCTOR(GuiSolidBackgroundElement)
+				
+				CLASS_MEMBER_PROPERTY_FAST(Color)
+				CLASS_MEMBER_PROPERTY_FAST(Shape)
+			END_CLASS_MEMBER(GuiSolidBackgroundElement)
+
+			BEGIN_CLASS_MEMBER(GuiGradientBackgroundElement)
+				CLASS_MEMBER_BASE(IGuiGraphicsElement)
+				ELEMENT_CONSTRUCTOR(GuiGradientBackgroundElement)
+				
+				CLASS_MEMBER_METHOD(SetColors, {L"value1" _ L"value2"})
+
+				CLASS_MEMBER_PROPERTY_FAST(Color1)
+				CLASS_MEMBER_PROPERTY_FAST(Color2)
+				CLASS_MEMBER_PROPERTY_FAST(Direction)
+				CLASS_MEMBER_PROPERTY_FAST(Shape)
+			END_CLASS_MEMBER(GuiGradientBackgroundElement)
+
+			BEGIN_CLASS_MEMBER(GuiInnerShadowElement)
+				CLASS_MEMBER_BASE(IGuiGraphicsElement)
+				ELEMENT_CONSTRUCTOR(GuiInnerShadowElement)
+
+				CLASS_MEMBER_PROPERTY_FAST(Color)
+				CLASS_MEMBER_PROPERTY_FAST(Thickness)
+			END_CLASS_MEMBER(GuiInnerShadowElement)
+
+			BEGIN_CLASS_MEMBER(GuiSolidLabelElement)
+				CLASS_MEMBER_BASE(IGuiGraphicsElement)
+				ELEMENT_CONSTRUCTOR(GuiSolidLabelElement)
+				
+				CLASS_MEMBER_METHOD(SetAlignments, {L"horizontal" _ L"vertical"})
+
+				CLASS_MEMBER_PROPERTY_FAST(Color)
+				CLASS_MEMBER_PROPERTY_FAST(Font)
+				CLASS_MEMBER_PROPERTY_FAST(Text)
+				CLASS_MEMBER_PROPERTY_FAST(HorizontalAlignment)
+				CLASS_MEMBER_PROPERTY_FAST(VerticalAlignment)
+				CLASS_MEMBER_PROPERTY_FAST(WrapLine)
+				CLASS_MEMBER_PROPERTY_FAST(Ellipse)
+				CLASS_MEMBER_PROPERTY_FAST(Multiline)
+				CLASS_MEMBER_PROPERTY_FAST(WrapLineHeightCalculation)
+			END_CLASS_MEMBER(GuiSolidLabelElement)
+
+			BEGIN_CLASS_MEMBER(GuiImageFrameElement)
+				CLASS_MEMBER_BASE(IGuiGraphicsElement)
+				ELEMENT_CONSTRUCTOR(GuiImageFrameElement)
+
+				CLASS_MEMBER_METHOD(GetImage, NO_PARAMETER)
+				CLASS_MEMBER_METHOD_OVERLOAD(SetImage, {L"value"}, void(GuiImageFrameElement::*)(Ptr<INativeImage>))
+				CLASS_MEMBER_METHOD_OVERLOAD(SetImage, {L"image" _  L"frameIndex"}, void(GuiImageFrameElement::*)(Ptr<INativeImage> _ vint))
+				CLASS_MEMBER_PROPERTY(Image, GetImage, SetImage)
+
+				CLASS_MEMBER_PROPERTY_FAST(FrameIndex)
+				CLASS_MEMBER_PROPERTY_FAST(HorizontalAlignment)
+				CLASS_MEMBER_PROPERTY_FAST(VerticalAlignment)
+				CLASS_MEMBER_PROPERTY_FAST(Stretch)
+				CLASS_MEMBER_PROPERTY_FAST(Enabled)
+			END_CLASS_MEMBER(GuiImageFrameElement)
+
+			BEGIN_CLASS_MEMBER(GuiPolygonElement)
+				CLASS_MEMBER_BASE(IGuiGraphicsElement)
+				ELEMENT_CONSTRUCTOR(GuiPolygonElement)
+
+				CLASS_MEMBER_METHOD_RENAME(GetPoints, GetPointsArray, NO_PARAMETER);
+				CLASS_MEMBER_METHOD_RENAME(SetPoints, SetPointsArray, {L"points"});
+				CLASS_MEMBER_PROPERTY(Points, GetPoints, SetPoints);
+				CLASS_MEMBER_PROPERTY_FAST(Size)
+				CLASS_MEMBER_PROPERTY_FAST(BorderColor)
+				CLASS_MEMBER_PROPERTY_FAST(BackgroundColor)
+			END_CLASS_MEMBER(GuiPolygonElement)
+
 			BEGIN_CLASS_MEMBER(GuiColorizedTextElement)
 				CLASS_MEMBER_BASE(IGuiGraphicsElement)
-				CLASS_MEMBER_EXTERNALCTOR(Ptr<GuiColorizedTextElement>(), NO_PARAMETER, vl::reflection::description::Element_Constructor<::vl::presentation::elements::GuiColorizedTextElement>)
+				ELEMENT_CONSTRUCTOR(GuiColorizedTextElement)
 
 				CLASS_MEMBER_PROPERTY_FAST(Font)
 				CLASS_MEMBER_PROPERTY_FAST(PasswordChar)
@@ -2783,7 +3117,7 @@ Type Declaration
 
 			BEGIN_CLASS_MEMBER(GuiDocumentElement)
 				CLASS_MEMBER_BASE(IGuiGraphicsElement)
-				CLASS_MEMBER_EXTERNALCTOR(Ptr<GuiDocumentElement>(), NO_PARAMETER, vl::reflection::description::Element_Constructor<::vl::presentation::elements::GuiDocumentElement>)
+				ELEMENT_CONSTRUCTOR(GuiDocumentElement)
 
 				CLASS_MEMBER_PROPERTY_FAST(Document)
 				CLASS_MEMBER_PROPERTY_READONLY_FAST(CaretBegin)
@@ -2808,10 +3142,13 @@ Type Declaration
 				CLASS_MEMBER_METHOD(RenameStyle, {L"oldStyleName" _ L"newStyleName"})
 				CLASS_MEMBER_METHOD(ClearStyle, {L"begin" _ L"end"})
 				CLASS_MEMBER_METHOD(SummarizeStyle, {L"begin" _ L"end"})
+				CLASS_MEMBER_METHOD(SummarizeStyleName, { L"begin" _ L"end" })
 				CLASS_MEMBER_METHOD(SetParagraphAlignment, {L"begin" _ L"end" _ L"alignments"})
 				CLASS_MEMBER_METHOD(SummarizeParagraphAlignment, { L"begin" _ L"end" })
 				CLASS_MEMBER_METHOD(GetHyperlinkFromPoint, {L"point"})
 			END_CLASS_MEMBER(GuiDocumentElement)
+
+#undef ELEMENT_CONSTRUCTOR
 #undef _
 
 /***********************************************************************
@@ -2897,6 +3234,7 @@ Type Declaration
 				CLASS_MEMBER_FIELD(shift)
 				CLASS_MEMBER_FIELD(alt)
 				CLASS_MEMBER_FIELD(capslock)
+				CLASS_MEMBER_FIELD(autoRepeatKeyDown)
 			END_CLASS_MEMBER(GuiKeyEventArgs)
 
 			BEGIN_CLASS_MEMBER(GuiCharEventArgs)
@@ -2924,6 +3262,18 @@ Type Declaration
 				CLASS_MEMBER_FIELD(wheel)
 				CLASS_MEMBER_FIELD(nonClient)
 			END_CLASS_MEMBER(GuiMouseEventArgs)
+
+			BEGIN_ENUM_ITEM(ControlSignal)
+				ENUM_CLASS_ITEM(RenderTargetChanged)
+				ENUM_CLASS_ITEM(ParentLineChanged)
+				ENUM_CLASS_ITEM(ServiceAdded)
+			END_ENUM_ITEM(ControlSignal)
+
+			BEGIN_CLASS_MEMBER(GuiControlSignalEventArgs)
+				CLASS_MEMBER_BASE(GuiEventArgs)
+				
+				CLASS_MEMBER_FIELD(controlSignal)
+			END_CLASS_MEMBER(GuiControlSignalEventArgs)
 
 			BEGIN_CLASS_MEMBER(GuiItemEventArgs)
 				CLASS_MEMBER_BASE(GuiEventArgs)
@@ -3005,12 +3355,16 @@ namespace vl
 	{
 		namespace description
 		{
+#define GUIREFLECTIONTEMPLATES_IMPL_VL_TYPE_INFO(NAME, BASE) IMPL_VL_TYPE_INFO(presentation::templates::NAME)
+
 			GUIREFLECTIONBASIC_TYPELIST(IMPL_VL_TYPE_INFO)
 			GUIREFLECTIONELEMENT_TYPELIST(IMPL_VL_TYPE_INFO)
 			GUIREFLECTIONCOMPOSITION_TYPELIST(IMPL_VL_TYPE_INFO)
 			GUIREFLECTIONEVENT_TYPELIST(IMPL_VL_TYPE_INFO)
 			GUIREFLECTIONTEMPLATES_TYPELIST(IMPL_VL_TYPE_INFO)
 			GUIREFLECTIONCONTROLS_TYPELIST(IMPL_VL_TYPE_INFO)
+
+#undef GUIREFLECTIONTEMPLATES_IMPL_VL_TYPE_INFO
 
 			extern bool LoadGuiBasicTypes();
 			extern bool LoadGuiElementTypes();
@@ -3066,18 +3420,19 @@ namespace vl
 			using namespace presentation;
 			using namespace presentation::compositions;
 			using namespace presentation::controls;
+			using namespace presentation::controls::list;
 			using namespace presentation::templates;
 
 #ifndef VCZH_DEBUG_NO_REFLECTION
-
-/***********************************************************************
-Type Declaration
-***********************************************************************/
 
 #define _ ,
 
 #define GUI_TEMPLATE_PROPERTY_REFLECTION(CLASS, TYPE, NAME, VALUE)\
 	CLASS_MEMBER_PROPERTY_GUIEVENT_FAST(NAME)
+
+/***********************************************************************
+Type Declaration (Extra)
+***********************************************************************/
 
 			BEGIN_ENUM_ITEM(ButtonState)
 				ENUM_CLASS_ITEM(Normal)
@@ -3091,6 +3446,14 @@ Type Declaration
 				ENUM_CLASS_ITEM(Descending)
 			END_ENUM_ITEM(ColumnSortingState)
 
+			BEGIN_ENUM_ITEM(TabPageOrder)
+				ENUM_CLASS_ITEM(Unknown)
+				ENUM_CLASS_ITEM(LeftToRight)
+				ENUM_CLASS_ITEM(RightToLeft)
+				ENUM_CLASS_ITEM(TopToBottom)
+				ENUM_CLASS_ITEM(BottomToTop)
+			END_ENUM_ITEM(TabPageOrder)
+
 			BEGIN_ENUM_ITEM(BoolOption)
 				ENUM_CLASS_ITEM(AlwaysTrue)
 				ENUM_CLASS_ITEM(AlwaysFalse)
@@ -3102,12 +3465,6 @@ Type Declaration
 
 				CLASS_MEMBER_METHOD(UnsafeSetText, { L"value" })
 			END_INTERFACE_MEMBER(ITextBoxCommandExecutor)
-
-			BEGIN_INTERFACE_MEMBER_NOPROXY(IComboBoxCommandExecutor)
-				CLASS_MEMBER_BASE(IDescriptable)
-
-				CLASS_MEMBER_METHOD(SelectItem, NO_PARAMETER)
-			END_INTERFACE_MEMBER(IComboBoxCommandExecutor)
 
 			BEGIN_INTERFACE_MEMBER_NOPROXY(IScrollCommandExecutor)
 				CLASS_MEMBER_METHOD(SmallDecrease, NO_PARAMETER)
@@ -3121,7 +3478,7 @@ Type Declaration
 
 			BEGIN_INTERFACE_MEMBER_NOPROXY(ITabCommandExecutor)
 				CLASS_MEMBER_BASE(IDescriptable)
-				CLASS_MEMBER_METHOD(ShowTab, { L"index" })
+				CLASS_MEMBER_METHOD(ShowTab, { L"index" _ L"setFocus" })
 			END_INTERFACE_MEMBER(ITabCommandExecutor)
 
 			BEGIN_INTERFACE_MEMBER_NOPROXY(IDatePickerCommandExecutor)
@@ -3130,6 +3487,18 @@ Type Declaration
 				CLASS_MEMBER_METHOD(NotifyDateNavigated, NO_PARAMETER)
 				CLASS_MEMBER_METHOD(NotifyDateSelected, NO_PARAMETER)
 			END_INTERFACE_MEMBER(IDatePickerCommandExecutor)
+
+			BEGIN_INTERFACE_MEMBER_NOPROXY(IRibbonGroupCommandExecutor)
+				CLASS_MEMBER_BASE(IDescriptable)
+				CLASS_MEMBER_METHOD(NotifyExpandButtonClicked, NO_PARAMETER)
+			END_INTERFACE_MEMBER(IRibbonGroupCommandExecutor)
+
+			BEGIN_INTERFACE_MEMBER_NOPROXY(IRibbonGalleryCommandExecutor)
+				CLASS_MEMBER_BASE(IDescriptable)
+				CLASS_MEMBER_METHOD(NotifyScrollUp, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(NotifyScrollDown, NO_PARAMETER)
+				CLASS_MEMBER_METHOD(NotifyDropdown, NO_PARAMETER)
+			END_INTERFACE_MEMBER(IRibbonGalleryCommandExecutor)
 
 			BEGIN_CLASS_MEMBER(GuiComponent)
 			END_CLASS_MEMBER(GuiComponent)
@@ -3156,6 +3525,7 @@ Type Declaration
 				CLASS_MEMBER_STATIC_METHOD(PlayAndWaitAndPause, { L"impl" _ L"animation" })
 				CLASS_MEMBER_STATIC_METHOD(PlayInGroupAndPause, { L"impl" _ L"animation" _ L"groupId" })
 				CLASS_MEMBER_STATIC_METHOD(WaitForGroupAndPause, { L"impl" _ L"groupId" })
+				CLASS_MEMBER_STATIC_METHOD(ReturnAndExit, { L"impl" })
 				CLASS_MEMBER_STATIC_METHOD(Create, { L"creator" })
 			END_CLASS_MEMBER(IGuiAnimationCoroutine)
 
@@ -3174,6 +3544,25 @@ Type Declaration
 				CLASS_MEMBER_METHOD(AddAnimation, { L"animation" })
 				CLASS_MEMBER_METHOD(KillAnimation, { L"animation" })
 			END_CLASS_MEMBER(GuiInstanceRootObject)
+
+			BEGIN_CLASS_MEMBER(GuiCommonScrollBehavior)
+				CLASS_MEMBER_BASE(GuiComponent)
+				CLASS_MEMBER_CONSTRUCTOR(GuiCommonScrollBehavior*(), NO_PARAMETER)
+				
+				CLASS_MEMBER_METHOD(AttachScrollTemplate, { L"value" })
+				CLASS_MEMBER_METHOD(AttachDecreaseButton, { L"button" })
+				CLASS_MEMBER_METHOD(AttachIncreaseButton, { L"button" })
+				CLASS_MEMBER_METHOD(AttachHorizontalScrollHandle, { L"partialView" })
+				CLASS_MEMBER_METHOD(AttachVerticalScrollHandle, { L"partialView" })
+				CLASS_MEMBER_METHOD(AttachHorizontalTrackerHandle, { L"partialView" })
+				CLASS_MEMBER_METHOD(AttachVerticalTrackerHandle, { L"partialView" })
+				CLASS_MEMBER_METHOD(GetHorizontalTrackerHandlerPosition, { L"handle" _ L"totalSize" _ L"pageSize" _ L"position" })
+				CLASS_MEMBER_METHOD(GetVerticalTrackerHandlerPosition, { L"handle" _ L"totalSize" _ L"pageSize" _ L"position" })
+			END_CLASS_MEMBER(GuiCommonScrollBehavior)
+
+/***********************************************************************
+Type Declaration (Class)
+***********************************************************************/
 
 			BEGIN_CLASS_MEMBER(GuiTemplate)
 				CLASS_MEMBER_BASE(GuiBoundsComposition)
@@ -3218,20 +3607,30 @@ Type Declaration
 				CLASS_MEMBER_PROPERTY_READONLY_FAST(ContainerComposition)
 			END_CLASS_MEMBER(GuiCommonScrollViewLook)
 
-			BEGIN_CLASS_MEMBER(GuiCommonScrollBehavior)
-				CLASS_MEMBER_BASE(GuiComponent)
-				CLASS_MEMBER_CONSTRUCTOR(GuiCommonScrollBehavior*(), NO_PARAMETER)
-				
-				CLASS_MEMBER_METHOD(AttachScrollTemplate, { L"value" })
-				CLASS_MEMBER_METHOD(AttachDecreaseButton, { L"button" })
-				CLASS_MEMBER_METHOD(AttachIncreaseButton, { L"button" })
-				CLASS_MEMBER_METHOD(AttachHorizontalScrollHandle, { L"partialView" })
-				CLASS_MEMBER_METHOD(AttachVerticalScrollHandle, { L"partialView" })
-				CLASS_MEMBER_METHOD(AttachHorizontalTrackerHandle, { L"partialView" })
-				CLASS_MEMBER_METHOD(AttachVerticalTrackerHandle, { L"partialView" })
-				CLASS_MEMBER_METHOD(GetHorizontalTrackerHandlerPosition, { L"handle" _ L"totalSize" _ L"pageSize" _ L"position" })
-				CLASS_MEMBER_METHOD(GetVerticalTrackerHandlerPosition, { L"handle" _ L"totalSize" _ L"pageSize" _ L"position" })
-			END_CLASS_MEMBER(GuiCommonScrollBehavior)
+			BEGIN_CLASS_MEMBER(MainColumnVisualizerTemplate)
+				CLASS_MEMBER_BASE(GuiGridVisualizerTemplate)
+				CLASS_MEMBER_CONSTRUCTOR(MainColumnVisualizerTemplate*(), NO_PARAMETER)
+			END_CLASS_MEMBER(MainColumnVisualizerTemplate)
+
+			BEGIN_CLASS_MEMBER(SubColumnVisualizerTemplate)
+				CLASS_MEMBER_BASE(GuiGridVisualizerTemplate)
+				CLASS_MEMBER_CONSTRUCTOR(SubColumnVisualizerTemplate*(), NO_PARAMETER)
+			END_CLASS_MEMBER(SubColumnVisualizerTemplate)
+
+			BEGIN_CLASS_MEMBER(HyperlinkVisualizerTemplate)
+				CLASS_MEMBER_BASE(SubColumnVisualizerTemplate)
+				CLASS_MEMBER_CONSTRUCTOR(HyperlinkVisualizerTemplate*(), NO_PARAMETER)
+			END_CLASS_MEMBER(HyperlinkVisualizerTemplate)
+
+			BEGIN_CLASS_MEMBER(FocusRectangleVisualizerTemplate)
+				CLASS_MEMBER_BASE(GuiGridVisualizerTemplate)
+				CLASS_MEMBER_CONSTRUCTOR(FocusRectangleVisualizerTemplate*(), NO_PARAMETER)
+			END_CLASS_MEMBER(FocusRectangleVisualizerTemplate)
+
+			BEGIN_CLASS_MEMBER(CellBorderVisualizerTemplate)
+				CLASS_MEMBER_BASE(GuiGridVisualizerTemplate)
+				CLASS_MEMBER_CONSTRUCTOR(CellBorderVisualizerTemplate*(), NO_PARAMETER)
+			END_CLASS_MEMBER(CellBorderVisualizerTemplate)
 
 #undef GUI_CONTROL_TEMPLATE
 #undef GUI_TEMPLATE_PROPERTY_REFLECTION
@@ -3246,7 +3645,11 @@ Type Loader
 			public:
 				void Load(ITypeManager* manager)
 				{
+#define GUIREFLECTIONTEMPLATES_ADD_TYPE_INFO(NAME, BASE) ADD_TYPE_INFO(presentation::templates::NAME)
+
 					GUIREFLECTIONTEMPLATES_TYPELIST(ADD_TYPE_INFO)
+
+#undef GUIREFLECTIONTEMPLATES_ADD_TYPE_INFO
 				}
 
 				void Unload(ITypeManager* manager)

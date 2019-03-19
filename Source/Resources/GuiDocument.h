@@ -15,8 +15,6 @@ namespace vl
 {
 	namespace presentation
 	{
-		using namespace reflection;
-
 		class DocumentTextRun;
 		class DocumentStylePropertiesRun;
 		class DocumentStyleApplicationRun;
@@ -368,10 +366,12 @@ Rich Content Document (model)
 			bool									RenameStyle(const WString& oldStyleName, const WString& newStyleName);
 			bool									ClearStyle(TextPos begin, TextPos end);
 			Ptr<DocumentStyleProperties>			SummarizeStyle(TextPos begin, TextPos end);
+			Nullable<WString>						SummarizeStyleName(TextPos begin, TextPos end);
 			Nullable<Alignment>						SummarizeParagraphAlignment(TextPos begin, TextPos end);
 
 			/// <summary>Load a document model from an xml.</summary>
 			/// <returns>The loaded document model.</returns>
+			/// <param name="resource">The resource item containing the resource.</param>
 			/// <param name="xml">The xml document.</param>
 			/// <param name="resolver">A document resolver to resolve symbols in non-embedded objects like image.</param>
 			/// <param name="errors">All collected errors during loading a resource.</param>

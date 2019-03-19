@@ -10,10 +10,6 @@ Interfaces:
 #define VCZH_PRESENTATION_CONTROLS_GUIDATAEXTENSIONS
 
 #include "GuiDataGridInterfaces.h"
-#include "GuiComboControls.h"
-#include "GuiTextListControls.h"
-#include "../GuiDateTimeControls.h"
-#include "../TextEditorPackage/GuiTextControls.h"
 
 namespace vl
 {
@@ -43,7 +39,6 @@ Extension Bases
 
 				public:
 					/// <summary>Create the data visualizer.</summary>
-					/// <param name="_decoratedDataVisualizer">The decorated data visualizer inside the current data visualizer.</param>
 					DataVisualizerBase();
 					~DataVisualizerBase();
 
@@ -109,29 +104,29 @@ Extension Bases
 Visualizer Extensions
 ***********************************************************************/
 
-				class MainColumnVisualizerTemplate : public templates::GuiGridVisualizerTemplate
+				class MainColumnVisualizerTemplate : public templates::GuiGridVisualizerTemplate, public Description<MainColumnVisualizerTemplate>
 				{
 				protected:
 					elements::GuiImageFrameElement*						image = nullptr;
 					elements::GuiSolidLabelElement*						text = nullptr;
 
-					void												OnTextChanged(GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
-					void												OnFontChanged(GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
-					void												OnTextColorChanged(GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
-					void												OnSmallImageChanged(GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
+					void												OnTextChanged(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
+					void												OnFontChanged(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
+					void												OnTextColorChanged(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
+					void												OnSmallImageChanged(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
 				public:
 					MainColumnVisualizerTemplate();
 					~MainColumnVisualizerTemplate();
 				};
 
-				class SubColumnVisualizerTemplate : public templates::GuiGridVisualizerTemplate
+				class SubColumnVisualizerTemplate : public templates::GuiGridVisualizerTemplate, public Description<SubColumnVisualizerTemplate>
 				{
 				protected:
 					elements::GuiSolidLabelElement*						text = nullptr;
 
-					void												OnTextChanged(GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
-					void												OnFontChanged(GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
-					void												OnTextColorChanged(GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
+					void												OnTextChanged(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
+					void												OnFontChanged(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
+					void												OnTextColorChanged(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
 					void												Initialize(bool fixTextColor);
 
 					SubColumnVisualizerTemplate(bool fixTextColor);
@@ -140,7 +135,7 @@ Visualizer Extensions
 					~SubColumnVisualizerTemplate();
 				};
 
-				class HyperlinkVisualizerTemplate : public SubColumnVisualizerTemplate
+				class HyperlinkVisualizerTemplate : public SubColumnVisualizerTemplate, public Description<HyperlinkVisualizerTemplate>
 				{
 				protected:
 					void												label_MouseEnter(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
@@ -151,7 +146,19 @@ Visualizer Extensions
 					~HyperlinkVisualizerTemplate();
 				};
 
-				class CellBorderVisualizerTemplate : public templates::GuiGridVisualizerTemplate
+				class FocusRectangleVisualizerTemplate : public templates::GuiGridVisualizerTemplate, public Description<FocusRectangleVisualizerTemplate>
+				{
+				protected:
+					compositions::GuiBoundsComposition*					focusComposition = nullptr;
+
+					void												OnSelectedChanged(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
+
+				public:
+					FocusRectangleVisualizerTemplate();
+					~FocusRectangleVisualizerTemplate();
+				};
+
+				class CellBorderVisualizerTemplate : public templates::GuiGridVisualizerTemplate, public Description<CellBorderVisualizerTemplate>
 				{
 				protected:
 					elements::GuiSolidBorderElement*					border1 = nullptr;

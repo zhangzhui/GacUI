@@ -1,4 +1,4 @@
-<Instance ref.CodeBehind="false" ref.Class="demo::TextListTabPage">
+<Instance ref.CodeBehind="false" ref.Class="demo::TextListTabPage" xmlns:x="presentation::controls::GuiSelectableButton::*">
   <ref.Members>
     <![CDATA[
       var counter : int = 0;
@@ -6,6 +6,7 @@
     ]]>
   </ref.Members>
   <TabPage ref.Name="self" Text="TextList">
+    <x:MutexGroupController ref.Name="mutexGroupController"/>
     <Table AlignmentToParent="left:0 top:0 right:0 bottom:0" CellPadding="5">
       <att.Rows>
         <_>composeType:MinSize</_>
@@ -161,6 +162,45 @@
                 </ev.Clicked-eval>
               </Button>
             </StackItem>
+            <StackItem>
+              <Button Alt="X" Text="Rotate Item Source --&gt;">
+                <att.BoundsComposition-set AlignmentToParent="left:0 top:0 right:0 bottom:0"/>
+                <ev.Clicked-eval>
+                  <![CDATA[
+                    {
+                      if (bindableTextList.ItemSource is not null)
+                      {
+                        bindableTextList.ItemSource = null;
+                      }
+                      else
+                      {
+                        bindableTextList.ItemSource = self.itemsToBind;
+                      }
+                    }
+                  ]]>
+                </ev.Clicked-eval>
+              </Button>
+            </StackItem>
+            <StackItem>
+              <CheckBox Text="Dummy">
+                <att.BoundsComposition-set AlignmentToParent="left:0 top:0 right:0 bottom:0"/>
+              </CheckBox>
+            </StackItem>
+            <StackItem>
+              <CheckBox Text="Dummy">
+                <att.BoundsComposition-set AlignmentToParent="left:0 top:0 right:0 bottom:0"/>
+              </CheckBox>
+            </StackItem>
+            <StackItem>
+              <RadioButton Text="Dummy" GroupController-ref="mutexGroupController">
+                <att.BoundsComposition-set AlignmentToParent="left:0 top:0 right:0 bottom:0"/>
+              </RadioButton>
+            </StackItem>
+            <StackItem>
+              <RadioButton Text="Dummy" GroupController-ref="mutexGroupController">
+                <att.BoundsComposition-set AlignmentToParent="left:0 top:0 right:0 bottom:0"/>
+              </RadioButton>
+            </StackItem>
           </Stack>
         </GroupBox>
       </Cell>
@@ -168,7 +208,7 @@
       <Cell Site="row:1 column:2">
         <BindableTextList ref.Name="bindableTextList" Alt="B" env.ItemType="demo::MyTextItem^" HorizontalAlwaysVisible="false" VerticalAlwaysVisible="false">
           <att.BoundsComposition-set AlignmentToParent="left:0 top:0 right:0 bottom:0"/>
-          <att.ItemSource-eval>self.self.itemsToBind</att.ItemSource-eval>
+          <att.ItemSource-eval>self.itemsToBind</att.ItemSource-eval>
           <att.TextProperty>Name</att.TextProperty>
           <att.CheckedProperty>Checked</att.CheckedProperty>
         </BindableTextList>

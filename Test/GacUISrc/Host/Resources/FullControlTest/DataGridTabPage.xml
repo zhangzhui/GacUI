@@ -1,9 +1,13 @@
 <Instance ref.CodeBehind="false" ref.Class="demo::DataGridTabPage" xmlns:demo="demo::*">
+  <ref.Members>
+    <![CDATA[
+      var tempData : observe MyDataItem^[] = null;
+    ]]>
+  </ref.Members>
   <ref.Ctor>
     <![CDATA[
       {
-        var tempData : observe MyDataItem^[] = 
-        {
+        tempData = {
           new MyDataItem^("涼宮 春日",     Female, Lime,  (cast DateTime "1988-08-08 00:00:00.000"),  "http://www.haruhi.tv/")
           new MyDataItem^("キョン",        Male,   Black, (cast DateTime "1988-08-08 00:00:00.000"),  "http://www.haruhi.tv/")
           new MyDataItem^("长门 有希",     Female, White, (cast DateTime "2000-08-06 00:00:00.000"),  "http://www.haruhi.tv/")
@@ -25,6 +29,7 @@
   <TabPage ref.Name="self" Text="BindableDataGrid">
     <Table AlignmentToParent="left:0 top:0 right:0 bottom:0" CellPadding="5">
       <att.Rows>
+        <_>composeType:MinSize</_>
         <_>composeType:MinSize</_>
         <_>composeType:Percentage percentage:1.0</_>
       </att.Rows>
@@ -89,6 +94,26 @@
       </Cell>
 
       <Cell Site="row:1 column:0">
+        <Button Alt="X" Text="Rotate Item Source">
+          <att.BoundsComposition-set/>
+          <ev.Clicked-eval>
+            <![CDATA[
+              {
+                if (dataGrid.ItemSource is not null)
+                {
+                  dataGrid.ItemSource = null;
+                }
+                else
+                {
+                  dataGrid.ItemSource = self.tempData;
+                }
+              }
+            ]]>
+          </ev.Clicked-eval>
+        </Button>
+      </Cell>
+
+      <Cell Site="row:2 column:0">
         <BindableDataGrid ref.Name="dataGrid" Alt="L" env.ItemType="demo::MyDataItem^" env.ItemName="itemToBind" HorizontalAlwaysVisible="false" VerticalAlwaysVisible="false">
           <att.BoundsComposition-set AlignmentToParent="left:0 top:0 right:0 bottom:0"/>
           <att.LargeImageProperty>LargeImage</att.LargeImageProperty>
@@ -105,7 +130,7 @@
             <DataColumn Text="Gender" Size="80">
               <att.TextProperty>demo::ToString(itemToBind.Gender)</att.TextProperty>
               <att.ValueProperty>Gender</att.ValueProperty>
-              <att.VisualizerFactory>demo:GenderVisualizer;CellBorderVisualizerTemplate</att.VisualizerFactory>
+              <att.VisualizerFactory>demo:GenderVisualizer;FocusRectangleVisualizerTemplate;CellBorderVisualizerTemplate</att.VisualizerFactory>
               <att.EditorFactory>demo:GenderEditor</att.EditorFactory>
               <att.Sorter>[Sys::Compare(cast UInt64 ($1.Gender), cast UInt64 ($2.Gender))]</att.Sorter>
             </DataColumn>
@@ -113,7 +138,7 @@
             <DataColumn Text="Category" Size="80">
               <att.TextProperty>demo::ToString(itemToBind.Category)</att.TextProperty>
               <att.ValueProperty>Category</att.ValueProperty>
-              <att.VisualizerFactory>demo:CategoryVisualizer;CellBorderVisualizerTemplate</att.VisualizerFactory>
+              <att.VisualizerFactory>demo:CategoryVisualizer;FocusRectangleVisualizerTemplate;CellBorderVisualizerTemplate</att.VisualizerFactory>
               <att.EditorFactory>demo:CategoryEditor</att.EditorFactory>
               <att.Sorter>[Sys::Compare(cast UInt64 ($1.Category), cast UInt64 ($2.Category))]</att.Sorter>
             </DataColumn>
@@ -136,7 +161,7 @@
             <DataColumn Text="Website" Size="160">
               <att.TextProperty>Website</att.TextProperty>
               <att.ValueProperty>Website</att.ValueProperty>
-              <att.VisualizerFactory>HyperlinkVisualizerTemplate;CellBorderVisualizerTemplate</att.VisualizerFactory>
+              <att.VisualizerFactory>HyperlinkVisualizerTemplate;FocusRectangleVisualizerTemplate;CellBorderVisualizerTemplate</att.VisualizerFactory>
               <att.EditorFactory>demo:TextEditor</att.EditorFactory>
               <att.Sorter>[Sys::Compare($1.Website, $2.Website)]</att.Sorter>
             </DataColumn>

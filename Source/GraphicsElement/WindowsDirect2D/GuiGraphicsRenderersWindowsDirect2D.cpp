@@ -96,6 +96,62 @@ IMPLEMENT_BRUSH_ELEMENT_RENDERER
 GuiSolidBorderElementRenderer
 ***********************************************************************/
 
+			void GuiFocusRectangleElementRenderer::InitializeInternal()
+			{
+			}
+
+			void GuiFocusRectangleElementRenderer::FinalizeInternal()
+			{
+				focusRectangleEffect = nullptr;
+			}
+
+			void GuiFocusRectangleElementRenderer::RenderTargetChangedInternal(IWindowsDirect2DRenderTarget* oldRenderTarget, IWindowsDirect2DRenderTarget* newRenderTarget)
+			{
+				focusRectangleEffect = nullptr;
+				if (newRenderTarget)
+				{
+					focusRectangleEffect = newRenderTarget->GetFocusRectangleEffect();
+				}
+			}
+
+			void GuiFocusRectangleElementRenderer::Render(Rect bounds)
+			{
+				if (focusRectangleEffect)
+				{
+					ID2D1RenderTarget* d2dRenderTarget = renderTarget->GetDirect2DRenderTarget();
+					ID2D1DeviceContext* d2dDeviceContext = nullptr;
+
+					HRESULT hr = d2dRenderTarget->QueryInterface(&d2dDeviceContext);
+					if (SUCCEEDED(hr))
+					{
+						FLOAT x = (FLOAT)bounds.Left();
+						FLOAT y = (FLOAT)bounds.Top();
+						FLOAT x2 = (FLOAT)bounds.Right() - 1;
+						FLOAT y2 = (FLOAT)bounds.Bottom() - 1;
+						FLOAT w = (FLOAT)bounds.Width();
+						FLOAT h = (FLOAT)bounds.Height();
+
+						d2dDeviceContext->DrawImage(focusRectangleEffect, D2D1::Point2F(x, y), D2D1::RectF(0, 0, w, 1), D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR, D2D1_COMPOSITE_MODE_MASK_INVERT);
+						d2dDeviceContext->DrawImage(focusRectangleEffect, D2D1::Point2F(x, y2), D2D1::RectF(0, y2 - y, w, h), D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR, D2D1_COMPOSITE_MODE_MASK_INVERT);
+						d2dDeviceContext->DrawImage(focusRectangleEffect, D2D1::Point2F(x, y + 1), D2D1::RectF(0, 1, 1, h - 1), D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR, D2D1_COMPOSITE_MODE_MASK_INVERT);
+						d2dDeviceContext->DrawImage(focusRectangleEffect, D2D1::Point2F(x2, y + 1), D2D1::RectF(x2 - x, 1, w, h - 1), D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR, D2D1_COMPOSITE_MODE_MASK_INVERT);
+					}
+
+					if (d2dDeviceContext)
+					{
+						d2dDeviceContext->Release();
+					}
+				}
+			}
+
+			void GuiFocusRectangleElementRenderer::OnElementStateChanged()
+			{
+			}
+
+/***********************************************************************
+GuiSolidBorderElementRenderer
+***********************************************************************/
+
 			IMPLEMENT_BRUSH_ELEMENT_RENDERER_SOLID_COLOR_BRUSH(GuiSolidBorderElementRenderer)
 			IMPLEMENT_BRUSH_ELEMENT_RENDERER(GuiSolidBorderElementRenderer)
 			{
@@ -570,6 +626,8 @@ GuiSolidLabelElementRenderer
 				{
 					IWindowsDirect2DResourceManager* resourceManager=GetWindowsDirect2DResourceManager();
 					oldFont=element->GetFont();
+					if (oldFont.fontFamily == L"") oldFont.fontFamily = GetCurrentController()->ResourceService()->GetDefaultFont().fontFamily;
+					if (oldFont.size == 0) oldFont.size = 12;
 					textFormat=resourceManager->CreateDirect2DTextFormat(oldFont);
 				}
 			}
@@ -586,35 +644,30 @@ GuiSolidLabelElementRenderer
 
 			void GuiSolidLabelElementRenderer::CreateTextLayout()
 			{
-				if(textFormat)
+				if (textFormat)
 				{
-					HRESULT hr=GetWindowsDirect2DObjectProvider()->GetDirectWriteFactory()->CreateTextLayout(
+					HRESULT hr = GetWindowsDirect2DObjectProvider()->GetDirectWriteFactory()->CreateTextLayout(
 						oldText.Buffer(),
 						(int)oldText.Length(),
 						textFormat->textFormat.Obj(),
 						0,
 						0,
 						&textLayout);
-					if(!FAILED(hr))
+					CHECK_ERROR(SUCCEEDED(hr), L"You should check HRESULT to see why it failed.");
+
+					if (oldFont.underline)
 					{
-						if(oldFont.underline)
-						{
-							DWRITE_TEXT_RANGE textRange;
-							textRange.startPosition=0;
-							textRange.length=(int)oldText.Length();
-							textLayout->SetUnderline(TRUE, textRange);
-						}
-						if(oldFont.strikeline)
-						{
-							DWRITE_TEXT_RANGE textRange;
-							textRange.startPosition=0;
-							textRange.length=(int)oldText.Length();
-							textLayout->SetStrikethrough(TRUE, textRange);
-						}
+						DWRITE_TEXT_RANGE textRange;
+						textRange.startPosition = 0;
+						textRange.length = (int)oldText.Length();
+						textLayout->SetUnderline(TRUE, textRange);
 					}
-					else
+					if (oldFont.strikeline)
 					{
-						textLayout=0;
+						DWRITE_TEXT_RANGE textRange;
+						textRange.startPosition = 0;
+						textRange.length = (int)oldText.Length();
+						textLayout->SetStrikethrough(TRUE, textRange);
 					}
 				}
 			}
@@ -758,7 +811,10 @@ GuiSolidLabelElementRenderer
 					IDWriteFactory* dwriteFactory=GetWindowsDirect2DObjectProvider()->GetDirectWriteFactory();
 					DWRITE_TRIMMING trimming;
 					IDWriteInlineObject* inlineObject;
-					textLayout->GetTrimming(&trimming, &inlineObject);
+					{
+						HRESULT hr = textLayout->GetTrimming(&trimming, &inlineObject);
+						CHECK_ERROR(SUCCEEDED(hr), L"You should check HRESULT to see why it failed.");
+					}
 
 					textLayout->SetWordWrapping(element->GetWrapLine()?DWRITE_WORD_WRAPPING_WRAP:DWRITE_WORD_WRAPPING_NO_WRAP);
 					if(element->GetEllipse())
@@ -990,19 +1046,18 @@ GuiPolygonElementRenderer
 			void GuiPolygonElementRenderer::CreateGeometry()
 			{
 				oldPoints.Resize(element->GetPointCount());
-				if(oldPoints.Count()>0)
+				if (oldPoints.Count() > 0)
 				{
 					memcpy(&oldPoints[0], &element->GetPoint(0), sizeof(Point)*element->GetPointCount());
 				}
-				if(oldPoints.Count()>=3)
+				if (oldPoints.Count() >= 3)
 				{
-					ID2D1PathGeometry* pg=0;
-					GetWindowsDirect2DObjectProvider()->GetDirect2DFactory()->CreatePathGeometry(&pg);
-					if(pg)
-					{
-						geometry=pg;
-						FillGeometry(Point(0, 0));
-					}
+					ID2D1PathGeometry* pg = 0;
+					HRESULT hr = GetWindowsDirect2DObjectProvider()->GetDirect2DFactory()->CreatePathGeometry(&pg);
+					CHECK_ERROR(SUCCEEDED(hr), L"You should check HRESULT to see why it failed.");
+
+					geometry = pg;
+					FillGeometry(Point(0, 0));
 				}
 			}
 
@@ -1016,26 +1071,25 @@ GuiPolygonElementRenderer
 
 			void GuiPolygonElementRenderer::FillGeometry(Point offset)
 			{
-				if(geometry)
+				if (geometry)
 				{
-					ID2D1GeometrySink* pgs=0;
-					geometry->Open(&pgs);
-					if(pgs)
+					ID2D1GeometrySink* pgs = 0;
+					HRESULT hr = geometry->Open(&pgs);
+					CHECK_ERROR(SUCCEEDED(hr), L"You should check HRESULT to see why it failed.");
+
+					D2D1_POINT_2F p;
+					p.x = (FLOAT)(oldPoints[0].x + offset.x) + 0.5f;
+					p.y = (FLOAT)(oldPoints[0].y + offset.y) + 0.5f;
+					pgs->BeginFigure(p, D2D1_FIGURE_BEGIN_FILLED);
+					for (vint i = 1; i < oldPoints.Count(); i++)
 					{
-						D2D1_POINT_2F p;
-						p.x=(FLOAT)(oldPoints[0].x+offset.x)+0.5f;
-						p.y=(FLOAT)(oldPoints[0].y+offset.y)+0.5f;
-						pgs->BeginFigure(p, D2D1_FIGURE_BEGIN_FILLED);
-						for(vint i=1;i<oldPoints.Count();i++)
-						{
-							p.x=(FLOAT)(oldPoints[i].x+offset.x)+0.5f;
-							p.y=(FLOAT)(oldPoints[i].y+offset.y)+0.5f;
-							pgs->AddLine(p);
-						}
-						pgs->EndFigure(D2D1_FIGURE_END_CLOSED);
-						pgs->Close();
-						pgs->Release();
+						p.x = (FLOAT)(oldPoints[i].x + offset.x) + 0.5f;
+						p.y = (FLOAT)(oldPoints[i].y + offset.y) + 0.5f;
+						pgs->AddLine(p);
 					}
+					pgs->EndFigure(D2D1_FIGURE_END_CLOSED);
+					pgs->Close();
+					pgs->Release();
 				}
 			}
 
@@ -1223,14 +1277,18 @@ GuiColorizedTextElementRenderer
 
 			void GuiColorizedTextElementRenderer::FontChanged()
 			{
-				IWindowsDirect2DResourceManager* resourceManager=GetWindowsDirect2DResourceManager();
-				if(textFormat)
+				IWindowsDirect2DResourceManager* resourceManager = GetWindowsDirect2DResourceManager();
+				if (textFormat)
 				{
+					element->GetLines().SetCharMeasurer(nullptr);
 					resourceManager->DestroyDirect2DTextFormat(oldFont);
 					resourceManager->DestroyDirect2DCharMeasurer(oldFont);
 				}
-				oldFont=element->GetFont();
-				textFormat=resourceManager->CreateDirect2DTextFormat(oldFont);
+				oldFont = element->GetFont();
+				if (oldFont.fontFamily == L"") oldFont.fontFamily = GetCurrentController()->ResourceService()->GetDefaultFont().fontFamily;
+				if (oldFont.size == 0) oldFont.size = 12;
+
+				textFormat = resourceManager->CreateDirect2DTextFormat(oldFont);
 				element->GetLines().SetCharMeasurer(resourceManager->CreateDirect2DCharMeasurer(oldFont).Obj());
 			}
 
@@ -1270,99 +1328,106 @@ GuiColorizedTextElementRenderer
 
 			void GuiColorizedTextElementRenderer::Render(Rect bounds)
 			{
-				if(renderTarget)
+				if (renderTarget)
 				{
-					ID2D1RenderTarget* d2dRenderTarget=renderTarget->GetDirect2DRenderTarget();
-					wchar_t passwordChar=element->GetPasswordChar();
-					Point viewPosition=element->GetViewPosition();
+					ID2D1RenderTarget* d2dRenderTarget = renderTarget->GetDirect2DRenderTarget();
+					wchar_t passwordChar = element->GetPasswordChar();
+					Point viewPosition = element->GetViewPosition();
 					Rect viewBounds(viewPosition, bounds.GetSize());
-					vint startRow=element->GetLines().GetTextPosFromPoint(Point(viewBounds.x1, viewBounds.y1)).row;
-					vint endRow=element->GetLines().GetTextPosFromPoint(Point(viewBounds.x2, viewBounds.y2)).row;
-					TextPos selectionBegin=element->GetCaretBegin()<element->GetCaretEnd()?element->GetCaretBegin():element->GetCaretEnd();
-					TextPos selectionEnd=element->GetCaretBegin()>element->GetCaretEnd()?element->GetCaretBegin():element->GetCaretEnd();
-					bool focused=element->GetFocused();
-					
+					vint startRow = element->GetLines().GetTextPosFromPoint(Point(viewBounds.x1, viewBounds.y1)).row;
+					vint endRow = element->GetLines().GetTextPosFromPoint(Point(viewBounds.x2, viewBounds.y2)).row;
+					TextPos selectionBegin = element->GetCaretBegin() < element->GetCaretEnd() ? element->GetCaretBegin() : element->GetCaretEnd();
+					TextPos selectionEnd = element->GetCaretBegin() > element->GetCaretEnd() ? element->GetCaretBegin() : element->GetCaretEnd();
+					bool focused = element->GetFocused();
+
 					renderTarget->SetTextAntialias(oldFont.antialias, oldFont.verticalAntialias);
 
-					for(vint row=startRow;row<=endRow;row++)
+					for (vint row = startRow; row <= endRow; row++)
 					{
-						Rect startRect=element->GetLines().GetRectFromTextPos(TextPos(row, 0));
-						Point startPoint=startRect.LeftTop();
-						vint startColumn=element->GetLines().GetTextPosFromPoint(Point(viewBounds.x1, startPoint.y)).column;
-						vint endColumn=element->GetLines().GetTextPosFromPoint(Point(viewBounds.x2, startPoint.y)).column;
-						text::TextLine& line=element->GetLines().GetLine(row);
+						Rect startRect = element->GetLines().GetRectFromTextPos(TextPos(row, 0));
+						Point startPoint = startRect.LeftTop();
+						vint startColumn = element->GetLines().GetTextPosFromPoint(Point(viewBounds.x1, startPoint.y)).column;
+						vint endColumn = element->GetLines().GetTextPosFromPoint(Point(viewBounds.x2, startPoint.y)).column;
 
-						vint x=startColumn==0?0:line.att[startColumn-1].rightOffset;
-						for(vint column=startColumn; column<=endColumn; column++)
+						text::TextLine& line = element->GetLines().GetLine(row);
+						if (endColumn + 1 < line.dataLength && text::UTF16SPFirst(line.text[endColumn]) && text::UTF16SPSecond(line.text[startColumn + 1]))
 						{
-							bool inSelection=false;
-							if(selectionBegin.row==selectionEnd.row)
+							endColumn++;
+						}
+
+						vint x = startColumn == 0 ? 0 : line.att[startColumn - 1].rightOffset;
+						for (vint column = startColumn; column <= endColumn; column++)
+						{
+							bool inSelection = false;
+							if (selectionBegin.row == selectionEnd.row)
 							{
-								inSelection=(row==selectionBegin.row && selectionBegin.column<=column && column<selectionEnd.column);
+								inSelection = (row == selectionBegin.row && selectionBegin.column <= column && column < selectionEnd.column);
 							}
-							else if(row==selectionBegin.row)
+							else if (row == selectionBegin.row)
 							{
-								inSelection=selectionBegin.column<=column;
+								inSelection = selectionBegin.column <= column;
 							}
-							else if(row==selectionEnd.row)
+							else if (row == selectionEnd.row)
 							{
-								inSelection=column<selectionEnd.column;
+								inSelection = column < selectionEnd.column;
 							}
 							else
 							{
-								inSelection=selectionBegin.row<row && row<selectionEnd.row;
+								inSelection = selectionBegin.row < row && row < selectionEnd.row;
 							}
-							
-							bool crlf=column==line.dataLength;
-							vint colorIndex=crlf?0:line.att[column].colorIndex;
-							if(colorIndex>=colors.Count())
+
+							bool crlf = column == line.dataLength;
+							vint colorIndex = crlf ? 0 : line.att[column].colorIndex;
+							if (colorIndex >= colors.Count())
 							{
-								colorIndex=0;
+								colorIndex = 0;
 							}
-							ColorItemResource& color=
-								!inSelection?colors[colorIndex].normal:
-								focused?colors[colorIndex].selectedFocused:
+							ColorItemResource& color =
+								!inSelection ? colors[colorIndex].normal :
+								focused ? colors[colorIndex].selectedFocused :
 								colors[colorIndex].selectedUnfocused;
-							vint x2=crlf?x+startRect.Height()/2:line.att[column].rightOffset;
-							vint tx=x-viewPosition.x+bounds.x1;
-							vint ty=startPoint.y-viewPosition.y+bounds.y1;
-							
-							if(color.background.a>0)
+							vint x2 = crlf ? x + startRect.Height() / 2 : line.att[column].rightOffset;
+							vint tx = x - viewPosition.x + bounds.x1;
+							vint ty = startPoint.y - viewPosition.y + bounds.y1;
+
+							if (color.background.a > 0)
 							{
-								d2dRenderTarget->FillRectangle(D2D1::RectF((FLOAT)tx, (FLOAT)ty, (FLOAT)(tx+(x2-x)), (FLOAT)(ty+startRect.Height())), color.backgroundBrush);
+								d2dRenderTarget->FillRectangle(D2D1::RectF((FLOAT)tx, (FLOAT)ty, (FLOAT)(tx + (x2 - x)), (FLOAT)(ty + startRect.Height())), color.backgroundBrush);
 							}
-							if(!crlf)
+							if (!crlf)
 							{
+								UINT32 count = text::UTF16SPFirst(line.text[column]) && column + 1 < line.dataLength && text::UTF16SPSecond(line.text[column + 1]) ? 2 : 1;
 								d2dRenderTarget->DrawText(
-									(passwordChar?&passwordChar:&line.text[column]),
-									1,
+									(passwordChar ? &passwordChar : &line.text[column]),
+									count,
 									textFormat->textFormat.Obj(),
-									D2D1::RectF((FLOAT)tx, (FLOAT)ty, (FLOAT)tx+1, (FLOAT)ty+1),
+									D2D1::RectF((FLOAT)tx, (FLOAT)ty, (FLOAT)tx + 1, (FLOAT)ty + 1),
 									color.textBrush,
 									D2D1_DRAW_TEXT_OPTIONS_NO_SNAP,
 									DWRITE_MEASURING_MODE_GDI_NATURAL
-									);
+								);
+								if (count == 2) column++;
 							}
-							x=x2;
+							x = x2;
 						}
 					}
 
-					if(element->GetCaretVisible() && element->GetLines().IsAvailable(element->GetCaretEnd()))
+					if (element->GetCaretVisible() && element->GetLines().IsAvailable(element->GetCaretEnd()))
 					{
-						Point caretPoint=element->GetLines().GetPointFromTextPos(element->GetCaretEnd());
-						vint height=element->GetLines().GetRowHeight();
-						Point p1(caretPoint.x-viewPosition.x+bounds.x1, caretPoint.y-viewPosition.y+bounds.y1+1);
-						Point p2(caretPoint.x-viewPosition.x+bounds.x1, caretPoint.y+height-viewPosition.y+bounds.y1-1);
+						Point caretPoint = element->GetLines().GetPointFromTextPos(element->GetCaretEnd());
+						vint height = element->GetLines().GetRowHeight();
+						Point p1(caretPoint.x - viewPosition.x + bounds.x1, caretPoint.y - viewPosition.y + bounds.y1 + 1);
+						Point p2(caretPoint.x - viewPosition.x + bounds.x1, caretPoint.y + height - viewPosition.y + bounds.y1 - 1);
 						d2dRenderTarget->DrawLine(
-							D2D1::Point2F((FLOAT)p1.x+0.5f, (FLOAT)p1.y),
-							D2D1::Point2F((FLOAT)p2.x+0.5f, (FLOAT)p2.y),
+							D2D1::Point2F((FLOAT)p1.x + 0.5f, (FLOAT)p1.y),
+							D2D1::Point2F((FLOAT)p2.x + 0.5f, (FLOAT)p2.y),
 							caretBrush
-							);
+						);
 						d2dRenderTarget->DrawLine(
-							D2D1::Point2F((FLOAT)p1.x-0.5f, (FLOAT)p1.y),
-							D2D1::Point2F((FLOAT)p2.x-0.5f, (FLOAT)p2.y),
+							D2D1::Point2F((FLOAT)p1.x - 0.5f, (FLOAT)p1.y),
+							D2D1::Point2F((FLOAT)p2.x - 0.5f, (FLOAT)p2.y),
 							caretBrush
-							);
+						);
 					}
 				}
 			}

@@ -679,6 +679,31 @@ GuiInstanceContext
 							errors.Add(GuiResourceError({ {resource},element->codeRange.start }, L"ref.Parameter requires the following attributes existing at the same time: Name, Class."));
 						}
 					}
+					else if (element->name.value == L"ref.LocalizedStrings")
+					{
+						auto attName = XmlGetAttribute(element, L"Name");
+						auto attClass = XmlGetAttribute(element, L"Class");
+						auto attDefault = XmlGetAttribute(element, L"Default");
+						if (attName && attClass)
+						{
+							auto localized = MakePtr<GuiInstanceLocalized>();
+							localized->name = GlobalStringKey::Get(attName->value.value);
+							localized->className = GlobalStringKey::Get(attClass->value.value);
+							localized->tagPosition = { { resource },element->codeRange.start };
+							localized->classPosition = { { resource },attClass->value.codeRange.start };
+							localized->classPosition.column += 1;
+
+							if (attDefault)
+							{
+								localized->defaultStrings = attDefault->value.value == L"true";
+							}
+							context->localizeds.Add(localized);
+						}
+						else
+						{
+							errors.Add(GuiResourceError({ { resource },element->codeRange.start }, L"ref.LocalizedStrings requires the following attributes existing at the same time: Name, Class."));
+						}
+					}
 
 #define COLLECT_SCRIPT(NAME, SCRIPT, POSITION)\
 					(element->name.value == L"ref." #NAME)\
@@ -772,6 +797,28 @@ GuiInstanceContext
 				attClass->name.value = L"Class";
 				attClass->value.value = parameter->className.ToString();
 				xmlParameter->attributes.Add(attClass);
+			}
+
+			FOREACH(Ptr<GuiInstanceLocalized>, localized, localizeds)
+			{
+				auto xmlParameter = MakePtr<XmlElement>();
+				xmlParameter->name.value = L"ref.LocalizedStrings";
+				xmlInstance->subNodes.Add(xmlParameter);
+
+				auto attName = MakePtr<XmlAttribute>();
+				attName->name.value = L"Name";
+				attName->value.value = localized->name.ToString();
+				xmlParameter->attributes.Add(attName);
+
+				auto attClass = MakePtr<XmlAttribute>();
+				attClass->name.value = L"Class";
+				attClass->value.value = localized->className.ToString();
+				xmlParameter->attributes.Add(attClass);
+
+				auto attDefault = MakePtr<XmlAttribute>();
+				attDefault->name.value = L"Default";
+				attDefault->value.value = localized->defaultStrings ? L"true" : L"false";
+				xmlParameter->attributes.Add(attDefault);
 			}
 
 #define SERIALIZE_SCRIPT(NAME, SCRIPT)\
@@ -933,18 +980,10 @@ GuiInstanceStyle
 
 			auto attPath = MakePtr<XmlAttribute>();
 			attPath->name.value = L"ref.Path";
+			attPath->value.value = GenerateToStream([&](StreamWriter& writer)
 			{
-				MemoryStream stream;
-				{
-					StreamWriter writer(stream);
-					GuiIqPrint(query, writer);
-				}
-				stream.SeekFromBegin(0);
-				{
-					StreamReader reader(stream);
-					attPath->value.value = reader.ReadToEnd();
-				}
-			}
+				GuiIqPrint(query, writer);
+			});
 			xmlStyle->attributes.Add(attPath);
 
 			setter->FillXml(xmlStyle);

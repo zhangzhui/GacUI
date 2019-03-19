@@ -64,18 +64,21 @@ Tab Control
 				{
 				protected:
 					GuiTab*										tab;
+
 				public:
 					CommandExecutor(GuiTab* _tab);
 					~CommandExecutor();
 
-					void										ShowTab(vint index)override;
+					void										ShowTab(vint index, bool setFocus)override;
 				};
 
 				Ptr<CommandExecutor>							commandExecutor;
 				GuiTabPageList									tabPages;
 				GuiTabPage*										selectedPage = nullptr;
+
+				void											OnKeyDown(compositions::GuiGraphicsComposition* sender, compositions::GuiKeyEventArgs& arguments);
 			public:
-				/// <summary>Create a control with a specified style controller.</summary>
+				/// <summary>Create a control with a specified default theme.</summary>
 				/// <param name="themeName">The theme name for retriving a default control template.</param>
 				GuiTab(theme::ThemeName themeName);
 				~GuiTab();
@@ -116,6 +119,8 @@ Scroll View
 				bool									horizontalAlwaysVisible = true;
 				bool									verticalAlwaysVisible = true;
 
+				void									UpdateDisplayFont()override;
+
 				void									OnContainerBoundsChanged(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
 				void									OnHorizontalScroll(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
 				void									OnVerticalScroll(compositions::GuiGraphicsComposition* sender, compositions::GuiEventArgs& arguments);
@@ -143,8 +148,6 @@ Scroll View
 				GuiScrollView(theme::ThemeName themeName);
 				~GuiScrollView();
 
-				virtual void							SetFont(const FontProperties& value);
-
 				/// <summary>Force to update contents and scroll bars.</summary>
 				void									CalculateView();
 				/// <summary>Get the view size.</summary>
@@ -153,6 +156,13 @@ Scroll View
 				/// <summary>Get the view bounds.</summary>
 				/// <returns>The view bounds.</returns>
 				Rect									GetViewBounds();
+				
+				/// <summary>Get the position of the left-top corner of the view bounds.</summary>
+				/// <returns>The view position.</returns>
+				Point									GetViewPosition();
+				/// <summary>Set the position of the left-top corner of the view bounds.</summary>
+				/// <param name="value">The position.</param>
+				void									SetViewPosition(Point value);
 				
 				/// <summary>Get the horizontal scroll control.</summary>
 				/// <returns>The horizontal scroll control.</returns>
